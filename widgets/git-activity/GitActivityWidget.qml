@@ -52,6 +52,7 @@ WidgetCard {
   property bool hasRepos: detectedReposList.length > 0
 
   function selectRepo(path) {
+    gitWidgetRoot.contextMenuOpen = false
     activeRepoPath = path
     gitPulseProc.command = ["/home/dagyr/Projects/desktop-widgets/widgets/git-activity/git_pulse.py", path]
     if (!gitPulseProc.running) gitPulseProc.running = true
@@ -188,7 +189,10 @@ WidgetCard {
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
-          onClicked: gitWidgetRoot.selectRepo("ALL")
+          onClicked: {
+            gitWidgetRoot.contextMenuOpen = false
+            gitWidgetRoot.selectRepo("ALL")
+          }
         }
       }
 
@@ -267,7 +271,10 @@ WidgetCard {
             anchors.rightMargin: 26 // Leave room for trash button
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: gitWidgetRoot.selectRepo(modelData.path)
+            onClicked: {
+              gitWidgetRoot.contextMenuOpen = false
+              gitWidgetRoot.selectRepo(modelData.path)
+            }
           }
         }
       }
@@ -579,6 +586,7 @@ WidgetCard {
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: {
+            gitWidgetRoot.contextMenuOpen = false
             if (!gitPulseProc.running) gitPulseProc.running = true
           }
         }
