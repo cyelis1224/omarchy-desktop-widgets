@@ -171,7 +171,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 11
             font.weight: isCurrent ? Font.Bold : Font.Normal
-            color: isCurrent ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
+            color: "#ffffff"
             elide: Text.ElideRight
           }
 
@@ -226,7 +226,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: isCurrent ? Font.Bold : Font.Normal
-              color: isCurrent ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
+              color: "#ffffff"
               elide: Text.ElideRight
             }
 
@@ -633,7 +633,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 13
           font.weight: Font.Bold
-          color: Color.foreground
+          color: "#ffffff"
           elide: Text.ElideRight
         }
         RowLayout {
@@ -1037,7 +1037,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.Bold
-              color: Color.foreground
+              color: "#ffffff"
             }
             Text {
               text: "Current Streak"
@@ -1078,7 +1078,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.Bold
-              color: Color.foreground
+              color: "#ffffff"
             }
             Text {
               text: "Total Commits"
@@ -1117,7 +1117,7 @@ WidgetCard {
             text: "\uf126"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: isActive ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: isActive ? Color.accent : Qt.rgba(1, 1, 1, 0.7)
           }
 
           Text {
@@ -1125,7 +1125,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: isActive ? Font.Bold : Font.Normal
-            color: isActive ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+            color: "#ffffff"
           }
 
           Rectangle {
@@ -1133,7 +1133,7 @@ WidgetCard {
             implicitWidth: comCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: isActive ? Color.accent : Qt.rgba(1, 1, 1, 0.1)
+            color: isActive ? Color.accent : Qt.rgba(1, 1, 1, 0.15)
 
             Text {
               id: comCountText
@@ -1142,7 +1142,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 8
               font.weight: Font.Bold
-              color: isActive ? "#000000" : Color.foreground
+              color: "#ffffff"
             }
           }
         }
@@ -1174,7 +1174,7 @@ WidgetCard {
             text: "\uf446"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: isActive ? "#a855f7" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: isActive ? "#c084fc" : Qt.rgba(1, 1, 1, 0.7)
           }
 
           Text {
@@ -1182,7 +1182,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: isActive ? Font.Bold : Font.Normal
-            color: isActive ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+            color: "#ffffff"
           }
 
           Rectangle {
@@ -1190,7 +1190,7 @@ WidgetCard {
             implicitWidth: prCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: isActive ? "#a855f7" : Qt.rgba(1, 1, 1, 0.1)
+            color: isActive ? "#a855f7" : Qt.rgba(1, 1, 1, 0.15)
 
             Text {
               id: prCountText
@@ -1199,7 +1199,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 8
               font.weight: Font.Bold
-              color: isActive ? "#ffffff" : Color.foreground
+              color: "#ffffff"
             }
           }
         }
@@ -1231,7 +1231,7 @@ WidgetCard {
             text: "\uf41c"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: isActive ? "#10b981" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: isActive ? "#34d399" : Qt.rgba(1, 1, 1, 0.7)
           }
 
           Text {
@@ -1239,7 +1239,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: isActive ? Font.Bold : Font.Normal
-            color: isActive ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+            color: "#ffffff"
           }
 
           Rectangle {
@@ -1247,7 +1247,7 @@ WidgetCard {
             implicitWidth: issCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: isActive ? "#10b981" : Qt.rgba(1, 1, 1, 0.1)
+            color: isActive ? "#10b981" : Qt.rgba(1, 1, 1, 0.15)
 
             Text {
               id: issCountText
@@ -1256,7 +1256,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 8
               font.weight: Font.Bold
-              color: isActive ? "#000000" : Color.foreground
+              color: "#ffffff"
             }
           }
         }
@@ -1410,7 +1410,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 10
                 font.weight: Font.Normal
-                color: Color.foreground
+                color: "#ffffff"
                 elide: Text.ElideRight
               }
 
@@ -1420,7 +1420,7 @@ WidgetCard {
                       ("by @" + modelData.author + " • " + modelData.date)
                 font.family: Style.font.family
                 font.pixelSize: 8
-                color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+                color: Qt.rgba(1, 1, 1, 0.65)
                 elide: Text.ElideRight
               }
             }
