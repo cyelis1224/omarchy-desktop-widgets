@@ -162,7 +162,7 @@ WidgetCard {
             text: "\uf005"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: isCurrent ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: "#ffffff"
           }
 
           Text {
@@ -217,7 +217,7 @@ WidgetCard {
               text: modelData.is_remote ? "\uf0ac" : "\uf126"
               font.family: Style.font.family
               font.pixelSize: 11
-              color: isCurrent ? Color.accent : (modelData.is_remote ? "#38bdf8" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5))
+              color: "#ffffff"
             }
 
             Text {
@@ -619,10 +619,10 @@ WidgetCard {
 
         Text {
           anchors.centerIn: parent
-          text: gitWidgetRoot.isRemoteRepo ? "\uf0ac" : "\uf126"
+          text: gitWidgetRoot.isRemoteRepo ? "\uf0ac" : (gitWidgetRoot.activeRepoPath === "ALL" ? "\uf005" : "\uf126")
           font.family: Style.font.family
           font.pixelSize: 13
-          color: gitWidgetRoot.isRemoteRepo ? "#38bdf8" : "#10b981"
+          color: "#ffffff"
         }
       }
 
@@ -1117,7 +1117,7 @@ WidgetCard {
             text: "\uf126"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: isActive ? Color.accent : Qt.rgba(1, 1, 1, 0.7)
+            color: "#ffffff"
           }
 
           Text {
@@ -1174,7 +1174,7 @@ WidgetCard {
             text: "\uf446"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: isActive ? "#c084fc" : Qt.rgba(1, 1, 1, 0.7)
+            color: "#ffffff"
           }
 
           Text {
@@ -1231,7 +1231,7 @@ WidgetCard {
             text: "\uf41c"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: isActive ? "#34d399" : Qt.rgba(1, 1, 1, 0.7)
+            color: "#ffffff"
           }
 
           Text {
@@ -1293,7 +1293,7 @@ WidgetCard {
           text: gitWidgetRoot.activeTab === "prs" ? "\uf446" : (gitWidgetRoot.activeTab === "issues" ? "\uf41c" : "\uf126")
           font.family: Style.font.family
           font.pixelSize: 20
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+          color: "#ffffff"
         }
 
         Text {
