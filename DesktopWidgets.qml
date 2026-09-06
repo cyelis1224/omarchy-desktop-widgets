@@ -209,6 +209,7 @@ Item {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "omarchy-desktop-widgets"
         WlrLayershell.layer: WlrLayer.Bottom
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
         onWidthChanged: if (width > 0) root.screenWidth = width
         onHeightChanged: if (height > 0) root.screenHeight = height
