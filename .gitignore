@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Temporary and local state
+.cache/
+*.tmp
+*.log
+.DS_Store
+
+# Editor artifacts
+*~
+*.swp
+*.swo
+.vscode/
+.idea/

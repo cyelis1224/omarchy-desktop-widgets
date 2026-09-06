@@ -1,106 +1,134 @@
-# Omarchy Desktop Widgets Repository
+# Omarchy Desktop Widgets
 
-Welcome to the **Omarchy Desktop Widgets** workspace. This repository is dedicated to designing, building, and testing custom interactive widgets for Omarchy on Hyprland.
+A suite of high-performance, aesthetic desktop widgets for [Omarchy Linux](https://github.com/omarchy) running on Hyprland and Quickshell.
 
----
-
-## 📁 Repository Structure
-
-```
-~/Projects/desktop-widgets/
-├── README.md               # This documentation
-├── shared/                 # Shared base components
-│   └── WidgetCard.qml      # Symlink to the core WidgetCard component
-├── templates/
-│   └── WidgetTemplate.qml  # Quick-start boilerplate template
-├── widgets/                # Custom widgets directory
-│   ├── quick-notes/        # Scratchpad & Todo Deck
-│   ├── pomodoro/           # Circular Flow State Timer
-│   ├── gpu-telemetry/      # Hardware Monitoring Matrix
-│   └── ...                 # Additional widgets
-└── scripts/
-    ├── import-widget.sh    # CLI tool to register any widget into Omarchy
-    └── test-widget.sh      # Syntax & diagnostic checker
-```
+Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GPU hardware telemetry, an 84-day git activity radar, a Pomodoro timer, scratchpad notes, an ambient hero clock, MPRIS media controls, and multi-disk system monitors.
 
 ---
 
-## 🏗️ Architecture & Widget Anatomy
+## ✨ Included Widgets
 
-All custom desktop widgets run under **Quickshell** within the `dagyr.desktop-widgets` Omarchy plugin.
+### Core Built-in Widgets
+1. **🕒 Hero Clock & Weather** (`HeroClockWidget.qml`)
+   - Centered clock with expansive ambient radial drop shadow backdrop.
+   - Live weather status (temperature, condition icon, descriptions via wttr.in).
+   - Dynamic time-of-day greeting ("Good morning", "Late night vibes").
+   - Configurable 12h/24h time, seconds display (`:SS`), and compact date format.
+2. **📸 3D Layered Photo Stack Gallery** (`PhotoGalleryWidget.qml`)
+   - Realistic multi-angle 3D photo deck with full-bleed images and hardware-accelerated rounded corners (`MultiEffect`).
+   - Natural depth shading, drop shadows, and interactive hover fan-out.
+   - Folder selector (Wallpapers, Pictures, custom directories with Zenity file dialog).
+   - Configurable auto-cycle timing (10s, 30s, 1m, 5m, 15m, or paused) and manual shuffle button.
+3. **🌐 Real-time Network Traffic Monitor** (`NetworkTrafficWidget.qml`)
+   - Dual real-time sparkline area chart graphing upload and download bandwidth simultaneously.
+   - Current upload/download speeds and cumulative session byte counters.
+   - **Popout Device Selector**: Right-click context menu flyout to choose which network device is actively monitored (Wi-Fi, Ethernet, Tailscale VPN, Docker/bridge, Loopback, or Auto-detect).
+4. **💾 System Resources & Storage Matrix** (`SystemResourcesWidget.qml`)
+   - Live RAM memory usage gauge with optional compact percentage format.
+   - Multi-drive storage monitor tracking Root (`/`), external drives, and secondary mount points.
+   - Monitored drive checkboxes to select which drives are displayed on the desktop.
+5. **🎵 MPRIS Media Player** (`MediaPlayerWidget.qml`)
+   - Seamless media playback control (Play/Pause, Next, Prev) with album artwork and track metadata.
+   - Integrated live audio spectrum visualizer bar.
+   - MPRIS audio source picker to switch between active media players (Spotify, Firefox, Chromium, mpv).
 
-### The `WidgetCard` Base Component
-
-Most widgets inherit from `WidgetCard.qml` (`import "../../shared"`). By inheriting `WidgetCard`, your widget automatically gains:
-
-1. **Move Mode Drag Button (⬡)**: A clean grip button in the top-right that only appears when desktop layout is unlocked (`layoutEditMode: true`). It matches the close button styling (`rgba(1,1,1,0.08)` default, accent glow on hover).
-2. **Standard Right-Click Context Menu**:
-   - Right-click anywhere on the widget body to open options:
-     - 🔓 *Unlock / Lock Widgets Layout (Move Mode)*
-     - ➕ *Open Widget Selector / Marketplace*
-     - 🔄 *Reset Widgets Layout*
-   - Clicking or right-clicking anywhere outside dismisses the menu cleanly.
-3. **Smooth Drag Physics & Position Persistence**: Dragging updates coordinates and automatically saves them to `~/.local/state/omarchy/dagyr.desktop-widgets.json`.
-4. **Elevation & Glassmorphism**: Built-in dark translucency (`Color.bar.background`), rounded corners (`radius: 18`), and dynamic drop shadows (`MultiEffect`).
-
-### Key Properties
-
-| Property | Type | Description |
-|---|---|---|
-| `widgetId` | `string` | Unique identifier (e.g. `"quick_notes"`) |
-| `title` | `string` | Title shown in the header (if `showHeader` is true) |
-| `icon` | `string` | FontAwesome unicode glyph (e.g. `"\uf044"`) |
-| `showHeader` | `bool` | Set `true` for standard top bar, or `false` for fully custom layouts |
-| `defaultX` | `real` | Initial X coordinate before user moves it |
-| `defaultY` | `real` | Initial Y coordinate before user moves it |
-| `width` / `height` | `real` | Dimensions of the widget card |
-| `rootRef` | `var` | Reference to desktop root (injected automatically) |
-| `loaderItem` | `var` | Reference to Quickshell Loader (injected automatically) |
-
----
-
-## 🎨 Omarchy Design System & Tokens
-
-To ensure widgets match the user's active Omarchy theme:
-
-- **Colors**:
-  - `Color.accent` - Primary theme accent color (dynamic)
-  - `Color.foreground` - Text & icon color
-  - `Color.urgent` - Warning / destructive action color (red/orange)
-  - `Color.bar.background` - Background color of shell bars and cards
-- **Typography & Font**:
-  - `font.family: Style.font.family`
-  - FontAwesome 6 icons (e.g. `"\uf017"`, `"\uf03e"`, `"\uf0ec"`, `"\uf2db"`)
-- **Spacing**:
-  - `Style.space(4)`, `Style.space(8)`, `Style.space(12)`, `Style.space(16)`, `Style.space(24)`
+### Custom Interactive Widgets
+6. **📝 Quick Notes & Todo Deck** (`widgets/quick-notes/`)
+   - Floating Kanban-style todo deck with tag pills (`#work`, `#todo`, `#idea`, `#done`).
+   - Markdown scratchpad instantly synchronized to local markdown and JSON files.
+7. **⏱️ Circular Pomodoro Timer** (`widgets/pomodoro/`)
+   - Flow-state countdown timer with SVG circular progress ring.
+   - Focus sessions (25m), short breaks (5m), and long breaks (15m) with audio chimes.
+8. **⚡ Hardware Telemetry Monitor** (`widgets/hardware-telemetry/`)
+   - Dual radial gauge matrix for CPU and GPU utilization, clock frequencies, temperatures, and VRAM.
+   - Native integration with NVIDIA, AMD, and Intel hardware sensors.
+9. **🌿 Git Activity & Contribution Radar** (`widgets/git-activity/`)
+   - 84-day GitHub-style contribution heatmap and commit pulse.
+   - Branch status, uncommitted diff counter, and recent commit history log.
+   - **Repository Switcher**: Monitor specific local projects or toggle **All Repositories** aggregate mode.
 
 ---
 
-## 🚀 How to Import a Widget
+## 🚀 Installation
 
-### Option A: From Desktop GUI (Widget Marketplace)
-1. Right-click any existing desktop widget and click **Open Widget Selector (+)** (or press the Add Widgets button in Move Mode).
-2. Click **Import QML Widget...** in the top-right of the drawer.
-3. Select your `.qml` file (e.g. `~/Projects/desktop-widgets/widgets/quick-notes/QuickNotesWidget.qml`).
-4. The widget will appear under the **Custom** tab and can be toggled onto the desktop!
+### Option 1: Install as Omarchy Plugin (Recommended)
+Clone directly into your Omarchy plugins directory and reload the shell:
 
-### Option B: From Command Line
-Run the import helper script:
 ```bash
-~/Projects/desktop-widgets/scripts/import-widget.sh ~/Projects/desktop-widgets/widgets/quick-notes/QuickNotesWidget.qml "Quick Notes"
+git clone https://github.com/cyelis1224/omarchy-desktop-widgets ~/.config/omarchy/plugins/dagyr.desktop-widgets
+/usr/share/omarchy/bin/omarchy-restart-shell
+```
+
+### Option 2: Custom Widget Development Workspace
+If you are developing custom widgets, clone to your projects directory:
+
+```bash
+git clone https://github.com/cyelis1224/omarchy-desktop-widgets ~/Projects/desktop-widgets
+```
+
+To register any custom widget with Omarchy:
+```bash
+~/Projects/desktop-widgets/scripts/import-widget.sh ~/Projects/desktop-widgets/widgets/pomodoro/PomodoroWidget.qml "Pomodoro Timer"
 ```
 
 ---
 
-## 📋 Widget Roadmap
+## 🎮 Controls & Interaction
 
-1. **QuickNotesWidget** (Scratchpad & Floating Kanban / Todo Deck)
-2. **PomodoroWidget** (Circular SVG Flow State Countdown Timer)
-3. **GpuTelemetryWidget** (Dual Radial Hardware Monitor Matrix)
-4. **GitActivityWidget** (GitHub Contribution Radar & Repo Pulse)
-5. **AudioOrbWidget** (PipeWire Reactive Audio Frequency Waveform)
-6. **AmbientNoiseWidget** (Rain / Campfire / Coffee Shop Soundscapes)
-7. **AppFavoritesWidget** (Floating Magnifying App Pinboard Dock)
-8. **HabitRingsWidget** (Concentric Daily Habit Activity Rings)
-9. **MarketTickerWidget** (Crypto & Stocks Sparkline Ticker)
-10. **NewsFeedWidget** (Hacker News / Reddit Tech Pulse Marquee)
+- **Right-Click Context Menu**:
+  - Right-click anywhere on any widget body to open its options.
+  - Selecting any setting option automatically saves your preference and dismisses the context menu.
+- **Move Mode (Layout Lock/Unlock)**:
+  - Select **Unlock Widgets Layout (Move Mode)** from any widget's context menu.
+  - Drag widgets freely across your desktop with smooth physics and 20px grid snapping.
+  - Click **Done / Lock** in the floating top banner when finished.
+- **Persistent Preferences**:
+  - All widget positions, enabled states, and right-click menu settings (seconds display, disabled drive mounts, network interface selection, graph fill styles, visualizers, cycle timers) persist across Omarchy shell restarts in `~/.local/state/omarchy/dagyr.desktop-widgets.json`.
+- **Smart Auto-Hide**:
+  - Desktop widgets automatically conceal when application windows are focused and smoothly re-appear when navigating to an empty workspace.
+
+---
+
+## 🛠️ Developing Custom Widgets
+
+All widgets inherit from the base `WidgetCard` (`shared/WidgetCard.qml`), giving them glassmorphic cards, drag physics, right-click menus, and persistent settings out of the box:
+
+```qml
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import qs.Commons
+import qs.Ui
+import "../../shared"
+
+WidgetCard {
+  id: myWidgetRoot
+  widgetId: "my_custom_widget"
+  title: "My Custom Widget"
+  icon: "\uf005"
+  width: 320
+  height: 200
+
+  // Persisted setting helper:
+  // saveSetting("myOption", true)
+  // getSetting("myOption", defaultValue)
+
+  Text {
+    anchors.centerIn: parent
+    text: "Hello Omarchy!"
+    color: Color.foreground
+    font.family: Style.font.family
+  }
+}
+```
+
+Validate and test your widget before loading:
+```bash
+~/Projects/desktop-widgets/scripts/test-widget.sh ~/Projects/desktop-widgets/widgets/my-widget/MyWidget.qml
+```
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
