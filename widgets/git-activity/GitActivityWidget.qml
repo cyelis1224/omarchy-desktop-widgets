@@ -24,8 +24,8 @@ WidgetCard {
   defaultX: screenWidth - width - Style.space(24)
   defaultY: 340
 
-  width: 380
-  height: 460
+  width: 390
+  height: 490
   menuWidth: 320
 
   // ---------------------------------------------------------------------------
@@ -41,6 +41,11 @@ WidgetCard {
   property int streakDays: 0
   property var heatmapMatrix: []
   property var recentCommitsList: []
+  property var pullRequestsList: []
+  property var issuesList: []
+  property bool hasGithub: false
+  property string githubSlug: ""
+  property string activeTab: "commits" // "commits" | "prs" | "issues"
   property var detectedReposList: []
   property string hoveredCellInfo: ""
   property bool showRecentCommits: true
@@ -83,6 +88,10 @@ WidgetCard {
           if (data.streak_days !== undefined) gitWidgetRoot.streakDays = data.streak_days
           if (Array.isArray(data.heatmap)) gitWidgetRoot.heatmapMatrix = data.heatmap
           if (Array.isArray(data.recent_commits)) gitWidgetRoot.recentCommitsList = data.recent_commits
+          if (Array.isArray(data.pull_requests)) gitWidgetRoot.pullRequestsList = data.pull_requests
+          if (Array.isArray(data.issues)) gitWidgetRoot.issuesList = data.issues
+          if (data.has_github !== undefined) gitWidgetRoot.hasGithub = data.has_github
+          if (data.github_slug !== undefined) gitWidgetRoot.githubSlug = data.github_slug
           if (Array.isArray(data.detected_repos)) {
             gitWidgetRoot.detectedReposList = data.detected_repos
             gitWidgetRoot.hasRepos = data.has_repos !== undefined ? data.has_repos : (data.detected_repos.length > 0)
@@ -372,7 +381,7 @@ WidgetCard {
         Layout.topMargin: 4
       }
 
-      // Toggle Recent Commits Timeline
+      // Toggle Activity Stream
       Rectangle {
         Layout.fillWidth: true
         implicitHeight: 28
@@ -394,7 +403,7 @@ WidgetCard {
 
           Text {
             Layout.fillWidth: true
-            text: "Show Recent Commits Timeline"
+            text: "Show Activity Stream (Commits/PRs/Issues)"
             font.family: Style.font.family
             font.pixelSize: 11
             color: Color.foreground
@@ -477,9 +486,9 @@ WidgetCard {
         }
       }
 
-      // Open in Browser (for remote URLs)
+      // Open in Browser (for remote URLs or GitHub repos)
       Rectangle {
-        visible: gitWidgetRoot.hasRepos && gitWidgetRoot.isRemoteRepo && gitWidgetRoot.activeRepoPath !== ""
+        visible: gitWidgetRoot.hasRepos && (gitWidgetRoot.isRemoteRepo || gitWidgetRoot.hasGithub) && gitWidgetRoot.activeRepoPath !== ""
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
@@ -522,7 +531,9 @@ WidgetCard {
           onClicked: {
             gitWidgetRoot.contextMenuOpen = false
             var url = gitWidgetRoot.activeRepoPath
-            if (url.startsWith("git@")) {
+            if (gitWidgetRoot.hasGithub && gitWidgetRoot.githubSlug) {
+              url = "https://github.com/" + gitWidgetRoot.githubSlug
+            } else if (url.startsWith("git@")) {
               url = "https://" + url.replace("git@", "").replace(":", "/")
             }
             if (url.endsWith(".git")) {
@@ -580,8 +591,8 @@ WidgetCard {
   // ---------------------------------------------------------------------------
   ColumnLayout {
     anchors.fill: parent
-    anchors.margins: Style.space(16)
-    spacing: Style.space(12)
+    anchors.margins: Style.space(14)
+    spacing: Style.space(10)
 
     // -------------------------------------------------------------------------
     // 🏷️ Header: Icon, Repo Title, Branch Badge & Edit Controls
@@ -770,7 +781,7 @@ WidgetCard {
       Layout.fillWidth: true
       Layout.fillHeight: true
       radius: 12
-      color: Qt.rgba(1, 1, 0, 0.03)
+      color: Qt.rgba(1, 1, 1, 0.03)
       border.color: Qt.rgba(1, 1, 1, 0.07)
       border.width: 1
 
@@ -912,7 +923,7 @@ WidgetCard {
     Rectangle {
       visible: gitWidgetRoot.hasRepos && gitWidgetRoot.detectedReposList.length > 0
       Layout.fillWidth: true
-      implicitHeight: 140
+      implicitHeight: 124
       radius: 12
       color: Qt.rgba(1, 1, 1, 0.04)
       border.color: Qt.rgba(1, 1, 1, 0.08)
@@ -920,8 +931,8 @@ WidgetCard {
 
       ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Style.space(12)
-        spacing: Style.space(8)
+        anchors.margins: Style.space(10)
+        spacing: Style.space(6)
 
         RowLayout {
           Layout.fillWidth: true
@@ -947,8 +958,8 @@ WidgetCard {
           Layout.alignment: Qt.AlignHCenter
           columns: 12
           rows: 7
-          rowSpacing: 4
-          columnSpacing: 4
+          rowSpacing: 3
+          columnSpacing: 3
           flow: GridLayout.TopToBottom // Days vertically (Sun-Sat), weeks horizontally
 
           Repeater {
@@ -957,7 +968,7 @@ WidgetCard {
             Rectangle {
               required property var modelData
               width: 20
-              height: 10
+              height: 9
               radius: 2
               color: gitWidgetRoot.getLevelColor(modelData.level)
               border.color: modelData.is_today ? Color.accent : (cellMouse.containsMouse ? "#ffffff" : "transparent")
@@ -992,8 +1003,8 @@ WidgetCard {
       // Streak Metric
       Rectangle {
         Layout.fillWidth: true
-        implicitHeight: 46
-        radius: 10
+        implicitHeight: 40
+        radius: 8
         color: Qt.rgba(1, 1, 1, 0.04)
         border.color: Qt.rgba(1, 1, 1, 0.07)
         border.width: 1
@@ -1007,7 +1018,7 @@ WidgetCard {
           Text {
             text: "\uf06d"
             font.family: Style.font.family
-            font.pixelSize: 16
+            font.pixelSize: 15
             color: "#f59e0b" // Amber flame
           }
 
@@ -1016,14 +1027,14 @@ WidgetCard {
             Text {
               text: gitWidgetRoot.streakDays + (gitWidgetRoot.streakDays === 1 ? " Day" : " Days")
               font.family: Style.font.family
-              font.pixelSize: 12
+              font.pixelSize: 11
               font.weight: Font.Bold
               color: Color.foreground
             }
             Text {
               text: "Current Streak"
               font.family: Style.font.family
-              font.pixelSize: 9
+              font.pixelSize: 8
               color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
             }
           }
@@ -1033,8 +1044,8 @@ WidgetCard {
       // Total Commits Metric
       Rectangle {
         Layout.fillWidth: true
-        implicitHeight: 46
-        radius: 10
+        implicitHeight: 40
+        radius: 8
         color: Qt.rgba(1, 1, 1, 0.04)
         border.color: Qt.rgba(1, 1, 1, 0.07)
         border.width: 1
@@ -1048,7 +1059,7 @@ WidgetCard {
           Text {
             text: "\uf0c9"
             font.family: Style.font.family
-            font.pixelSize: 14
+            font.pixelSize: 13
             color: "#10b981" // Emerald
           }
 
@@ -1057,14 +1068,14 @@ WidgetCard {
             Text {
               text: gitWidgetRoot.totalCommits.toString()
               font.family: Style.font.family
-              font.pixelSize: 12
+              font.pixelSize: 11
               font.weight: Font.Bold
               color: Color.foreground
             }
             Text {
               text: "Total Commits"
               font.family: Style.font.family
-              font.pixelSize: 9
+              font.pixelSize: 8
               color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
             }
           }
@@ -1073,44 +1084,265 @@ WidgetCard {
     }
 
     // -------------------------------------------------------------------------
-    // 🕒 Recent Commit Timeline
+    // 📑 Tabbed Activity Navigation: Commits | Pull Requests | Issues
     // -------------------------------------------------------------------------
-    Text {
-      visible: gitWidgetRoot.hasRepos && gitWidgetRoot.showRecentCommits && gitWidgetRoot.recentCommitsList.length > 0
-      text: "RECENT COMMIT ACTIVITY"
-      font.family: Style.font.family
-      font.pixelSize: 9
-      font.weight: Font.Bold
-      color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
-      Layout.leftMargin: 2
-      Layout.topMargin: 2
-    }
-
-    ColumnLayout {
-      visible: gitWidgetRoot.hasRepos && gitWidgetRoot.showRecentCommits && gitWidgetRoot.recentCommitsList.length > 0
+    RowLayout {
+      visible: gitWidgetRoot.hasRepos && gitWidgetRoot.showRecentCommits
       Layout.fillWidth: true
       spacing: Style.space(6)
 
-      Repeater {
-        model: gitWidgetRoot.recentCommitsList
+      // Commits Tab
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        readonly property bool isActive: gitWidgetRoot.activeTab === "commits"
+        color: isActive ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+        border.color: isActive ? Color.accent : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        border.width: 1
 
-        Rectangle {
+        RowLayout {
+          anchors.centerIn: parent
+          spacing: 4
+
+          Text {
+            text: "\uf126"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            color: isActive ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          }
+
+          Text {
+            text: "Commits"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            font.weight: isActive ? Font.Bold : Font.Normal
+            color: isActive ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          }
+
+          Rectangle {
+            visible: gitWidgetRoot.recentCommitsList.length > 0
+            implicitWidth: comCountText.implicitWidth + 8
+            implicitHeight: 14
+            radius: 7
+            color: isActive ? Color.accent : Qt.rgba(1, 1, 1, 0.1)
+
+            Text {
+              id: comCountText
+              anchors.centerIn: parent
+              text: gitWidgetRoot.recentCommitsList.length.toString()
+              font.family: Style.font.family
+              font.pixelSize: 8
+              font.weight: Font.Bold
+              color: isActive ? "#000000" : Color.foreground
+            }
+          }
+        }
+
+        MouseArea {
+          id: comTabMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: gitWidgetRoot.activeTab = "commits"
+        }
+      }
+
+      // Pull Requests Tab
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        readonly property bool isActive: gitWidgetRoot.activeTab === "prs"
+        color: isActive ? Qt.rgba(168/255, 85/255, 247/255, 0.22) : (prsTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+        border.color: isActive ? "#a855f7" : (prsTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        border.width: 1
+
+        RowLayout {
+          anchors.centerIn: parent
+          spacing: 4
+
+          Text {
+            text: "\uf446"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            color: isActive ? "#a855f7" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          }
+
+          Text {
+            text: "PRs"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            font.weight: isActive ? Font.Bold : Font.Normal
+            color: isActive ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          }
+
+          Rectangle {
+            visible: gitWidgetRoot.pullRequestsList.length > 0
+            implicitWidth: prCountText.implicitWidth + 8
+            implicitHeight: 14
+            radius: 7
+            color: isActive ? "#a855f7" : Qt.rgba(1, 1, 1, 0.1)
+
+            Text {
+              id: prCountText
+              anchors.centerIn: parent
+              text: gitWidgetRoot.pullRequestsList.length.toString()
+              font.family: Style.font.family
+              font.pixelSize: 8
+              font.weight: Font.Bold
+              color: isActive ? "#ffffff" : Color.foreground
+            }
+          }
+        }
+
+        MouseArea {
+          id: prsTabMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: gitWidgetRoot.activeTab = "prs"
+        }
+      }
+
+      // Issues Tab
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        readonly property bool isActive: gitWidgetRoot.activeTab === "issues"
+        color: isActive ? Qt.rgba(16/255, 185/255, 129/255, 0.22) : (issTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+        border.color: isActive ? "#10b981" : (issTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        border.width: 1
+
+        RowLayout {
+          anchors.centerIn: parent
+          spacing: 4
+
+          Text {
+            text: "\uf41c"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            color: isActive ? "#10b981" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          }
+
+          Text {
+            text: "Issues"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            font.weight: isActive ? Font.Bold : Font.Normal
+            color: isActive ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          }
+
+          Rectangle {
+            visible: gitWidgetRoot.issuesList.length > 0
+            implicitWidth: issCountText.implicitWidth + 8
+            implicitHeight: 14
+            radius: 7
+            color: isActive ? "#10b981" : Qt.rgba(1, 1, 1, 0.1)
+
+            Text {
+              id: issCountText
+              anchors.centerIn: parent
+              text: gitWidgetRoot.issuesList.length.toString()
+              font.family: Style.font.family
+              font.pixelSize: 8
+              font.weight: Font.Bold
+              color: isActive ? "#000000" : Color.foreground
+            }
+          }
+        }
+
+        MouseArea {
+          id: issTabMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: gitWidgetRoot.activeTab = "issues"
+        }
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 📜 Scrollable Activity Stream (Last 25 Commits, PRs, or Issues)
+    // -------------------------------------------------------------------------
+    Item {
+      visible: gitWidgetRoot.hasRepos && gitWidgetRoot.showRecentCommits
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+      clip: true
+
+      // Empty State for Current Tab
+      ColumnLayout {
+        anchors.centerIn: parent
+        spacing: 6
+        visible: (gitWidgetRoot.activeTab === "commits" && gitWidgetRoot.recentCommitsList.length === 0) ||
+                 (gitWidgetRoot.activeTab === "prs" && gitWidgetRoot.pullRequestsList.length === 0) ||
+                 (gitWidgetRoot.activeTab === "issues" && gitWidgetRoot.issuesList.length === 0)
+
+        Text {
+          Layout.alignment: Qt.AlignHCenter
+          text: gitWidgetRoot.activeTab === "prs" ? "\uf446" : (gitWidgetRoot.activeTab === "issues" ? "\uf41c" : "\uf126")
+          font.family: Style.font.family
+          font.pixelSize: 20
+          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+        }
+
+        Text {
+          Layout.alignment: Qt.AlignHCenter
+          text: gitWidgetRoot.activeTab === "prs" ? (gitWidgetRoot.hasGithub ? "No Pull Requests" : "GitHub Repo Required for PRs") :
+                (gitWidgetRoot.activeTab === "issues" ? (gitWidgetRoot.hasGithub ? "No Issues Open" : "GitHub Repo Required for Issues") : "No Recent Commits")
+          font.family: Style.font.family
+          font.pixelSize: 11
+          font.weight: Font.DemiBold
+          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+        }
+
+        Text {
+          Layout.alignment: Qt.AlignHCenter
+          Layout.maximumWidth: 260
+          wrapMode: Text.WordWrap
+          horizontalAlignment: Text.AlignHCenter
+          text: gitWidgetRoot.activeTab === "prs" ? (gitWidgetRoot.hasGithub ? "All pull requests are reviewed and merged." : "Connect a GitHub remote or URL to track pull requests.") :
+                (gitWidgetRoot.activeTab === "issues" ? (gitWidgetRoot.hasGithub ? "All issues are closed or none have been opened yet." : "Connect a GitHub remote or URL to track issues.") : "No commits recorded in the selected period.")
+          font.family: Style.font.family
+          font.pixelSize: 9
+          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+        }
+      }
+
+      // Scrollable ListView
+      ListView {
+        id: activityListView
+        anchors.fill: parent
+        anchors.rightMargin: 6
+        clip: true
+        spacing: 5
+        boundsBehavior: Flickable.StopAtBounds
+
+        model: gitWidgetRoot.activeTab === "commits" ? gitWidgetRoot.recentCommitsList :
+               (gitWidgetRoot.activeTab === "prs" ? gitWidgetRoot.pullRequestsList : gitWidgetRoot.issuesList)
+
+        delegate: Rectangle {
           required property var modelData
-          Layout.fillWidth: true
-          implicitHeight: 38
+          required property int index
+          width: activityListView.width
+          implicitHeight: 40
           radius: 8
-          color: Qt.rgba(1, 1, 1, 0.04)
-          border.color: Qt.rgba(1, 1, 1, 0.06)
+          color: itemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.035)
+          border.color: itemMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.05)
           border.width: 1
 
           RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: Style.space(10)
-            anchors.rightMargin: Style.space(10)
+            anchors.leftMargin: Style.space(8)
+            anchors.rightMargin: Style.space(8)
             spacing: Style.space(8)
 
-            // Hash Badge
+            // Badge / Icon Column
+            // 1. For Commits: Hash pill
             Rectangle {
+              visible: gitWidgetRoot.activeTab === "commits"
               implicitWidth: hashText.implicitWidth + 8
               implicitHeight: 18
               radius: 4
@@ -1119,7 +1351,7 @@ WidgetCard {
               Text {
                 id: hashText
                 anchors.centerIn: parent
-                text: modelData.hash
+                text: modelData.hash ? modelData.hash : ""
                 font.family: Style.font.family
                 font.pixelSize: 9
                 font.weight: Font.DemiBold
@@ -1127,31 +1359,111 @@ WidgetCard {
               }
             }
 
+            // 2. For PRs / Issues: State icon & number
+            Rectangle {
+              visible: gitWidgetRoot.activeTab !== "commits"
+              implicitWidth: numText.implicitWidth + 12
+              implicitHeight: 18
+              radius: 4
+              readonly property bool isOpen: (modelData.state || "").toLowerCase() === "open"
+              readonly property bool isMerged: (modelData.state || "").toLowerCase() === "merged"
+              color: isOpen ? Qt.rgba(16/255, 185/255, 129/255, 0.2) : (isMerged ? Qt.rgba(168/255, 85/255, 247/255, 0.2) : Qt.rgba(1, 1, 1, 0.1))
+
+              RowLayout {
+                anchors.centerIn: parent
+                spacing: 3
+
+                Text {
+                  text: gitWidgetRoot.activeTab === "prs" ? "\uf446" : (parent.parent.isOpen ? "\uf41c" : "\uf058")
+                  font.family: Style.font.family
+                  font.pixelSize: 8
+                  color: parent.parent.isOpen ? "#10b981" : (parent.parent.isMerged ? "#a855f7" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5))
+                }
+
+                Text {
+                  id: numText
+                  text: "#" + (modelData.number || "")
+                  font.family: Style.font.family
+                  font.pixelSize: 9
+                  font.weight: Font.DemiBold
+                  color: parent.parent.isOpen ? "#10b981" : (parent.parent.isMerged ? "#a855f7" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7))
+                }
+              }
+            }
+
+            // Main Text Column
             ColumnLayout {
               Layout.fillWidth: true
-              spacing: 0
+              spacing: 1
 
               Text {
                 Layout.fillWidth: true
-                text: modelData.msg
+                text: (gitWidgetRoot.activeTab === "commits" ? modelData.msg : modelData.title) || ""
                 font.family: Style.font.family
-                font.pixelSize: 11
+                font.pixelSize: 10
+                font.weight: Font.Normal
                 color: Color.foreground
                 elide: Text.ElideRight
               }
 
               Text {
-                text: modelData.time
+                text: gitWidgetRoot.activeTab === "commits" ?
+                      (modelData.time + (modelData.author ? " • " + modelData.author : "")) :
+                      ("by @" + modelData.author + " • " + modelData.date)
                 font.family: Style.font.family
-                font.pixelSize: 9
+                font.pixelSize: 8
                 color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+                elide: Text.ElideRight
+              }
+            }
+
+            // External Link Icon on Hover
+            Text {
+              visible: itemMouse.containsMouse && Boolean(modelData.url)
+              text: "\uf08e"
+              font.family: Style.font.family
+              font.pixelSize: 9
+              color: Color.accent
+            }
+          }
+
+          MouseArea {
+            id: itemMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: modelData.url ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: {
+              if (modelData.url) {
+                Qt.openUrlExternally(modelData.url)
               }
             }
           }
         }
       }
+
+      // Sleek Vertical Scrollbar Indicator
+      Rectangle {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: 3
+        radius: 1.5
+        color: Qt.rgba(1, 1, 1, 0.08)
+        visible: activityListView.contentHeight > activityListView.height
+
+        Rectangle {
+          width: 3
+          radius: 1.5
+          color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
+          height: Math.max(16, (activityListView.height / activityListView.contentHeight) * activityListView.height)
+          y: (activityListView.contentY / activityListView.contentHeight) * activityListView.height
+        }
+      }
     }
 
-    Item { Layout.fillHeight: true }
+    Item {
+      visible: !gitWidgetRoot.showRecentCommits
+      Layout.fillHeight: true
+    }
   }
 }

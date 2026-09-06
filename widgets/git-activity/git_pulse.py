@@ -6,6 +6,7 @@ import datetime
 import json
 import re
 import shutil
+import concurrent.futures
 
 STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
@@ -50,6 +51,130 @@ def get_remote_name(url):
     if len(parts) >= 2:
         return f"{parts[-2]}/{parts[-1]}"
     return parts[-1] if parts else url
+
+def extract_github_slug(target_path_or_url):
+    if not target_path_or_url or target_path_or_url == "ALL":
+        return None
+    url = target_path_or_url
+    if os.path.exists(target_path_or_url):
+        try:
+            p = subprocess.run(['git', '-C', target_path_or_url, 'remote', 'get-url', 'origin'],
+                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, timeout=2)
+            if p.returncode == 0 and p.stdout.strip():
+                url = p.stdout.strip()
+            else:
+                return None
+        except Exception:
+            return None
+
+    m = re.search(r'github\.com[:/]([a-zA-Z0-9_\-\.]+)/([a-zA-Z0-9_\-\.]+)', url)
+    if m:
+        owner = m.group(1)
+        repo = m.group(2)
+        if repo.endswith('.git'):
+            repo = repo[:-4]
+        return f"{owner}/{repo}"
+    return None
+
+def fetch_github_prs(slug):
+    if not slug:
+        return []
+    # 1. Try `gh` CLI first (uses user keychain / authenticated token)
+    try:
+        cmd = ['gh', 'pr', 'list', '--repo', slug, '--limit', '25', '--state', 'all',
+               '--json', 'number,title,author,state,createdAt,url']
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, timeout=5)
+        if p.returncode == 0 and p.stdout.strip():
+            items = json.loads(p.stdout)
+            res = []
+            for it in items:
+                author_str = it.get("author", {}).get("login", "unknown") if isinstance(it.get("author"), dict) else str(it.get("author", "unknown"))
+                res.append({
+                    "number": it.get("number"),
+                    "title": it.get("title", ""),
+                    "author": author_str,
+                    "state": it.get("state", "OPEN").lower(),
+                    "date": (it.get("createdAt") or "")[:10],
+                    "url": it.get("url", f"https://github.com/{slug}/pull/{it.get('number')}")
+                })
+            return res
+    except Exception:
+        pass
+
+    # 2. Fallback to public GitHub API
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"https://api.github.com/repos/{slug}/pulls?state=all&per_page=25",
+                                     headers={"User-Agent": "Omarchy-Desktop-Widgets"})
+        with urllib.request.urlopen(req, timeout=3) as response:
+            items = json.loads(response.read().decode())
+            res = []
+            for it in items:
+                author_str = it.get("user", {}).get("login", "unknown") if isinstance(it.get("user"), dict) else "unknown"
+                res.append({
+                    "number": it.get("number"),
+                    "title": it.get("title", ""),
+                    "author": author_str,
+                    "state": it.get("state", "open").lower(),
+                    "date": (it.get("created_at") or "")[:10],
+                    "url": it.get("html_url", f"https://github.com/{slug}/pull/{it.get('number')}")
+                })
+            return res
+    except Exception:
+        pass
+
+    return []
+
+def fetch_github_issues(slug):
+    if not slug:
+        return []
+    # 1. Try `gh` CLI first
+    try:
+        cmd = ['gh', 'issue', 'list', '--repo', slug, '--limit', '25', '--state', 'all',
+               '--json', 'number,title,author,state,createdAt,url']
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, timeout=5)
+        if p.returncode == 0 and p.stdout.strip():
+            items = json.loads(p.stdout)
+            res = []
+            for it in items:
+                author_str = it.get("author", {}).get("login", "unknown") if isinstance(it.get("author"), dict) else str(it.get("author", "unknown"))
+                res.append({
+                    "number": it.get("number"),
+                    "title": it.get("title", ""),
+                    "author": author_str,
+                    "state": it.get("state", "OPEN").lower(),
+                    "date": (it.get("createdAt") or "")[:10],
+                    "url": it.get("url", f"https://github.com/{slug}/issues/{it.get('number')}")
+                })
+            return res
+    except Exception:
+        pass
+
+    # 2. Fallback to public GitHub API
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"https://api.github.com/repos/{slug}/issues?state=all&per_page=25",
+                                     headers={"User-Agent": "Omarchy-Desktop-Widgets"})
+        with urllib.request.urlopen(req, timeout=3) as response:
+            items = json.loads(response.read().decode())
+            res = []
+            for it in items:
+                if "pull_request" in it:
+                    continue
+                author_str = it.get("user", {}).get("login", "unknown") if isinstance(it.get("user"), dict) else "unknown"
+                res.append({
+                    "number": it.get("number"),
+                    "title": it.get("title", ""),
+                    "author": author_str,
+                    "state": it.get("state", "open").lower(),
+                    "date": (it.get("created_at") or "")[:10],
+                    "url": it.get("html_url", f"https://github.com/{slug}/issues/{it.get('number')}")
+                })
+            return res
+    except Exception:
+        pass
+
+    return []
 
 def sync_remote_repo(url):
     os.makedirs(CACHE_DIR, exist_ok=True)
@@ -111,7 +236,6 @@ def find_repos(custom_repos=None):
     repos = []
     seen = set()
 
-    # ONLY show repositories the user has added themselves (local paths or remote URLs)
     if custom_repos:
         for cr in custom_repos:
             if not cr or cr in seen:
@@ -170,13 +294,17 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
             "is_remote": False,
             "is_all_mode": False,
             "has_repos": False,
+            "has_github": False,
+            "github_slug": "",
             "branch": "none",
             "uncommitted_count": 0,
             "status_label": "clean",
             "total_commits": 0,
             "streak_days": 0,
             "heatmap": matrix,
-            "recent_commits": []
+            "recent_commits": [],
+            "pull_requests": [],
+            "issues": []
         }
 
     # Resolve paths (local or remote cache)
@@ -198,13 +326,17 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
             "is_remote": bool(target_items[0].get("is_remote")) if target_items else False,
             "is_all_mode": is_all_mode,
             "has_repos": True,
+            "has_github": False,
+            "github_slug": "",
             "branch": "connecting...",
             "uncommitted_count": 0,
             "status_label": "offline",
             "total_commits": 0,
             "streak_days": 0,
             "heatmap": matrix,
-            "recent_commits": []
+            "recent_commits": [],
+            "pull_requests": [],
+            "issues": []
         }
 
     # Aggregate commit counts by date
@@ -254,20 +386,24 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
     status_label = "remote" if is_remote else "clean"
     recent_commits = []
 
+    # Detect GitHub connection
+    github_slug = extract_github_slug(primary_item["path"])
+    has_github = bool(github_slug)
+
     if not is_all_mode:
         if is_remote:
-            # For bare remote cache, query symbolic-ref HEAD or rev-parse
             try:
-                proc = subprocess.run(['git', '-C', primary_path, 'symbolic-ref', '--short', 'HEAD'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+                proc = subprocess.run(['git', '-C', primary_path, 'symbolic-ref', '--short', 'HEAD'],
+                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
                 b = proc.stdout.strip()
                 if b:
                     branch = b
             except Exception:
                 pass
         else:
-            # For local repos, query active branch & uncommitted porcelain status
             try:
-                proc = subprocess.run(['git', '-C', primary_path, 'branch', '--show-current'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+                proc = subprocess.run(['git', '-C', primary_path, 'branch', '--show-current'],
+                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
                 b = proc.stdout.strip()
                 if b:
                     branch = b
@@ -275,7 +411,8 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
                 pass
 
             try:
-                proc = subprocess.run(['git', '-C', primary_path, 'status', '--porcelain'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+                proc = subprocess.run(['git', '-C', primary_path, 'status', '--porcelain'],
+                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
                 lines = [l for l in proc.stdout.splitlines() if l.strip()]
                 uncommitted = len(lines)
                 status_label = f"{uncommitted} diffs" if uncommitted > 0 else "clean"
@@ -283,32 +420,64 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
                 pass
 
         try:
-            proc = subprocess.run(['git', '-C', primary_path, 'log', '-n', '3', '--pretty=format:%h|%cr|%s'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+            # Retrieve last 25 commits
+            proc = subprocess.run(['git', '-C', primary_path, 'log', '-n', '25', '--pretty=format:%h|%cr|%s|%an'],
+                                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
             for l in proc.stdout.splitlines():
-                parts = l.split('|', 2)
-                if len(parts) == 3:
+                parts = l.split('|', 3)
+                if len(parts) >= 3:
+                    commit_hash = parts[0]
+                    url = f"https://github.com/{github_slug}/commit/{commit_hash}" if github_slug else ""
                     recent_commits.append({
-                        "hash": parts[0],
+                        "hash": commit_hash,
                         "time": parts[1],
-                        "msg": parts[2]
+                        "msg": parts[2],
+                        "author": parts[3] if len(parts) == 4 else "",
+                        "url": url
                     })
         except Exception:
             pass
     elif is_all_mode:
+        # Collect recent commits across all repos
         for item, query_path in valid_targets:
+            item_slug = extract_github_slug(item["path"])
             try:
-                proc = subprocess.run(['git', '-C', query_path, 'log', '-n', '2', '--pretty=format:%h|%cr|%s'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+                proc = subprocess.run(['git', '-C', query_path, 'log', '-n', '10', '--pretty=format:%h|%cr|%s|%an|%ct'],
+                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
                 for l in proc.stdout.splitlines():
-                    parts = l.split('|', 2)
-                    if len(parts) == 3:
+                    parts = l.split('|', 4)
+                    if len(parts) >= 4:
+                        commit_hash = parts[0]
+                        timestamp = int(parts[4]) if len(parts) == 5 and parts[4].isdigit() else 0
+                        url = f"https://github.com/{item_slug}/commit/{commit_hash}" if item_slug else ""
                         recent_commits.append({
-                            "hash": parts[0],
+                            "hash": commit_hash,
                             "time": parts[1],
-                            "msg": f"[{item['name']}] {parts[2]}"
+                            "msg": f"[{item['name']}] {parts[2]}",
+                            "author": parts[3],
+                            "url": url,
+                            "_ts": timestamp
                         })
             except Exception:
                 pass
-        recent_commits = recent_commits[:4]
+        recent_commits.sort(key=lambda c: c.get("_ts", 0), reverse=True)
+        recent_commits = recent_commits[:25]
+
+    # Fetch Pull Requests and Issues concurrently if GitHub slug is present
+    pull_requests = []
+    issues = []
+    if github_slug:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            fut_prs = executor.submit(fetch_github_prs, github_slug)
+            fut_issues = executor.submit(fetch_github_issues, github_slug)
+            try:
+                pull_requests = fut_prs.result(timeout=6)
+            except Exception:
+                pull_requests = []
+            try:
+                issues = fut_issues.result(timeout=6)
+            except Exception:
+                issues = []
 
     return {
         "repo_name": "All Repositories (Combined)" if is_all_mode else primary_item["name"],
@@ -316,13 +485,17 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
         "is_remote": is_remote,
         "is_all_mode": is_all_mode,
         "has_repos": True,
+        "has_github": has_github,
+        "github_slug": github_slug or "",
         "branch": branch,
         "uncommitted_count": uncommitted,
         "status_label": status_label,
         "total_commits": sum(commit_counts.values()),
         "streak_days": streak,
         "heatmap": matrix,
-        "recent_commits": recent_commits
+        "recent_commits": recent_commits,
+        "pull_requests": pull_requests,
+        "issues": issues
     }
 
 def main():
@@ -354,7 +527,6 @@ def main():
             if target_to_remove in custom_repos:
                 custom_repos = [r for r in custom_repos if r != target_to_remove]
                 settings["git_custom_repos"] = custom_repos
-                # If remote URL, clean up cached bare clone
                 if is_remote_url(target_to_remove):
                     c_path = os.path.join(CACHE_DIR, get_remote_slug(target_to_remove))
                     if os.path.exists(c_path):
