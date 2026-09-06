@@ -107,6 +107,55 @@ WidgetCard {
         Layout.topMargin: 2
       }
 
+      // All Repositories Option
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        readonly property bool isCurrent: gitWidgetRoot.activeRepoPath === "ALL"
+        color: allRepoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8)
+          spacing: Style.space(8)
+
+          Text {
+            text: "\uf005"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: isCurrent ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+          }
+
+          Text {
+            Layout.fillWidth: true
+            text: "All Repositories (Combined Radar)"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            font.weight: isCurrent ? Font.Bold : Font.Normal
+            color: isCurrent ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
+            elide: Text.ElideRight
+          }
+
+          Text {
+            visible: isCurrent
+            text: "\uf00c"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            color: Color.accent
+          }
+        }
+
+        MouseArea {
+          id: allRepoMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: gitWidgetRoot.selectRepo("ALL")
+        }
+      }
+
       Repeater {
         model: gitWidgetRoot.detectedReposList
 
@@ -156,6 +205,55 @@ WidgetCard {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: gitWidgetRoot.selectRepo(modelData.path)
+          }
+        }
+      }
+
+      // Choose Custom Repo Folder
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        color: customRepoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8)
+          spacing: Style.space(8)
+
+          Text {
+            text: "\uf07c"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.accent
+          }
+
+          Text {
+            Layout.fillWidth: true
+            text: "Choose Custom Repo..."
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+            elide: Text.ElideRight
+          }
+
+          Text {
+            text: "\uf054"
+            font.family: Style.font.family
+            font.pixelSize: 9
+            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+          }
+        }
+
+        MouseArea {
+          id: customRepoMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            gitWidgetRoot.contextMenuOpen = false
+            gitWidgetRoot.selectRepo("pick_dialog")
           }
         }
       }
