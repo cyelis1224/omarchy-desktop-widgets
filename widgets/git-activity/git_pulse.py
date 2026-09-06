@@ -42,39 +42,21 @@ def pick_repo_dialog():
     return None
 
 def find_repos(custom_repos=None):
-    search_dirs = [
-        os.path.expanduser('~/Projects'),
-        os.path.expanduser('~/.config/omarchy/plugins')
-    ]
     repos = []
     seen = set()
 
-    # 1. Custom user-added repositories
+    # ONLY show repositories the user has added themselves
     if custom_repos:
         for cr in custom_repos:
-            if os.path.exists(cr) and os.path.exists(os.path.join(cr, '.git')) and cr not in seen:
+            if cr and os.path.exists(cr) and os.path.exists(os.path.join(cr, '.git')) and cr not in seen:
                 seen.add(cr)
                 repos.append({
                     "name": os.path.basename(cr),
                     "path": cr,
-                    "category": "Custom"
+                    "category": "User Added"
                 })
 
-    # 2. Automatically discovered repositories
-    for sdir in search_dirs:
-        if os.path.exists(sdir):
-            for root, dirs, files in os.walk(sdir):
-                if '.git' in dirs:
-                    dirs.remove('.git')
-                    if root not in seen:
-                        seen.add(root)
-                        repos.append({
-                            "name": os.path.basename(root),
-                            "path": root,
-                            "category": "Projects" if "Projects" in root else "Plugins"
-                        })
-
-    return sorted(repos, key=lambda r: (0 if r["category"] == "Custom" else 1, r["name"].lower()))
+    return sorted(repos, key=lambda r: r["name"].lower())
 
 def get_git_data(repo_path, all_repos=None, num_weeks=12):
     today = datetime.date.today()
@@ -84,15 +66,40 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
     start_date = end_date - datetime.timedelta(days=total_days - 1)
 
     is_all_mode = (repo_path == "ALL")
-    target_repos = [r["path"] for r in (all_repos or [])] if is_all_mode else [repo_path]
-    if not target_repos and not is_all_mode:
-        target_repos = [os.path.expanduser('~/Projects/desktop-widgets')]
+    target_repos = [r["path"] for r in (all_repos or [])] if is_all_mode else ([repo_path] if repo_path and repo_path != "ALL" else [])
+    target_repos = [rp for rp in target_repos if os.path.exists(rp) and os.path.exists(os.path.join(rp, '.git'))]
+
+    # Generate default empty heatmap matrix template
+    matrix = []
+    curr = start_date
+    while curr <= end_date:
+        d_str = curr.isoformat()
+        matrix.append({
+            "date": d_str,
+            "day": curr.strftime('%a'),
+            "count": 0,
+            "level": 0,
+            "is_today": (d_str == today.isoformat())
+        })
+        curr += datetime.timedelta(days=1)
+
+    if not target_repos:
+        return {
+            "repo_name": "No Tracked Repositories",
+            "repo_path": "",
+            "is_all_mode": False,
+            "has_repos": False,
+            "branch": "none",
+            "uncommitted_count": 0,
+            "total_commits": 0,
+            "streak_days": 0,
+            "heatmap": matrix,
+            "recent_commits": []
+        }
 
     # Aggregate commit counts by date
     commit_counts = {}
     for rp in target_repos:
-        if not os.path.exists(rp) or not os.path.exists(os.path.join(rp, '.git')):
-            continue
         try:
             cmd = ['git', '-C', rp, 'log', f'--since={start_date.isoformat()}', '--date=short', '--pretty=format:%ad']
             proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
@@ -103,30 +110,18 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
         except Exception:
             pass
 
-    # Heatmap matrix
-    matrix = []
-    curr = start_date
-    while curr <= end_date:
-        d_str = curr.isoformat()
-        count = commit_counts.get(d_str, 0)
-        level = 0
+    # Update counts and levels in heatmap matrix
+    for cell in matrix:
+        count = commit_counts.get(cell["date"], 0)
+        cell["count"] = count
         if count >= 6:
-            level = 4
+            cell["level"] = 4
         elif count >= 4:
-            level = 3
+            cell["level"] = 3
         elif count >= 2:
-            level = 2
+            cell["level"] = 2
         elif count >= 1:
-            level = 1
-
-        matrix.append({
-            "date": d_str,
-            "day": curr.strftime('%a'),
-            "count": count,
-            "level": level,
-            "is_today": (d_str == today.isoformat())
-        })
-        curr += datetime.timedelta(days=1)
+            cell["level"] = 1
 
     # Calculate streak backwards from today
     streak = 0
@@ -143,7 +138,7 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
             break
 
     # Branch and uncommitted status for primary repo
-    primary_repo = target_repos[0] if target_repos else os.path.expanduser('~/Projects/desktop-widgets')
+    primary_repo = target_repos[0]
     branch = "all repos" if is_all_mode else "unknown"
     uncommitted = 0
     recent_commits = []
@@ -194,9 +189,10 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
         recent_commits = recent_commits[:4]
 
     return {
-        "repo_name": "All Projects (Aggregate)" if is_all_mode else os.path.basename(primary_repo),
+        "repo_name": "All Repositories (Combined)" if is_all_mode else os.path.basename(primary_repo),
         "repo_path": "ALL" if is_all_mode else primary_repo,
         "is_all_mode": is_all_mode,
+        "has_repos": True,
         "branch": branch,
         "uncommitted_count": uncommitted,
         "total_commits": sum(commit_counts.values()),
@@ -209,7 +205,7 @@ def main():
     settings = load_settings()
     custom_repos = settings.get("git_custom_repos", [])
 
-    # Handle argument to switch active repository or open picker dialog
+    # Handle argument to switch active repository, remove, or open picker dialog
     if len(sys.argv) > 1 and sys.argv[1].strip():
         req = sys.argv[1].strip()
         if req == "pick_dialog":
@@ -220,21 +216,34 @@ def main():
                     settings["git_custom_repos"] = custom_repos
                 settings["git_active_repo"] = chosen
                 save_settings(settings)
-        elif req == "ALL" or os.path.exists(req):
+        elif req.startswith("remove:"):
+            target_to_remove = req[7:].strip()
+            if target_to_remove in custom_repos:
+                custom_repos = [r for r in custom_repos if r != target_to_remove]
+                settings["git_custom_repos"] = custom_repos
+            if settings.get("git_active_repo") == target_to_remove:
+                settings["git_active_repo"] = custom_repos[0] if custom_repos else ""
+            save_settings(settings)
+        elif req == "ALL":
+            settings["git_active_repo"] = "ALL"
+            save_settings(settings)
+        elif os.path.exists(req) and os.path.exists(os.path.join(req, '.git')):
+            if req not in custom_repos:
+                custom_repos.append(req)
+                settings["git_custom_repos"] = custom_repos
             settings["git_active_repo"] = req
             save_settings(settings)
 
     detected_repos = find_repos(custom_repos)
 
     active_repo = settings.get("git_active_repo", "")
-    if not active_repo or (active_repo != "ALL" and not os.path.exists(active_repo)):
-        default_repo = os.path.expanduser('~/Projects/desktop-widgets')
-        if os.path.exists(default_repo):
-            active_repo = default_repo
-        elif detected_repos:
-            active_repo = detected_repos[0]["path"]
-        else:
-            active_repo = "ALL"
+    if active_repo == "ALL":
+        if not detected_repos:
+            active_repo = ""
+    elif not active_repo or not any(r["path"] == active_repo for r in detected_repos):
+        active_repo = detected_repos[0]["path"] if detected_repos else ""
+        settings["git_active_repo"] = active_repo
+        save_settings(settings)
 
     data = get_git_data(active_repo, detected_repos)
     data["detected_repos"] = detected_repos

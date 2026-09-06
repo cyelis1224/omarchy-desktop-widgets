@@ -31,21 +31,27 @@ WidgetCard {
   // ---------------------------------------------------------------------------
   // 🌿 Git State & Data
   // ---------------------------------------------------------------------------
-  property string activeRepoName: "desktop-widgets"
-  property string activeRepoPath: "/home/dagyr/Projects/desktop-widgets"
-  property string branchName: "master"
+  property string activeRepoName: "No Tracked Repos"
+  property string activeRepoPath: ""
+  property string branchName: ""
   property int uncommittedCount: 0
   property int totalCommits: 0
-  property int streakDays: 1
+  property int streakDays: 0
   property var heatmapMatrix: []
   property var recentCommitsList: []
   property var detectedReposList: []
   property string hoveredCellInfo: ""
   property bool showRecentCommits: true
+  property bool hasRepos: detectedReposList.length > 0
 
   function selectRepo(path) {
     activeRepoPath = path
     gitPulseProc.command = ["/home/dagyr/Projects/desktop-widgets/widgets/git-activity/git_pulse.py", path]
+    if (!gitPulseProc.running) gitPulseProc.running = true
+  }
+
+  function removeRepo(path) {
+    gitPulseProc.command = ["/home/dagyr/Projects/desktop-widgets/widgets/git-activity/git_pulse.py", "remove:" + path]
     if (!gitPulseProc.running) gitPulseProc.running = true
   }
 
@@ -65,15 +71,18 @@ WidgetCard {
       onRead: function(line) {
         try {
           var data = JSON.parse(String(line).trim())
-          if (data.repo_name) gitWidgetRoot.activeRepoName = data.repo_name
-          if (data.repo_path) gitWidgetRoot.activeRepoPath = data.repo_path
-          if (data.branch) gitWidgetRoot.branchName = data.branch
+          if (data.repo_name !== undefined) gitWidgetRoot.activeRepoName = data.repo_name
+          if (data.repo_path !== undefined) gitWidgetRoot.activeRepoPath = data.repo_path
+          if (data.branch !== undefined) gitWidgetRoot.branchName = data.branch
           if (data.uncommitted_count !== undefined) gitWidgetRoot.uncommittedCount = data.uncommitted_count
           if (data.total_commits !== undefined) gitWidgetRoot.totalCommits = data.total_commits
           if (data.streak_days !== undefined) gitWidgetRoot.streakDays = data.streak_days
           if (Array.isArray(data.heatmap)) gitWidgetRoot.heatmapMatrix = data.heatmap
           if (Array.isArray(data.recent_commits)) gitWidgetRoot.recentCommitsList = data.recent_commits
-          if (Array.isArray(data.detected_repos)) gitWidgetRoot.detectedReposList = data.detected_repos
+          if (Array.isArray(data.detected_repos)) {
+            gitWidgetRoot.detectedReposList = data.detected_repos
+            gitWidgetRoot.hasRepos = data.has_repos !== undefined ? data.has_repos : (data.detected_repos.length > 0)
+          }
         } catch (e) {}
       }
     }
@@ -96,9 +105,9 @@ WidgetCard {
       Layout.fillWidth: true
       spacing: Style.space(3)
 
-      // 1. Active Repository Selector
+      // 1. Tracked Repositories Header
       Text {
-        text: "ACTIVE REPOSITORY"
+        text: "TRACKED REPOSITORIES"
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
@@ -107,8 +116,22 @@ WidgetCard {
         Layout.topMargin: 2
       }
 
-      // All Repositories Option
+      // Empty placeholder when no repos are added
+      Text {
+        visible: gitWidgetRoot.detectedReposList.length === 0
+        text: "No repositories added yet"
+        font.family: Style.font.family
+        font.pixelSize: 11
+        font.italic: true
+        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+        Layout.leftMargin: 8
+        Layout.topMargin: 2
+        Layout.bottomMargin: 2
+      }
+
+      // All Repositories Option (only shown when 2+ repos tracked)
       Rectangle {
+        visible: gitWidgetRoot.detectedReposList.length > 1
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
@@ -170,8 +193,8 @@ WidgetCard {
           RowLayout {
             anchors.fill: parent
             anchors.leftMargin: Style.space(8)
-            anchors.rightMargin: Style.space(8)
-            spacing: Style.space(8)
+            anchors.rightMargin: Style.space(6)
+            spacing: Style.space(6)
 
             Text {
               text: "\uf126"
@@ -197,11 +220,38 @@ WidgetCard {
               font.pixelSize: 10
               color: Color.accent
             }
+
+            // Remove button for this repo
+            Rectangle {
+              width: 20
+              height: 20
+              radius: 4
+              color: delMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.3) : "transparent"
+
+              Text {
+                anchors.centerIn: parent
+                text: "\uf1f8"
+                font.family: Style.font.family
+                font.pixelSize: 10
+                color: delMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+              }
+
+              MouseArea {
+                id: delMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                  gitWidgetRoot.removeRepo(modelData.path)
+                }
+              }
+            }
           }
 
           MouseArea {
             id: rMouse
             anchors.fill: parent
+            anchors.rightMargin: 26 // Leave room for trash button
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: gitWidgetRoot.selectRepo(modelData.path)
@@ -209,7 +259,7 @@ WidgetCard {
         }
       }
 
-      // Choose Custom Repo Folder
+      // Add Repository Option
       Rectangle {
         Layout.fillWidth: true
         implicitHeight: 28
@@ -223,7 +273,7 @@ WidgetCard {
           spacing: Style.space(8)
 
           Text {
-            text: "\uf07c"
+            text: "\uf067"
             font.family: Style.font.family
             font.pixelSize: 11
             color: Color.accent
@@ -231,7 +281,7 @@ WidgetCard {
 
           Text {
             Layout.fillWidth: true
-            text: "Choose Custom Repo..."
+            text: "Add Repository..."
             font.family: Style.font.family
             font.pixelSize: 11
             color: Color.foreground
@@ -239,9 +289,9 @@ WidgetCard {
           }
 
           Text {
-            text: "\uf054"
+            text: "\uf07c"
             font.family: Style.font.family
-            font.pixelSize: 9
+            font.pixelSize: 10
             color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
           }
         }
@@ -325,8 +375,9 @@ WidgetCard {
         Layout.topMargin: 4
       }
 
-      // Open in Editor / Terminal
+      // Open Repository in Terminal (visible when a valid single repo is selected)
       Rectangle {
+        visible: gitWidgetRoot.hasRepos && gitWidgetRoot.activeRepoPath !== "" && gitWidgetRoot.activeRepoPath !== "ALL"
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
@@ -339,7 +390,7 @@ WidgetCard {
           spacing: Style.space(8)
 
           Text {
-            text: "\uf121"
+            text: "\uf120"
             font.family: Style.font.family
             font.pixelSize: 11
             color: Color.accent
@@ -450,7 +501,7 @@ WidgetCard {
       ColumnLayout {
         spacing: 0
         Text {
-          text: gitWidgetRoot.activeRepoName
+          text: gitWidgetRoot.hasRepos ? gitWidgetRoot.activeRepoName : "Git Tracker"
           font.family: Style.font.family
           font.pixelSize: 13
           font.weight: Font.Bold
@@ -459,6 +510,7 @@ WidgetCard {
         }
         RowLayout {
           spacing: 4
+          visible: gitWidgetRoot.hasRepos && gitWidgetRoot.branchName !== "" && gitWidgetRoot.branchName !== "none"
           Text {
             text: "\uf418"
             font.family: Style.font.family
@@ -478,6 +530,7 @@ WidgetCard {
 
       // Uncommitted Status Pill
       Rectangle {
+        visible: gitWidgetRoot.hasRepos && gitWidgetRoot.activeRepoPath !== "ALL" && gitWidgetRoot.activeRepoPath !== ""
         implicitWidth: uncomRow.implicitWidth + 12
         implicitHeight: 20
         radius: 10
@@ -601,9 +654,112 @@ WidgetCard {
     }
 
     // -------------------------------------------------------------------------
-    // 🟩 12-Week Git Contribution Radar Heatmap Grid
+    // 📭 Empty State: Displayed when no repositories are tracked
     // -------------------------------------------------------------------------
     Rectangle {
+      visible: !gitWidgetRoot.hasRepos || gitWidgetRoot.detectedReposList.length === 0
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+      radius: 12
+      color: Qt.rgba(1, 1, 1, 0.03)
+      border.color: Qt.rgba(1, 1, 1, 0.07)
+      border.width: 1
+
+      ColumnLayout {
+        anchors.centerIn: parent
+        spacing: Style.space(12)
+
+        Rectangle {
+          Layout.alignment: Qt.AlignHCenter
+          width: 52
+          height: 52
+          radius: 26
+          color: Qt.rgba(16/255, 185/255, 129/255, 0.15)
+          border.color: Qt.rgba(16/255, 185/255, 129/255, 0.35)
+          border.width: 1
+
+          Text {
+            anchors.centerIn: parent
+            text: "\uf126"
+            font.family: Style.font.family
+            font.pixelSize: 22
+            color: "#10b981"
+          }
+        }
+
+        ColumnLayout {
+          Layout.alignment: Qt.AlignHCenter
+          spacing: Style.space(4)
+
+          Text {
+            Layout.alignment: Qt.AlignHCenter
+            text: "No Tracked Repositories"
+            font.family: Style.font.family
+            font.pixelSize: 14
+            font.weight: Font.Bold
+            color: Color.foreground
+          }
+
+          Text {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.maximumWidth: 260
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+            text: "Add your local git repositories to monitor commit streaks, activity radars, and branch changes."
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          }
+        }
+
+        Rectangle {
+          Layout.alignment: Qt.AlignHCenter
+          implicitWidth: addBtnRow.implicitWidth + 24
+          implicitHeight: 32
+          radius: 16
+          color: addBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18)
+          border.color: Color.accent
+          border.width: 1
+
+          RowLayout {
+            id: addBtnRow
+            anchors.centerIn: parent
+            spacing: Style.space(6)
+
+            Text {
+              text: "\uf067"
+              font.family: Style.font.family
+              font.pixelSize: 10
+              color: Color.accent
+            }
+
+            Text {
+              text: "Add Repository..."
+              font.family: Style.font.family
+              font.pixelSize: 11
+              font.weight: Font.DemiBold
+              color: Color.foreground
+            }
+          }
+
+          MouseArea {
+            id: addBtnMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+              gitWidgetRoot.selectRepo("pick_dialog")
+            }
+          }
+        }
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 🟩 12-Week Git Contribution Radar Heatmap Grid (when repos exist)
+    // -------------------------------------------------------------------------
+    Rectangle {
+      visible: gitWidgetRoot.hasRepos && gitWidgetRoot.detectedReposList.length > 0
       Layout.fillWidth: true
       implicitHeight: 140
       radius: 12
@@ -678,6 +834,7 @@ WidgetCard {
     // 🔥 Streaks & Stats Metric Cards
     // -------------------------------------------------------------------------
     RowLayout {
+      visible: gitWidgetRoot.hasRepos && gitWidgetRoot.detectedReposList.length > 0
       Layout.fillWidth: true
       spacing: Style.space(8)
 
@@ -768,7 +925,7 @@ WidgetCard {
     // 🕒 Recent Commit Timeline
     // -------------------------------------------------------------------------
     Text {
-      visible: gitWidgetRoot.showRecentCommits && gitWidgetRoot.recentCommitsList.length > 0
+      visible: gitWidgetRoot.hasRepos && gitWidgetRoot.showRecentCommits && gitWidgetRoot.recentCommitsList.length > 0
       text: "RECENT COMMIT ACTIVITY"
       font.family: Style.font.family
       font.pixelSize: 9
@@ -779,7 +936,7 @@ WidgetCard {
     }
 
     ColumnLayout {
-      visible: gitWidgetRoot.showRecentCommits
+      visible: gitWidgetRoot.hasRepos && gitWidgetRoot.showRecentCommits && gitWidgetRoot.recentCommitsList.length > 0
       Layout.fillWidth: true
       spacing: Style.space(6)
 
