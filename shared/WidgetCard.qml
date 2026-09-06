@@ -1,0 +1,1 @@
+/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/widgets/WidgetCard.qml

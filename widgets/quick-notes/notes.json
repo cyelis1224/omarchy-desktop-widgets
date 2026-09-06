@@ -1,0 +1,46 @@
+{
+  "todos": [
+    {
+      "id": 1,
+      "text": "Set up desktop widgets repository",
+      "done": true,
+      "tag": "#work"
+    },
+    {
+      "id": 2,
+      "text": "Build QuickNotesWidget proof of concept",
+      "done": false,
+      "tag": "#todo"
+    },
+    {
+      "id": 3,
+      "text": "Test custom widget import pipeline",
+      "done": false,
+      "tag": "#idea"
+    },
+    {
+      "id": 4,
+      "text": "Design Circular Pomodoro Timer",
+      "done": false,
+      "tag": "#idea"
+    }
+  ],
+  "scratchpad": "# Desktop Scratchpad\n\nQuick notes synced to markdown.\n- High-performance Omarchy UI\n- Quickshell QML & Hyprland\n",
+  "commands": [
+    {
+      "name": "Restart Shell",
+      "cmd": "omarchy-restart-shell",
+      "desc": "Reload Quickshell desktop environment"
+    },
+    {
+      "name": "Git Status",
+      "cmd": "git status",
+      "desc": "Inspect current repository status"
+    },
+    {
+      "name": "System Info",
+      "cmd": "fastfetch",
+      "desc": "Show system and hardware overview"
+    }
+  ]
+}
