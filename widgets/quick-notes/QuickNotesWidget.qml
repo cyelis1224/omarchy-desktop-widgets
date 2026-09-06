@@ -489,27 +489,35 @@ WidgetCard {
           anchors.rightMargin: Style.space(6)
           spacing: Style.space(6)
 
-          TextInput {
-            id: taskInput
+          Item {
             Layout.fillWidth: true
-            font.family: Style.font.family
-            font.pixelSize: 12
-            color: Color.foreground
-            clip: true
+            Layout.fillHeight: true
 
-            Text {
+            TextInput {
+              id: taskInput
               anchors.fill: parent
-              verticalAlignment: Text.AlignVCenter
-              text: "Add new task... press Enter"
+              verticalAlignment: TextInput.AlignVCenter
               font.family: Style.font.family
               font.pixelSize: 12
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35)
-              visible: !taskInput.text && !taskInput.activeFocus
-            }
+              color: Color.foreground
+              clip: true
+              selectByMouse: true
+              cursorVisible: activeFocus
 
-            onAccepted: {
-              notesWidgetRoot.addTodo(taskInput.text, notesWidgetRoot.currentTag)
-              taskInput.text = ""
+              Text {
+                anchors.fill: parent
+                verticalAlignment: Text.AlignVCenter
+                text: "Add new task... press Enter"
+                font.family: Style.font.family
+                font.pixelSize: 12
+                color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35)
+                visible: !taskInput.text && !taskInput.activeFocus
+              }
+
+              onAccepted: {
+                notesWidgetRoot.addTodo(taskInput.text, notesWidgetRoot.currentTag)
+                taskInput.text = ""
+              }
             }
           }
 
@@ -779,6 +787,7 @@ WidgetCard {
             color: Color.foreground
             wrapMode: TextEdit.Wrap
             selectByMouse: true
+            cursorVisible: activeFocus
 
             Text {
               anchors.fill: parent
