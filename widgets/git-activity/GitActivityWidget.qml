@@ -34,6 +34,8 @@ WidgetCard {
   property string activeRepoName: "No Tracked Repos"
   property string activeRepoPath: ""
   property string branchName: ""
+  property bool isRemoteRepo: false
+  property string statusLabel: "clean"
   property int uncommittedCount: 0
   property int totalCommits: 0
   property int streakDays: 0
@@ -74,6 +76,8 @@ WidgetCard {
           if (data.repo_name !== undefined) gitWidgetRoot.activeRepoName = data.repo_name
           if (data.repo_path !== undefined) gitWidgetRoot.activeRepoPath = data.repo_path
           if (data.branch !== undefined) gitWidgetRoot.branchName = data.branch
+          if (data.is_remote !== undefined) gitWidgetRoot.isRemoteRepo = data.is_remote
+          if (data.status_label !== undefined) gitWidgetRoot.statusLabel = data.status_label
           if (data.uncommitted_count !== undefined) gitWidgetRoot.uncommittedCount = data.uncommitted_count
           if (data.total_commits !== undefined) gitWidgetRoot.totalCommits = data.total_commits
           if (data.streak_days !== undefined) gitWidgetRoot.streakDays = data.streak_days
@@ -197,10 +201,10 @@ WidgetCard {
             spacing: Style.space(6)
 
             Text {
-              text: "\uf126"
+              text: modelData.is_remote ? "\uf0ac" : "\uf126"
               font.family: Style.font.family
               font.pixelSize: 11
-              color: isCurrent ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              color: isCurrent ? Color.accent : (modelData.is_remote ? "#38bdf8" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5))
             }
 
             Text {
@@ -259,7 +263,7 @@ WidgetCard {
         }
       }
 
-      // Add Repository Option
+      // Add Local Repo Option
       Rectangle {
         Layout.fillWidth: true
         implicitHeight: 28
@@ -273,7 +277,7 @@ WidgetCard {
           spacing: Style.space(8)
 
           Text {
-            text: "\uf067"
+            text: "\uf07c"
             font.family: Style.font.family
             font.pixelSize: 11
             color: Color.accent
@@ -281,7 +285,7 @@ WidgetCard {
 
           Text {
             Layout.fillWidth: true
-            text: "Add Repository..."
+            text: "Add Local Repository..."
             font.family: Style.font.family
             font.pixelSize: 11
             color: Color.foreground
@@ -289,9 +293,9 @@ WidgetCard {
           }
 
           Text {
-            text: "\uf07c"
+            text: "\uf054"
             font.family: Style.font.family
-            font.pixelSize: 10
+            font.pixelSize: 9
             color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
           }
         }
@@ -304,6 +308,55 @@ WidgetCard {
           onClicked: {
             gitWidgetRoot.contextMenuOpen = false
             gitWidgetRoot.selectRepo("pick_dialog")
+          }
+        }
+      }
+
+      // Add Remote Git URL Option
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        color: remoteRepoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8)
+          spacing: Style.space(8)
+
+          Text {
+            text: "\uf0c1"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: "#38bdf8" // Sky blue for remote URL
+          }
+
+          Text {
+            Layout.fillWidth: true
+            text: "Add Remote Git URL..."
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+            elide: Text.ElideRight
+          }
+
+          Text {
+            text: "\uf054"
+            font.family: Style.font.family
+            font.pixelSize: 9
+            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+          }
+        }
+
+        MouseArea {
+          id: remoteRepoMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            gitWidgetRoot.contextMenuOpen = false
+            gitWidgetRoot.selectRepo("pick_remote_dialog")
           }
         }
       }
@@ -375,9 +428,9 @@ WidgetCard {
         Layout.topMargin: 4
       }
 
-      // Open Repository in Terminal (visible when a valid single repo is selected)
+      // Open in Terminal (for local repos)
       Rectangle {
-        visible: gitWidgetRoot.hasRepos && gitWidgetRoot.activeRepoPath !== "" && gitWidgetRoot.activeRepoPath !== "ALL"
+        visible: gitWidgetRoot.hasRepos && !gitWidgetRoot.isRemoteRepo && gitWidgetRoot.activeRepoPath !== "" && gitWidgetRoot.activeRepoPath !== "ALL"
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
@@ -420,6 +473,62 @@ WidgetCard {
           onClicked: {
             gitWidgetRoot.contextMenuOpen = false
             Quickshell.execDetached(["xdg-terminal-exec", "--dir", gitWidgetRoot.activeRepoPath])
+          }
+        }
+      }
+
+      // Open in Browser (for remote URLs)
+      Rectangle {
+        visible: gitWidgetRoot.hasRepos && gitWidgetRoot.isRemoteRepo && gitWidgetRoot.activeRepoPath !== ""
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        color: openBrowserMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8)
+          spacing: Style.space(8)
+
+          Text {
+            text: "\uf0ac"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: "#38bdf8"
+          }
+
+          Text {
+            Layout.fillWidth: true
+            text: "Open Repo in Browser"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+          }
+
+          Text {
+            text: "\uf08e"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+          }
+        }
+
+        MouseArea {
+          id: openBrowserMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            gitWidgetRoot.contextMenuOpen = false
+            var url = gitWidgetRoot.activeRepoPath
+            if (url.startsWith("git@")) {
+              url = "https://" + url.replace("git@", "").replace(":", "/")
+            }
+            if (url.endsWith(".git")) {
+              url = url.substring(0, url.length - 4)
+            }
+            Qt.openUrlExternally(url)
           }
         }
       }
@@ -485,16 +594,16 @@ WidgetCard {
         width: 30
         height: 30
         radius: 15
-        color: Qt.rgba(16/255, 185/255, 129/255, 0.18)
-        border.color: Qt.rgba(16/255, 185/255, 129/255, 0.45)
+        color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.18) : Qt.rgba(16/255, 185/255, 129/255, 0.18)
+        border.color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.45) : Qt.rgba(16/255, 185/255, 129/255, 0.45)
         border.width: 1
 
         Text {
           anchors.centerIn: parent
-          text: "\uf126"
+          text: gitWidgetRoot.isRemoteRepo ? "\uf0ac" : "\uf126"
           font.family: Style.font.family
           font.pixelSize: 13
-          color: "#10b981"
+          color: gitWidgetRoot.isRemoteRepo ? "#38bdf8" : "#10b981"
         }
       }
 
@@ -528,14 +637,14 @@ WidgetCard {
 
       Item { Layout.fillWidth: true }
 
-      // Uncommitted Status Pill
+      // Status Pill (Diffs for local, Remote / Online for remote URLs)
       Rectangle {
         visible: gitWidgetRoot.hasRepos && gitWidgetRoot.activeRepoPath !== "ALL" && gitWidgetRoot.activeRepoPath !== ""
         implicitWidth: uncomRow.implicitWidth + 12
         implicitHeight: 20
         radius: 10
-        color: gitWidgetRoot.uncommittedCount > 0 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.06)
-        border.color: gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "transparent"
+        color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.15) : (gitWidgetRoot.uncommittedCount > 0 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.06))
+        border.color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.4) : (gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "transparent")
         border.width: 1
 
         RowLayout {
@@ -544,18 +653,18 @@ WidgetCard {
           spacing: 4
 
           Text {
-            text: gitWidgetRoot.uncommittedCount > 0 ? "\uf044" : "\uf00c"
+            text: gitWidgetRoot.isRemoteRepo ? "\uf0c1" : (gitWidgetRoot.uncommittedCount > 0 ? "\uf044" : "\uf00c")
             font.family: Style.font.family
             font.pixelSize: 8
-            color: gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "#10b981"
+            color: gitWidgetRoot.isRemoteRepo ? "#38bdf8" : (gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "#10b981")
           }
 
           Text {
-            text: gitWidgetRoot.uncommittedCount > 0 ? (gitWidgetRoot.uncommittedCount + " diffs") : "clean"
+            text: gitWidgetRoot.statusLabel
             font.family: Style.font.family
             font.pixelSize: 9
             font.weight: Font.Bold
-            color: gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "#10b981"
+            color: gitWidgetRoot.isRemoteRepo ? "#38bdf8" : (gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "#10b981")
           }
         }
       }
@@ -661,7 +770,7 @@ WidgetCard {
       Layout.fillWidth: true
       Layout.fillHeight: true
       radius: 12
-      color: Qt.rgba(1, 1, 1, 0.03)
+      color: Qt.rgba(1, 1, 0, 0.03)
       border.color: Qt.rgba(1, 1, 1, 0.07)
       border.width: 1
 
@@ -705,50 +814,92 @@ WidgetCard {
             Layout.maximumWidth: 260
             wrapMode: Text.WordWrap
             horizontalAlignment: Text.AlignHCenter
-            text: "Add your local git repositories to monitor commit streaks, activity radars, and branch changes."
+            text: "Track local git folders or remote Git URLs (GitHub, GitLab) to monitor commit streaks and radar activity."
             font.family: Style.font.family
             font.pixelSize: 11
             color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
           }
         }
 
-        Rectangle {
+        RowLayout {
           Layout.alignment: Qt.AlignHCenter
-          implicitWidth: addBtnRow.implicitWidth + 24
-          implicitHeight: 32
-          radius: 16
-          color: addBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18)
-          border.color: Color.accent
-          border.width: 1
+          spacing: Style.space(8)
 
-          RowLayout {
-            id: addBtnRow
-            anchors.centerIn: parent
-            spacing: Style.space(6)
+          // Add Local Repo Button
+          Rectangle {
+            implicitWidth: addBtnRow.implicitWidth + 20
+            implicitHeight: 32
+            radius: 16
+            color: addBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18)
+            border.color: Color.accent
+            border.width: 1
 
-            Text {
-              text: "\uf067"
-              font.family: Style.font.family
-              font.pixelSize: 10
-              color: Color.accent
+            RowLayout {
+              id: addBtnRow
+              anchors.centerIn: parent
+              spacing: Style.space(6)
+
+              Text {
+                text: "\uf07c"
+                font.family: Style.font.family
+                font.pixelSize: 10
+                color: Color.accent
+              }
+
+              Text {
+                text: "Local Repo..."
+                font.family: Style.font.family
+                font.pixelSize: 11
+                font.weight: Font.DemiBold
+                color: Color.foreground
+              }
             }
 
-            Text {
-              text: "Add Repository..."
-              font.family: Style.font.family
-              font.pixelSize: 11
-              font.weight: Font.DemiBold
-              color: Color.foreground
+            MouseArea {
+              id: addBtnMouse
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: gitWidgetRoot.selectRepo("pick_dialog")
             }
           }
 
-          MouseArea {
-            id: addBtnMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-              gitWidgetRoot.selectRepo("pick_dialog")
+          // Add Remote URL Button
+          Rectangle {
+            implicitWidth: addRemoteBtnRow.implicitWidth + 20
+            implicitHeight: 32
+            radius: 16
+            color: addRemoteBtnMouse.containsMouse ? Qt.rgba(56/255, 189/255, 248/255, 0.3) : Qt.rgba(56/255, 189/255, 248/255, 0.18)
+            border.color: "#38bdf8"
+            border.width: 1
+
+            RowLayout {
+              id: addRemoteBtnRow
+              anchors.centerIn: parent
+              spacing: Style.space(6)
+
+              Text {
+                text: "\uf0c1"
+                font.family: Style.font.family
+                font.pixelSize: 10
+                color: "#38bdf8"
+              }
+
+              Text {
+                text: "Remote URL..."
+                font.family: Style.font.family
+                font.pixelSize: 11
+                font.weight: Font.DemiBold
+                color: Color.foreground
+              }
+            }
+
+            MouseArea {
+              id: addRemoteBtnMouse
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: gitWidgetRoot.selectRepo("pick_remote_dialog")
             }
           }
         }
