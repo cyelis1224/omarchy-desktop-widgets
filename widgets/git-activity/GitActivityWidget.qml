@@ -26,6 +26,8 @@ WidgetCard {
 
   width: 390
   height: 490
+  minWidth: 360
+  minHeight: 380
   menuWidth: 320
 
   // ---------------------------------------------------------------------------
@@ -145,12 +147,13 @@ WidgetCard {
 
       // All Repositories Option (only shown when 2+ repos tracked)
       Rectangle {
+        id: allRepoItem
         visible: gitWidgetRoot.detectedReposList.length > 1
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
         readonly property bool isCurrent: gitWidgetRoot.activeRepoPath === "ALL"
-        color: allRepoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+        color: allRepoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (allRepoItem.isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
 
         RowLayout {
           anchors.fill: parent
@@ -170,13 +173,13 @@ WidgetCard {
             text: "All Repositories (Combined Radar)"
             font.family: Style.font.family
             font.pixelSize: 11
-            font.weight: isCurrent ? Font.Bold : Font.Normal
+            font.weight: allRepoItem.isCurrent ? Font.Bold : Font.Normal
             color: "#ffffff"
             elide: Text.ElideRight
           }
 
           Text {
-            visible: isCurrent
+            visible: allRepoItem.isCurrent
             text: "\uf00c"
             font.family: Style.font.family
             font.pixelSize: 10
@@ -627,8 +630,12 @@ WidgetCard {
       }
 
       ColumnLayout {
+        Layout.fillWidth: true
+        Layout.maximumWidth: Math.max(120, gitWidgetRoot.width - 200)
         spacing: 0
+
         Text {
+          Layout.fillWidth: true
           text: gitWidgetRoot.hasRepos ? gitWidgetRoot.activeRepoName : "Git Tracker"
           font.family: Style.font.family
           font.pixelSize: 13
@@ -637,6 +644,7 @@ WidgetCard {
           elide: Text.ElideRight
         }
         RowLayout {
+          Layout.fillWidth: true
           spacing: 4
           visible: gitWidgetRoot.hasRepos && gitWidgetRoot.branchName !== "" && gitWidgetRoot.branchName !== "none"
           Text {
@@ -646,10 +654,12 @@ WidgetCard {
             color: Color.accent
           }
           Text {
+            Layout.fillWidth: true
             text: gitWidgetRoot.branchName
             font.family: Style.font.family
             font.pixelSize: 10
             color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            elide: Text.ElideRight
           }
         }
       }
@@ -722,31 +732,19 @@ WidgetCard {
       // Move Grip Button (Edit Mode)
       Rectangle {
         visible: rootRef && rootRef.layoutEditMode
-        implicitWidth: gripRow.implicitWidth + 16
-        implicitHeight: 22
+        width: 22
+        height: 22
         radius: 11
         color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
-        RowLayout {
-          id: gripRow
+        Text {
           anchors.centerIn: parent
-          spacing: Style.space(4)
-
-          Text {
-            text: "\uf0b2"
-            font.family: Style.font.family
-            font.pixelSize: 10
-            color: Color.accent
-          }
-          Text {
-            text: "Move"
-            font.family: Style.font.family
-            font.pixelSize: 10
-            font.weight: Font.DemiBold
-            color: Color.foreground
-          }
+          text: "\uf0b2"
+          font.family: Style.font.family
+          font.pixelSize: 10
+          color: customGripMouse.drag.active ? Color.background : Color.accent
         }
 
         MouseArea {
@@ -1101,12 +1099,13 @@ WidgetCard {
 
       // Commits Tab
       Rectangle {
+        id: comTabBtn
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
         readonly property bool isActive: gitWidgetRoot.activeTab === "commits"
-        color: isActive ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
-        border.color: isActive ? Color.accent : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        color: comTabBtn.isActive ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+        border.color: comTabBtn.isActive ? Color.accent : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
         border.width: 1
 
         RowLayout {
@@ -1124,7 +1123,7 @@ WidgetCard {
             text: "Commits"
             font.family: Style.font.family
             font.pixelSize: 10
-            font.weight: isActive ? Font.Bold : Font.Normal
+            font.weight: comTabBtn.isActive ? Font.Bold : Font.Normal
             color: "#ffffff"
           }
 
@@ -1133,7 +1132,7 @@ WidgetCard {
             implicitWidth: comCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: isActive ? Color.accent : Qt.rgba(1, 1, 1, 0.15)
+            color: comTabBtn.isActive ? Color.accent : Qt.rgba(1, 1, 1, 0.15)
 
             Text {
               id: comCountText
@@ -1158,12 +1157,13 @@ WidgetCard {
 
       // Pull Requests Tab
       Rectangle {
+        id: prsTabBtn
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
         readonly property bool isActive: gitWidgetRoot.activeTab === "prs"
-        color: isActive ? Qt.rgba(168/255, 85/255, 247/255, 0.22) : (prsTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
-        border.color: isActive ? "#a855f7" : (prsTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        color: prsTabBtn.isActive ? Qt.rgba(168/255, 85/255, 247/255, 0.22) : (prsTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+        border.color: prsTabBtn.isActive ? "#a855f7" : (prsTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
         border.width: 1
 
         RowLayout {
@@ -1181,7 +1181,7 @@ WidgetCard {
             text: "PRs"
             font.family: Style.font.family
             font.pixelSize: 10
-            font.weight: isActive ? Font.Bold : Font.Normal
+            font.weight: prsTabBtn.isActive ? Font.Bold : Font.Normal
             color: "#ffffff"
           }
 
@@ -1190,7 +1190,7 @@ WidgetCard {
             implicitWidth: prCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: isActive ? "#a855f7" : Qt.rgba(1, 1, 1, 0.15)
+            color: prsTabBtn.isActive ? "#a855f7" : Qt.rgba(1, 1, 1, 0.15)
 
             Text {
               id: prCountText
@@ -1215,12 +1215,13 @@ WidgetCard {
 
       // Issues Tab
       Rectangle {
+        id: issTabBtn
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
         readonly property bool isActive: gitWidgetRoot.activeTab === "issues"
-        color: isActive ? Qt.rgba(16/255, 185/255, 129/255, 0.22) : (issTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
-        border.color: isActive ? "#10b981" : (issTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        color: issTabBtn.isActive ? Qt.rgba(16/255, 185/255, 129/255, 0.22) : (issTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+        border.color: issTabBtn.isActive ? "#10b981" : (issTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
         border.width: 1
 
         RowLayout {
@@ -1238,7 +1239,7 @@ WidgetCard {
             text: "Issues"
             font.family: Style.font.family
             font.pixelSize: 10
-            font.weight: isActive ? Font.Bold : Font.Normal
+            font.weight: issTabBtn.isActive ? Font.Bold : Font.Normal
             color: "#ffffff"
           }
 
@@ -1247,7 +1248,7 @@ WidgetCard {
             implicitWidth: issCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: isActive ? "#10b981" : Qt.rgba(1, 1, 1, 0.15)
+            color: issTabBtn.isActive ? "#10b981" : Qt.rgba(1, 1, 1, 0.15)
 
             Text {
               id: issCountText

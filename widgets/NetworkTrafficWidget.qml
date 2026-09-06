@@ -19,6 +19,8 @@ WidgetCard {
 
   width: 360
   height: netCardLayout.implicitHeight + Style.space(36)
+  minWidth: 280
+  minHeight: 180
 
   // ---------------------------------------------------------------------------
   // 🌐 Network Traffic State & Poller Process

@@ -19,6 +19,8 @@ WidgetCard {
 
   width: 360
   height: mediaCardLayout.implicitHeight + Style.space(36)
+  minWidth: 300
+  minHeight: 140
 
   // ---------------------------------------------------------------------------
   // 🎵 MPRIS Media Player State & Audio Source Selection

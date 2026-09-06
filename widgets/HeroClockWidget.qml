@@ -19,6 +19,8 @@ Item {
 
   width: centerClockColumn.implicitWidth + 40
   height: centerClockColumn.implicitHeight + 36
+  property real minWidth: 280
+  property real minHeight: 160
 
   property var loaderItem: null
   readonly property var targetItem: loaderItem ? loaderItem : clockWidgetRoot
@@ -164,8 +166,8 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
     anchors.topMargin: 2
-    implicitWidth: clockGripRow.implicitWidth + 16
-    implicitHeight: 22
+    width: 22
+    height: 22
     radius: 11
     color: clockGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
     border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
@@ -178,24 +180,12 @@ Item {
       NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
     }
 
-    RowLayout {
-      id: clockGripRow
+    Text {
       anchors.centerIn: parent
-      spacing: Style.space(4)
-
-      Text {
-        text: "\uf0b2"
-        font.family: Style.font.family
-        font.pixelSize: 10
-        color: Color.accent
-      }
-      Text {
-        text: "Drag Clock"
-        font.family: Style.font.family
-        font.pixelSize: 10
-        font.weight: Font.DemiBold
-        color: Color.accent
-      }
+      text: "\uf0b2"
+      font.family: Style.font.family
+      font.pixelSize: 10
+      color: Color.accent
     }
 
     MouseArea {

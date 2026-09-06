@@ -26,6 +26,8 @@ WidgetCard {
 
   width: 380
   height: 440
+  minWidth: 320
+  minHeight: 280
 
   // ---------------------------------------------------------------------------
   // 📂 Data State & Backend Process
@@ -71,8 +73,9 @@ WidgetCard {
 
   function runAction(args) {
     var cmd = ["/home/dagyr/Projects/desktop-widgets/widgets/quick-notes/notes_manager.py"].concat(args)
+    notesProc.running = false
     notesProc.command = cmd
-    if (!notesProc.running) notesProc.running = true
+    notesProc.running = true
   }
 
   function toggleTodo(id) {
@@ -90,6 +93,78 @@ WidgetCard {
 
   function clearCompleted() {
     runAction(["clear_completed"])
+  }
+
+  // Snippets state & management
+  property bool snippetEditorOpen: false
+  property int editingSnippetId: -1
+  property string snippetEditorName: ""
+  property string snippetEditorCmd: ""
+  property string snippetEditorDesc: ""
+
+  onCurrentTabChanged: {
+    if (currentTab !== "COMMANDS") {
+      closeSnippetEditor()
+    }
+  }
+
+  onSnippetEditorOpenChanged: {
+    if (snippetEditorOpen) {
+      if (typeof snipNameInput !== "undefined" && snipNameInput) {
+        snipNameInput.text = snippetEditorName
+        snipNameInput.forceActiveFocus()
+      }
+      if (typeof snipCmdInput !== "undefined" && snipCmdInput) {
+        snipCmdInput.text = snippetEditorCmd
+      }
+      if (typeof snipDescInput !== "undefined" && snipDescInput) {
+        snipDescInput.text = snippetEditorDesc
+      }
+    }
+  }
+
+  function openNewSnippetEditor() {
+    editingSnippetId = -1
+    snippetEditorName = ""
+    snippetEditorCmd = ""
+    snippetEditorDesc = ""
+    if (typeof snipNameInput !== "undefined" && snipNameInput) snipNameInput.text = ""
+    if (typeof snipCmdInput !== "undefined" && snipCmdInput) snipCmdInput.text = ""
+    if (typeof snipDescInput !== "undefined" && snipDescInput) snipDescInput.text = ""
+    snippetEditorOpen = true
+  }
+
+  function openEditSnippetEditor(snippet) {
+    editingSnippetId = snippet.id !== undefined ? snippet.id : -1
+    snippetEditorName = snippet.name || ""
+    snippetEditorCmd = snippet.cmd || ""
+    snippetEditorDesc = snippet.desc || ""
+    if (typeof snipNameInput !== "undefined" && snipNameInput) snipNameInput.text = snippetEditorName
+    if (typeof snipCmdInput !== "undefined" && snipCmdInput) snipCmdInput.text = snippetEditorCmd
+    if (typeof snipDescInput !== "undefined" && snipDescInput) snipDescInput.text = snippetEditorDesc
+    snippetEditorOpen = true
+  }
+
+  function closeSnippetEditor() {
+    snippetEditorOpen = false
+    editingSnippetId = -1
+    snippetEditorName = ""
+    snippetEditorCmd = ""
+    snippetEditorDesc = ""
+  }
+
+  function addSnippet(name, cmd, desc) {
+    if (!name || !name.trim() || !cmd || !cmd.trim()) return
+    runAction(["add_command", name.trim(), cmd.trim(), desc ? desc.trim() : ""])
+  }
+
+  function editSnippet(id, name, cmd, desc) {
+    if (!name || !name.trim() || !cmd || !cmd.trim()) return
+    runAction(["edit_command", id.toString(), name.trim(), cmd.trim(), desc ? desc.trim() : ""])
+  }
+
+  function deleteSnippet(id) {
+    runAction(["delete_command", id.toString()])
   }
 
   Timer {
@@ -190,6 +265,85 @@ WidgetCard {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             notesWidgetRoot.currentTab = "SCRATCHPAD"
+            notesWidgetRoot.contextMenuOpen = false
+          }
+        }
+      }
+
+      // Switch to Snippets Tab
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        color: tabCmdMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8)
+          spacing: Style.space(8)
+
+          Text {
+            text: "\uf120"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.accent
+          }
+          Text {
+            Layout.fillWidth: true
+            text: "Switch to Snippets Tab"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+          }
+        }
+        MouseArea {
+          id: tabCmdMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            notesWidgetRoot.currentTab = "COMMANDS"
+            notesWidgetRoot.contextMenuOpen = false
+          }
+        }
+      }
+
+      // Add New Snippet
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        color: addSnipOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8)
+          spacing: Style.space(8)
+
+          Text {
+            text: "\uf067"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.accent
+          }
+          Text {
+            Layout.fillWidth: true
+            text: "Add New Snippet"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+          }
+        }
+        MouseArea {
+          id: addSnipOptMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            notesWidgetRoot.currentTab = "COMMANDS"
+            notesWidgetRoot.openNewSnippetEditor()
             notesWidgetRoot.contextMenuOpen = false
           }
         }
@@ -361,31 +515,19 @@ WidgetCard {
       // Drag Grip Button (Move Mode)
       Rectangle {
         visible: rootRef && rootRef.layoutEditMode
-        implicitWidth: gripRow.implicitWidth + 16
-        implicitHeight: 22
+        width: 22
+        height: 22
         radius: 11
         color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
-        RowLayout {
-          id: gripRow
+        Text {
           anchors.centerIn: parent
-          spacing: Style.space(4)
-
-          Text {
-            text: "\uf0b2"
-            font.family: Style.font.family
-            font.pixelSize: 10
-            color: Color.accent
-          }
-          Text {
-            text: "Move"
-            font.family: Style.font.family
-            font.pixelSize: 10
-            font.weight: Font.DemiBold
-            color: Color.accent
-          }
+          text: "\uf0b2"
+          font.family: Style.font.family
+          font.pixelSize: 10
+          color: customGripMouse.drag.active ? Color.background : Color.accent
         }
 
         MouseArea {
@@ -836,108 +978,648 @@ WidgetCard {
       visible: notesWidgetRoot.currentTab === "COMMANDS"
       spacing: Style.space(8)
 
-      ListView {
-        id: commandsListView
+      // 1. When NOT editing a snippet: show List and "+ New Snippet" button
+      ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        clip: true
-        spacing: Style.space(6)
-        model: notesWidgetRoot.commandsList
+        visible: !notesWidgetRoot.snippetEditorOpen
+        spacing: Style.space(8)
 
-        delegate: Rectangle {
-          required property var modelData
-          width: commandsListView.width
-          height: 52
-          radius: 10
-          color: cmdMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
-          border.color: Qt.rgba(1, 1, 1, 0.08)
-          border.width: 1
+        // Header Row: Count & Add Button
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: Style.space(8)
 
-          RowLayout {
-            anchors.fill: parent
-            anchors.margins: Style.space(8)
-            spacing: Style.space(10)
+          Text {
+            text: "SAVED SNIPPETS"
+            font.family: Style.font.family
+            font.pixelSize: 10
+            font.weight: Font.Bold
+            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          }
 
-            Rectangle {
-              width: 32
-              height: 32
-              radius: 16
-              color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15)
+          Rectangle {
+            implicitWidth: countText.implicitWidth + 12
+            implicitHeight: 18
+            radius: 9
+            color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
+            border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+            border.width: 1
 
-              Text {
-                anchors.centerIn: parent
-                text: "\uf120"
-                font.family: Style.font.family
-                font.pixelSize: 12
-                color: Color.accent
-              }
+            Text {
+              id: countText
+              anchors.centerIn: parent
+              text: notesWidgetRoot.commandsList.length.toString()
+              font.family: Style.font.family
+              font.pixelSize: 9
+              font.weight: Font.Bold
+              color: Color.accent
             }
+          }
 
-            ColumnLayout {
-              Layout.fillWidth: true
-              spacing: 1
+          Item { Layout.fillWidth: true }
+
+          // Add Snippet Button
+          Rectangle {
+            implicitWidth: addSnipRow.implicitWidth + 16
+            implicitHeight: 24
+            radius: 12
+            color: addSnipMouse.containsMouse ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
+            border.color: Color.accent
+            border.width: 1
+
+            RowLayout {
+              id: addSnipRow
+              anchors.centerIn: parent
+              spacing: 4
 
               Text {
-                text: modelData.name || ""
+                text: "\uf067"
                 font.family: Style.font.family
-                font.pixelSize: 11
-                font.weight: Font.Bold
-                color: Color.foreground
+                font.pixelSize: 9
+                color: addSnipMouse.containsMouse ? Color.background : Color.accent
               }
               Text {
-                text: modelData.cmd || ""
-                font.family: "Monospace"
+                text: "New Snippet"
+                font.family: Style.font.family
                 font.pixelSize: 10
-                color: Color.accent
-                elide: Text.ElideRight
+                font.weight: Font.Bold
+                color: addSnipMouse.containsMouse ? Color.background : Color.accent
               }
             }
 
-            // Run Button
-            Rectangle {
-              implicitWidth: runText.implicitWidth + 14
-              implicitHeight: 24
-              radius: 12
-              color: runBtnMouse.containsMouse ? Qt.lighter(Color.accent, 1.2) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-              border.color: Color.accent
+            MouseArea {
+              id: addSnipMouse
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: notesWidgetRoot.openNewSnippetEditor()
+            }
+          }
+        }
+
+        // Snippets List & Scrollbar Container
+        Item {
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+
+          // Empty state
+          ColumnLayout {
+            anchors.centerIn: parent
+            visible: notesWidgetRoot.commandsList.length === 0
+            spacing: Style.space(6)
+
+            Text {
+              Layout.alignment: Qt.AlignHCenter
+              text: "\uf120"
+              font.family: Style.font.family
+              font.pixelSize: 28
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.2)
+            }
+            Text {
+              Layout.alignment: Qt.AlignHCenter
+              text: "No snippets saved yet"
+              font.family: Style.font.family
+              font.pixelSize: 12
+              font.weight: Font.DemiBold
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            }
+            Text {
+              Layout.alignment: Qt.AlignHCenter
+              text: "Click '+ New Snippet' to add custom commands"
+              font.family: Style.font.family
+              font.pixelSize: 10
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35)
+            }
+          }
+
+          ListView {
+            id: commandsListView
+            anchors.fill: parent
+            clip: true
+            spacing: Style.space(6)
+            model: notesWidgetRoot.commandsList
+
+            delegate: Rectangle {
+              required property var modelData
+              width: commandsListView.width - (scrollTrack.visible ? 8 : 0)
+              height: 52
+              radius: 10
+              color: cmdMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
+              border.color: cmdMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
               border.width: 1
 
               RowLayout {
-                anchors.centerIn: parent
-                spacing: 4
-                Text {
-                  text: "\uf04b"
-                  font.family: Style.font.family
-                  font.pixelSize: 8
-                  color: runBtnMouse.containsMouse ? Color.background : Color.accent
+                anchors.fill: parent
+                anchors.leftMargin: Style.space(10)
+                anchors.rightMargin: Style.space(8)
+                spacing: Style.space(8)
+
+                Rectangle {
+                  width: 30
+                  height: 30
+                  radius: 8
+                  color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15)
+                  border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
+                  border.width: 1
+
+                  Text {
+                    anchors.centerIn: parent
+                    text: "\uf120"
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    color: Color.accent
+                  }
                 }
-                Text {
-                  id: runText
-                  text: "Run"
-                  font.family: Style.font.family
-                  font.pixelSize: 10
-                  font.weight: Font.Bold
-                  color: runBtnMouse.containsMouse ? Color.background : Color.accent
+
+                ColumnLayout {
+                  Layout.fillWidth: true
+                  spacing: 1
+
+                  Text {
+                    Layout.fillWidth: true
+                    text: modelData.name || ""
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    font.weight: Font.Bold
+                    color: Color.foreground
+                    elide: Text.ElideRight
+                  }
+                  Text {
+                    Layout.fillWidth: true
+                    text: modelData.cmd || ""
+                    font.family: "Monospace"
+                    font.pixelSize: 10
+                    color: Qt.lighter(Color.accent, 1.15)
+                    elide: Text.ElideRight
+                  }
+                }
+
+                // Actions: Run, Edit, Delete
+                RowLayout {
+                  spacing: 4
+
+                  // Run Button
+                  Rectangle {
+                    width: 24
+                    height: 24
+                    radius: 12
+                    color: runBtnMouse.containsMouse ? Qt.lighter(Color.accent, 1.2) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                    border.color: Color.accent
+                    border.width: 1
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf04b"
+                      font.family: Style.font.family
+                      font.pixelSize: 8
+                      color: runBtnMouse.containsMouse ? Color.background : Color.accent
+                    }
+
+                    MouseArea {
+                      id: runBtnMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        Quickshell.execDetached(["bash", "-c", modelData.cmd])
+                      }
+                    }
+                  }
+
+                  // Edit Button
+                  Rectangle {
+                    width: 24
+                    height: 24
+                    radius: 12
+                    color: editBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                    border.color: editBtnMouse.containsMouse ? Color.accent : Qt.rgba(1, 1, 1, 0.15)
+                    border.width: 1
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf044"
+                      font.family: Style.font.family
+                      font.pixelSize: 10
+                      color: editBtnMouse.containsMouse ? Color.accent : Color.foreground
+                    }
+
+                    MouseArea {
+                      id: editBtnMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: notesWidgetRoot.openEditSnippetEditor(modelData)
+                    }
+                  }
+
+                  // Delete Button
+                  Rectangle {
+                    width: 24
+                    height: 24
+                    radius: 12
+                    color: delBtnMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                    border.color: delBtnMouse.containsMouse ? Color.urgent : Qt.rgba(1, 1, 1, 0.15)
+                    border.width: 1
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf1f8"
+                      font.family: Style.font.family
+                      font.pixelSize: 10
+                      color: Color.urgent
+                    }
+
+                    MouseArea {
+                      id: delBtnMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: notesWidgetRoot.deleteSnippet(modelData.id)
+                    }
+                  }
                 }
               }
 
               MouseArea {
-                id: runBtnMouse
+                id: cmdMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+              }
+            }
+          }
+
+          // Sleek Custom Scrollbar
+          Rectangle {
+            id: scrollTrack
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: 4
+            radius: 2
+            color: Qt.rgba(1, 1, 1, 0.05)
+            visible: commandsListView.contentHeight > commandsListView.height
+
+            Rectangle {
+              width: parent.width
+              radius: 2
+              color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
+              height: Math.max(16, (commandsListView.height / Math.max(1, commandsListView.contentHeight)) * commandsListView.height)
+              y: Math.max(0, Math.min(commandsListView.height - height, (commandsListView.contentY / Math.max(1, commandsListView.contentHeight - commandsListView.height)) * (commandsListView.height - height)))
+            }
+          }
+        }
+      }
+
+      // 2. When EDITING or ADDING a snippet: dedicated full editor card
+      Rectangle {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        visible: notesWidgetRoot.snippetEditorOpen
+        radius: 12
+        color: Qt.rgba(1, 1, 1, 0.04)
+        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+        border.width: 1
+
+        ColumnLayout {
+          anchors.fill: parent
+          anchors.margins: Style.space(12)
+          spacing: Style.space(8)
+
+          // Editor Header
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.space(8)
+
+            Rectangle {
+              width: 24
+              height: 24
+              radius: 12
+              color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
+              border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+              border.width: 1
+
+              Text {
+                anchors.centerIn: parent
+                text: notesWidgetRoot.editingSnippetId > 0 ? "\uf044" : "\uf067"
+                font.family: Style.font.family
+                font.pixelSize: 10
+                color: Color.accent
+              }
+            }
+
+            Text {
+              text: notesWidgetRoot.editingSnippetId > 0 ? "Edit Snippet" : "New Snippet"
+              font.family: Style.font.family
+              font.pixelSize: 12
+              font.weight: Font.Bold
+              color: Color.foreground
+            }
+
+            Item { Layout.fillWidth: true }
+
+            // Close button
+            Rectangle {
+              width: 22
+              height: 22
+              radius: 11
+              color: closeEditMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent"
+
+              Text {
+                anchors.centerIn: parent
+                text: "\uf00d"
+                font.family: Style.font.family
+                font.pixelSize: 10
+                color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+              }
+
+              MouseArea {
+                id: closeEditMouse
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                  Quickshell.execDetached(["bash", "-c", modelData.cmd])
+                onClicked: notesWidgetRoot.closeSnippetEditor()
+              }
+            }
+          }
+
+          // Divider
+          Rectangle {
+            Layout.fillWidth: true
+            height: 1
+            color: Qt.rgba(1, 1, 1, 0.08)
+          }
+
+          // Field 1: Snippet Name
+          ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 2
+
+            Text {
+              text: "NAME / TITLE"
+              font.family: Style.font.family
+              font.pixelSize: 9
+              font.weight: Font.Bold
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            }
+
+            Rectangle {
+              Layout.fillWidth: true
+              height: 32
+              radius: 8
+              color: Qt.rgba(1, 1, 1, 0.06)
+              border.color: snipNameInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              border.width: 1
+
+              TextInput {
+                id: snipNameInput
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                verticalAlignment: TextInput.AlignVCenter
+                font.family: Style.font.family
+                font.pixelSize: 11
+                color: Color.foreground
+                clip: true
+                selectByMouse: true
+                onAccepted: snipCmdInput.forceActiveFocus()
+
+                Text {
+                  anchors.fill: parent
+                  verticalAlignment: Text.AlignVCenter
+                  text: "e.g. Restart Shell, Git Status..."
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+                  visible: !snipNameInput.text && !snipNameInput.activeFocus
                 }
               }
             }
           }
 
-          MouseArea {
-            id: cmdMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
+          // Field 2: Shell Command
+          ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 2
+
+            Text {
+              text: "SHELL COMMAND"
+              font.family: Style.font.family
+              font.pixelSize: 9
+              font.weight: Font.Bold
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            }
+
+            Rectangle {
+              Layout.fillWidth: true
+              height: 32
+              radius: 8
+              color: Qt.rgba(1, 1, 1, 0.06)
+              border.color: snipCmdInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              border.width: 1
+
+              TextInput {
+                id: snipCmdInput
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                verticalAlignment: TextInput.AlignVCenter
+                font.family: "Monospace"
+                font.pixelSize: 11
+                color: Qt.lighter(Color.accent, 1.2)
+                clip: true
+                selectByMouse: true
+                onAccepted: snipDescInput.forceActiveFocus()
+
+                Text {
+                  anchors.fill: parent
+                  verticalAlignment: Text.AlignVCenter
+                  text: "e.g. omarchy-restart-shell, fastfetch..."
+                  font.family: "Monospace"
+                  font.pixelSize: 11
+                  color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+                  visible: !snipCmdInput.text && !snipCmdInput.activeFocus
+                }
+              }
+            }
+          }
+
+          // Field 3: Description (Optional)
+          ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 2
+
+            Text {
+              text: "DESCRIPTION (OPTIONAL)"
+              font.family: Style.font.family
+              font.pixelSize: 9
+              font.weight: Font.Bold
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            }
+
+            Rectangle {
+              Layout.fillWidth: true
+              height: 30
+              radius: 8
+              color: Qt.rgba(1, 1, 1, 0.06)
+              border.color: snipDescInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              border.width: 1
+
+              TextInput {
+                id: snipDescInput
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                verticalAlignment: TextInput.AlignVCenter
+                font.family: Style.font.family
+                font.pixelSize: 11
+                color: Color.foreground
+                clip: true
+                selectByMouse: true
+                onAccepted: saveSnippetBtn.triggerSave()
+
+                Text {
+                  anchors.fill: parent
+                  verticalAlignment: Text.AlignVCenter
+                  text: "Brief description of command"
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+                  visible: !snipDescInput.text && !snipDescInput.activeFocus
+                }
+              }
+            }
+          }
+
+          // Spacer
+          Item { Layout.fillHeight: true }
+
+          // Action Buttons
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.space(8)
+
+            // Delete button (visible when editing existing snippet)
+            Rectangle {
+              visible: notesWidgetRoot.editingSnippetId > 0
+              implicitWidth: delEditRow.implicitWidth + 16
+              implicitHeight: 30
+              radius: 15
+              color: delEditBtnMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.3) : Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.12)
+              border.color: Color.urgent
+              border.width: 1
+
+              RowLayout {
+                id: delEditRow
+                anchors.centerIn: parent
+                spacing: 5
+                Text {
+                  text: "\uf1f8"
+                  font.family: Style.font.family
+                  font.pixelSize: 10
+                  color: Color.urgent
+                }
+                Text {
+                  text: "Delete"
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  font.weight: Font.DemiBold
+                  color: Color.urgent
+                }
+              }
+
+              MouseArea {
+                id: delEditBtnMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                  notesWidgetRoot.deleteSnippet(notesWidgetRoot.editingSnippetId)
+                  notesWidgetRoot.closeSnippetEditor()
+                }
+              }
+            }
+
+            Item { Layout.fillWidth: true }
+
+            // Cancel Button
+            Rectangle {
+              implicitWidth: cancelText.implicitWidth + 18
+              implicitHeight: 30
+              radius: 15
+              color: cancelBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+              border.color: Qt.rgba(1, 1, 1, 0.15)
+              border.width: 1
+
+              Text {
+                id: cancelText
+                anchors.centerIn: parent
+                text: "Cancel"
+                font.family: Style.font.family
+                font.pixelSize: 11
+                color: Color.foreground
+              }
+
+              MouseArea {
+                id: cancelBtnMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: notesWidgetRoot.closeSnippetEditor()
+              }
+            }
+
+            // Save Button
+            Rectangle {
+              id: saveSnippetBtn
+              implicitWidth: saveRow.implicitWidth + 18
+              implicitHeight: 30
+              radius: 15
+              readonly property bool canSave: snipNameInput.text.trim().length > 0 && snipCmdInput.text.trim().length > 0
+              opacity: canSave ? 1.0 : 0.5
+              color: canSave && saveBtnMouse.containsMouse ? Qt.lighter(Color.accent, 1.2) : Color.accent
+
+              function triggerSave() {
+                var name = snipNameInput.text.trim()
+                var cmd = snipCmdInput.text.trim()
+                var desc = snipDescInput.text.trim()
+                if (!name || !cmd) return
+                if (notesWidgetRoot.editingSnippetId > 0) {
+                  notesWidgetRoot.editSnippet(notesWidgetRoot.editingSnippetId, name, cmd, desc)
+                } else {
+                  notesWidgetRoot.addSnippet(name, cmd, desc)
+                }
+                notesWidgetRoot.closeSnippetEditor()
+              }
+
+              RowLayout {
+                id: saveRow
+                anchors.centerIn: parent
+                spacing: 5
+                Text {
+                  text: "\uf00c"
+                  font.family: Style.font.family
+                  font.pixelSize: 10
+                  color: Color.background
+                }
+                Text {
+                  text: notesWidgetRoot.editingSnippetId > 0 ? "Save Changes" : "Create Snippet"
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  font.weight: Font.Bold
+                  color: Color.background
+                }
+              }
+
+              MouseArea {
+                id: saveBtnMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: saveSnippetBtn.canSave ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: saveSnippetBtn.triggerSave()
+              }
+            }
           }
         }
       }

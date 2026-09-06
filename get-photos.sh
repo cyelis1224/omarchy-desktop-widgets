@@ -3,8 +3,9 @@ import sys
 import os
 import json
 import subprocess
+import urllib.parse
 
-IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.webp', '.avif')
+IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif')
 STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
 LEGACY_CONFIG = os.path.expanduser('~/.config/omarchy/plugins/dagyr.desktop-widgets/settings.json')
@@ -85,7 +86,7 @@ def find_images(target_dir):
                             base_name = os.path.splitext(f)[0].replace('_', ' ').replace('-', ' ')
                             title = ' '.join(word.capitalize() for word in base_name.split()[:4])
                             images.append({
-                                "path": "file://" + full_path,
+                                "path": "file://" + urllib.parse.quote(full_path),
                                 "raw_path": full_path,
                                 "title": title,
                                 "filename": f
@@ -113,12 +114,12 @@ def main():
             save_settings(settings)
 
     imgs = find_images(current_folder)
-    
-    output = {
-        "folder": current_folder,
-        "images": imgs
-    }
-    print(json.dumps(output))
+    print(json.dumps({"type": "init", "folder": current_folder, "total": len(imgs)}), flush=True)
+    for img in imgs:
+        payload = {"type": "photo"}
+        payload.update(img)
+        print(json.dumps(payload), flush=True)
+    print(json.dumps({"type": "done"}), flush=True)
 
 if __name__ == '__main__':
     main()

@@ -19,6 +19,8 @@ WidgetCard {
 
   width: 360
   height: sysCardLayout.implicitHeight + Style.space(36)
+  minWidth: 300
+  minHeight: 200
 
   // ---------------------------------------------------------------------------
   // RAM Usage State (/proc/meminfo)

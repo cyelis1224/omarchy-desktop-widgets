@@ -22,6 +22,13 @@ Item {
   property var loaderItem: null
   readonly property var targetItem: loaderItem ? loaderItem : widgetCardRoot
 
+  property bool resizable: true
+  property real minWidth: 220
+  property real minHeight: 120
+  property real maxWidth: Math.min(1400, screenWidth - 40)
+  property real maxHeight: Math.min(1000, screenHeight - 80)
+  readonly property bool isResizing: (resizeCornerArea && resizeCornerArea.isResizingNow) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
+
   property bool customGripDragging: false
   readonly property bool isDragging: gripArea.drag.active || (fullDragArea && fullDragArea.drag.active) || customGripDragging
   scale: isDragging ? 1.025 : 1.0
@@ -36,8 +43,8 @@ Item {
     anchors.fill: parent
     radius: 18
     color: Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.85)
-    border.color: (widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode)) ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
-    border.width: (widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode)) ? 2 : 1
+    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+    border.width: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? 2 : 1
 
     layer.enabled: true
     layer.effect: MultiEffect {
@@ -152,7 +159,7 @@ Item {
               widgetCardRoot.targetItem.x = snappedX
               widgetCardRoot.targetItem.y = snappedY
               if (rootRef && rootRef.saveWidgetPos) {
-                rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY)
+                rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, Math.round(widgetCardRoot.width / 20) * 20, Math.round(widgetCardRoot.height / 20) * 20)
               }
             }
           }
@@ -192,8 +199,206 @@ Item {
       widgetCardRoot.targetItem.x = snappedX
       widgetCardRoot.targetItem.y = snappedY
       if (rootRef && rootRef.saveWidgetPos) {
-        rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY)
+        rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, Math.round(widgetCardRoot.width / 20) * 20, Math.round(widgetCardRoot.height / 20) * 20)
       }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 📐 Interactive Resizing Handles & Live Dimensions Pill
+  // ---------------------------------------------------------------------------
+
+  // Visual Grip Icon in Bottom-Right Corner
+  Rectangle {
+    id: cornerResizeVisual
+    visible: rootRef && rootRef.layoutEditMode && widgetCardRoot.resizable
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    anchors.margins: 6
+    width: 18
+    height: 18
+    radius: 4
+    z: 115
+    color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+    border.color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
+    border.width: 1
+
+    Text {
+      anchors.centerIn: parent
+      text: "\uf424"
+      font.family: Style.font.family
+      font.pixelSize: 10
+      color: Color.accent
+    }
+  }
+
+  // Interactive Bottom-Right Corner Resize Area (Width & Height)
+  MouseArea {
+    id: resizeCornerArea
+    width: 24
+    height: 24
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    z: 125
+    visible: rootRef && rootRef.layoutEditMode && widgetCardRoot.resizable
+    cursorShape: Qt.SizeFDiagCursor
+    hoverEnabled: true
+
+    property real startScreenX: 0
+    property real startScreenY: 0
+    property real startWidth: 0
+    property real startHeight: 0
+    property bool isResizingNow: false
+
+    onPressed: function(mouse) {
+      var p = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
+      startScreenX = p.x
+      startScreenY = p.y
+      startWidth = widgetCardRoot.width
+      startHeight = widgetCardRoot.height
+      isResizingNow = true
+    }
+
+    onPositionChanged: function(mouse) {
+      if (isResizingNow) {
+        var cur = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
+        var newW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, startWidth + (cur.x - startScreenX)))
+        var newH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, startHeight + (cur.y - startScreenY)))
+        widgetCardRoot.width = newW
+        widgetCardRoot.height = newH
+      }
+    }
+
+    onReleased: function() {
+      if (isResizingNow) {
+        isResizingNow = false
+        var snappedW = Math.round(widgetCardRoot.width / 20) * 20
+        var snappedH = Math.round(widgetCardRoot.height / 20) * 20
+        snappedW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, snappedW))
+        snappedH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, snappedH))
+        widgetCardRoot.width = snappedW
+        widgetCardRoot.height = snappedH
+        if (rootRef && rootRef.saveWidgetPos) {
+          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, snappedW, snappedH)
+        }
+      }
+    }
+  }
+
+  // Interactive Right Edge Resize Area (Width only)
+  MouseArea {
+    id: resizeRightArea
+    width: 10
+    anchors.right: parent.right
+    anchors.top: parent.top
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: 24
+    z: 120
+    visible: rootRef && rootRef.layoutEditMode && widgetCardRoot.resizable
+    cursorShape: Qt.SizeHorCursor
+    hoverEnabled: true
+
+    property real startScreenX: 0
+    property real startWidth: 0
+    property bool isResizingNow: false
+
+    onPressed: function(mouse) {
+      var p = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
+      startScreenX = p.x
+      startWidth = widgetCardRoot.width
+      isResizingNow = true
+    }
+
+    onPositionChanged: function(mouse) {
+      if (isResizingNow) {
+        var cur = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
+        var newW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, startWidth + (cur.x - startScreenX)))
+        widgetCardRoot.width = newW
+      }
+    }
+
+    onReleased: function() {
+      if (isResizingNow) {
+        isResizingNow = false
+        var snappedW = Math.round(widgetCardRoot.width / 20) * 20
+        snappedW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, snappedW))
+        widgetCardRoot.width = snappedW
+        if (rootRef && rootRef.saveWidgetPos) {
+          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, snappedW, Math.round(widgetCardRoot.height / 20) * 20)
+        }
+      }
+    }
+  }
+
+  // Interactive Bottom Edge Resize Area (Height only)
+  MouseArea {
+    id: resizeBottomArea
+    height: 10
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.rightMargin: 24
+    z: 120
+    visible: rootRef && rootRef.layoutEditMode && widgetCardRoot.resizable
+    cursorShape: Qt.SizeVerCursor
+    hoverEnabled: true
+
+    property real startScreenY: 0
+    property real startHeight: 0
+    property bool isResizingNow: false
+
+    onPressed: function(mouse) {
+      var p = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
+      startScreenY = p.y
+      startHeight = widgetCardRoot.height
+      isResizingNow = true
+    }
+
+    onPositionChanged: function(mouse) {
+      if (isResizingNow) {
+        var cur = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
+        var newH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, startHeight + (cur.y - startScreenY)))
+        widgetCardRoot.height = newH
+      }
+    }
+
+    onReleased: function() {
+      if (isResizingNow) {
+        isResizingNow = false
+        var snappedH = Math.round(widgetCardRoot.height / 20) * 20
+        snappedH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, snappedH))
+        widgetCardRoot.height = snappedH
+        if (rootRef && rootRef.saveWidgetPos) {
+          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, Math.round(widgetCardRoot.width / 20) * 20, snappedH)
+        }
+      }
+    }
+  }
+
+  // Floating Real-Time Dimensions Pill Badge
+  Rectangle {
+    id: resizeDimPill
+    visible: widgetCardRoot.isResizing
+    anchors.bottom: parent.bottom
+    anchors.right: parent.right
+    anchors.bottomMargin: 28
+    anchors.rightMargin: 10
+    z: 150
+    implicitWidth: dimPillText.implicitWidth + Style.space(16)
+    implicitHeight: 22
+    radius: 11
+    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    border.color: Color.accent
+    border.width: 1
+
+    Text {
+      id: dimPillText
+      anchors.centerIn: parent
+      text: Math.round(widgetCardRoot.width) + " × " + Math.round(widgetCardRoot.height) + " px"
+      font.family: Style.font.family
+      font.pixelSize: 10
+      font.weight: Font.Bold
+      color: Color.accent
     }
   }
 
@@ -218,6 +423,13 @@ Item {
   // Close menu when widget starts being dragged
   onIsDraggingChanged: {
     if (isDragging && contextMenuOpen) {
+      contextMenuOpen = false
+    }
+  }
+
+  // Close menu when widget starts being resized
+  onIsResizingChanged: {
+    if (isResizing && contextMenuOpen) {
       contextMenuOpen = false
     }
   }

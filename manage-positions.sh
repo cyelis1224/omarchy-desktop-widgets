@@ -65,9 +65,27 @@ def main():
         widget_id = sys.argv[2]
         x = int(sys.argv[3])
         y = int(sys.argv[4])
-        settings['positions'][widget_id] = {'x': x, 'y': y}
+        pos_entry = {'x': x, 'y': y}
+        if len(sys.argv) >= 7:
+            pos_entry['w'] = int(sys.argv[5])
+            pos_entry['h'] = int(sys.argv[6])
+        elif widget_id in settings.get('positions', {}):
+            old = settings['positions'][widget_id]
+            if 'w' in old and 'h' in old:
+                pos_entry['w'] = old['w']
+                pos_entry['h'] = old['h']
+        settings['positions'][widget_id] = pos_entry
         save_settings(settings)
         print(json.dumps({"status": "saved", "positions": settings['positions']}))
+    elif action == 'save_geometry' and len(sys.argv) >= 7:
+        widget_id = sys.argv[2]
+        x = int(sys.argv[3])
+        y = int(sys.argv[4])
+        w = int(sys.argv[5])
+        h = int(sys.argv[6])
+        settings['positions'][widget_id] = {'x': x, 'y': y, 'w': w, 'h': h}
+        save_settings(settings)
+        print(json.dumps({"status": "geometry_saved", "widget_id": widget_id, "geometry": settings['positions'][widget_id]}))
     elif action == 'toggle_widget' and len(sys.argv) >= 4:
         widget_id = sys.argv[2]
         enable = sys.argv[3].lower() in ('true', '1', 'yes')

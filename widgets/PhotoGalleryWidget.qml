@@ -17,6 +17,14 @@ Item {
   readonly property real screenWidth: (rootRef && rootRef.screenWidth > 0) ? rootRef.screenWidth : 1920
   readonly property real screenHeight: (rootRef && rootRef.screenHeight > 0) ? rootRef.screenHeight : 1080
 
+  property real defaultWidth: 360
+  property real defaultHeight: 228
+  property real minWidth: 260
+  property real minHeight: 180
+  property real maxWidth: Math.min(1200, screenWidth - 40)
+  property real maxHeight: Math.min(900, screenHeight - 80)
+  property bool resizable: true
+
   width: 360
   height: 228
 
@@ -53,6 +61,7 @@ Item {
   readonly property string layer1PhotoPath: layer1PhotoObj ? layer1PhotoObj.path : ""
 
   readonly property bool isHovered: cardHoverTracker.containsMouse && !folderMenuOpen
+  readonly property bool isGif: currentPhotoPath.toLowerCase().endsWith(".gif")
 
   function nextPhoto() {
     if (photoList && photoList.length > 0) {
@@ -86,16 +95,31 @@ Item {
     }
   }
 
+  property var tempPhotoList: []
+
   Process {
     id: photosProc
     command: ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-photos.sh"]
     running: true
     stdout: SplitParser {
       onRead: function(line) {
+        var str = String(line).trim()
+        if (!str) return
         try {
-          var data = JSON.parse(String(line).trim())
-          if (data.folder) galleryWidgetRoot.photoFolder = data.folder
-          if (Array.isArray(data.images)) {
+          var data = JSON.parse(str)
+          if (data.type === "init") {
+            if (data.folder) galleryWidgetRoot.photoFolder = data.folder
+            galleryWidgetRoot.tempPhotoList = []
+          } else if (data.type === "photo") {
+            galleryWidgetRoot.tempPhotoList.push(data)
+            if (galleryWidgetRoot.tempPhotoList.length === 1) {
+              galleryWidgetRoot.photoList = [data]
+              galleryWidgetRoot.photoIndex = 0
+            }
+          } else if (data.type === "done") {
+            galleryWidgetRoot.photoList = galleryWidgetRoot.tempPhotoList.slice()
+          } else if (Array.isArray(data.images)) {
+            if (data.folder) galleryWidgetRoot.photoFolder = data.folder
             galleryWidgetRoot.photoList = data.images
             galleryWidgetRoot.photoIndex = 0
           }
@@ -205,6 +229,7 @@ Item {
       id: card1Src
       anchors.fill: parent
       visible: false
+      layer.enabled: true
 
       Image {
         anchors.fill: parent
@@ -294,6 +319,7 @@ Item {
       id: card2Src
       anchors.fill: parent
       visible: false
+      layer.enabled: true
 
       Image {
         anchors.fill: parent
@@ -383,6 +409,7 @@ Item {
       id: card3Src
       anchors.fill: parent
       visible: false
+      layer.enabled: true
 
       Image {
         anchors.fill: parent
@@ -458,11 +485,13 @@ Item {
       id: mainCardSrc
       anchors.fill: parent
       visible: false
+      layer.enabled: true
 
       Image {
         id: galleryImg
+        visible: !galleryWidgetRoot.isGif
         anchors.fill: parent
-        source: galleryWidgetRoot.currentPhotoPath
+        source: !galleryWidgetRoot.isGif ? galleryWidgetRoot.currentPhotoPath : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         smooth: true
@@ -489,10 +518,26 @@ Item {
         }
       }
 
+      AnimatedImage {
+        id: galleryGif
+        visible: galleryWidgetRoot.isGif
+        anchors.fill: parent
+        source: galleryWidgetRoot.isGif ? galleryWidgetRoot.currentPhotoPath : ""
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        smooth: true
+        playing: true
+        opacity: status === AnimatedImage.Ready ? 1.0 : 0.0
+
+        Behavior on opacity {
+          NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
+        }
+      }
+
       // Placeholder if no photo
       ColumnLayout {
         anchors.centerIn: parent
-        visible: galleryImg.status !== Image.Ready
+        visible: (!galleryWidgetRoot.isGif && galleryImg.status !== Image.Ready) || (galleryWidgetRoot.isGif && galleryGif.status !== AnimatedImage.Ready)
         spacing: Style.space(6)
 
         Text {
@@ -552,6 +597,10 @@ Item {
       height: 48
       radius: 16
       z: 30
+      opacity: (galleryWidgetRoot.isHovered || (rootRef && rootRef.layoutEditMode) || galleryWidgetRoot.folderMenuOpen) ? 1.0 : 0.0
+      Behavior on opacity {
+        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+      }
       gradient: Gradient {
         GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.72) }
         GradientStop { position: 0.7; color: Qt.rgba(0, 0, 0, 0.25) }

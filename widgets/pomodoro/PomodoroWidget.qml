@@ -26,6 +26,8 @@ WidgetCard {
 
   width: 320
   height: 410
+  minWidth: 260
+  minHeight: 280
 
   // ---------------------------------------------------------------------------
   // ⏱️ Pomodoro State & Durations
@@ -522,31 +524,19 @@ WidgetCard {
       // Move Grip Button (Edit Mode)
       Rectangle {
         visible: rootRef && rootRef.layoutEditMode
-        implicitWidth: gripRow.implicitWidth + 16
-        implicitHeight: 22
+        width: 22
+        height: 22
         radius: 11
         color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
-        RowLayout {
-          id: gripRow
+        Text {
           anchors.centerIn: parent
-          spacing: Style.space(4)
-
-          Text {
-            text: "\uf0b2"
-            font.family: Style.font.family
-            font.pixelSize: 10
-            color: Color.accent
-          }
-          Text {
-            text: "Move"
-            font.family: Style.font.family
-            font.pixelSize: 10
-            font.weight: Font.DemiBold
-            color: Color.accent
-          }
+          text: "\uf0b2"
+          font.family: Style.font.family
+          font.pixelSize: 10
+          color: customGripMouse.drag.active ? Color.background : Color.accent
         }
 
         MouseArea {
