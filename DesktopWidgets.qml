@@ -26,11 +26,16 @@ Item {
   property bool layoutEditMode: false
   property bool selectorOpen: false
   property bool manualHide: false
+  property bool overlayActive: false
   property bool keyboardFocusRequested: false
   property bool menuOpenRequested: false
   property int activeDragCount: 0
   readonly property bool isAnyWidgetDragging: activeDragCount > 0
   readonly property bool showSnapGrid: layoutEditMode || isAnyWidgetDragging
+
+  function closeOverlay() {
+    overlayActive = false
+  }
 
   property real activeDragCenterX: -1
   property real activeDragCenterY: -1
@@ -155,50 +160,42 @@ Item {
   // 🔄 Automatically re-enable widgets when switching to an empty workspace
   readonly property var focusedWorkspace: Hyprland.focusedWorkspace
   onFocusedWorkspaceChanged: {
-    Qt.callLater(function() {
-      if (ToplevelManager.activeToplevel === null) {
-        root.manualHide = false
-      }
-    })
+    var ws = root.focusedWorkspace
+    var hasWindows = ws && ws.toplevels && ws.toplevels.values.length > 0
+    if (!hasWindows) {
+      root.manualHide = false
+    }
   }
 
   Connections {
     target: ToplevelManager
     function onActiveToplevelChanged() {
-      if (ToplevelManager.activeToplevel === null) {
+      var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
+      var hasWindows = ws && ws.toplevels && ws.toplevels.values.length > 0
+      if (!hasWindows) {
         root.manualHide = false
       }
     }
   }
 
-  // 🔍 Smart Navigation: Jump to first empty workspace if windows are active
-  function findEmptyWorkspaceId() {
-    var occupied = {}
-    var list = (typeof Hyprland !== "undefined" && Hyprland.workspaces) ? Hyprland.workspaces.values : []
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].toplevels && list[i].toplevels.values.length > 0) {
-        occupied[list[i].id] = true
-      }
-    }
-    var currentId = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace.id : 1
-    for (var id = 1; id <= 10; id++) {
-      if (!occupied[id] && id !== currentId) {
-        return id
-      }
-    }
-    return 10
-  }
-
   function handleToggleOrJump() {
+    if (root.overlayActive) {
+      root.closeOverlay()
+      return
+    }
+
     var currentWs = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
     var hasWindows = currentWs && currentWs.toplevels && currentWs.toplevels.values.length > 0
 
     if (hasWindows) {
-      var target = root.findEmptyWorkspaceId()
-      Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ workspace = \"" + target + "\" })"])
+      root.overlayActive = true
       root.manualHide = false
     } else {
-      root.manualHide = !root.manualHide
+      if (root.manualHide) {
+        root.manualHide = false
+      } else {
+        root.overlayActive = true
+      }
     }
   }
 
@@ -251,8 +248,14 @@ Item {
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "omarchy-desktop-widgets"
-        WlrLayershell.layer: WlrLayer.Bottom
-        WlrLayershell.keyboardFocus: (!desktopWindow.hasOpenWindows && (root.selectorOpen || root.keyboardFocusRequested)) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        WlrLayershell.layer: root.overlayActive ? WlrLayer.Overlay : WlrLayer.Bottom
+        WlrLayershell.keyboardFocus: root.overlayActive ? WlrKeyboardFocus.Exclusive : ((!desktopWindow.hasOpenWindows && (root.selectorOpen || root.keyboardFocusRequested)) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None)
+
+        Shortcut {
+          sequence: "Escape"
+          enabled: root.overlayActive
+          onActivated: root.closeOverlay()
+        }
 
         onWidthChanged: if (width > 0) root.screenWidth = width
         onHeightChanged: if (height > 0) root.screenHeight = height
@@ -261,7 +264,25 @@ Item {
           if (height > 0) root.screenHeight = height
         }
 
-        readonly property bool hasOpenWindows: ToplevelManager.activeToplevel !== null
+        readonly property bool hasOpenWindows: {
+          var dummy = ToplevelManager.toplevels.values.length
+          var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
+          return !!(ws && ws.toplevels && ws.toplevels.values.length > 0)
+        }
+
+        // 🌓 Shaded Transparent Overlay Backdrop
+        Rectangle {
+          id: shadedOverlayBackdrop
+          anchors.fill: parent
+          z: 0
+          color: Qt.rgba(10/255, 10/255, 16/255, 0.62)
+          opacity: root.overlayActive ? 1.0 : 0.0
+          visible: opacity > 0
+
+          Behavior on opacity {
+            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+          }
+        }
 
         // 🖱️ Desktop Background Click & Context Menu Handler
         MouseArea {
@@ -270,11 +291,19 @@ Item {
           z: 0
           acceptedButtons: Qt.LeftButton | Qt.RightButton
           onDoubleClicked: function(mouse) {
+            if (root.overlayActive) {
+              root.closeOverlay()
+              return
+            }
             if (mouse.button === Qt.LeftButton) {
               Quickshell.execDetached(["bash", "-c", "background=$(omarchy-theme-bg-switcher); [[ -n $background ]] && omarchy-theme-bg-set \"$background\""])
             }
           }
           onClicked: function(mouse) {
+            if (root.overlayActive) {
+              root.closeOverlay()
+              return
+            }
             root.menuOpenRequested = false
             if (mouse.button === Qt.RightButton) {
               desktopContextMenu.x = Math.max(16, Math.min(mouse.x, desktopWindow.width - 256))
@@ -291,7 +320,7 @@ Item {
           anchors.fill: parent
           z: 1
 
-          readonly property bool shouldShow: !root.manualHide && !desktopWindow.hasOpenWindows
+          readonly property bool shouldShow: root.overlayActive || (!root.manualHide && !desktopWindow.hasOpenWindows)
           opacity: shouldShow ? 1.0 : 0.0
           scale: shouldShow ? 1.0 : 0.96
           visible: opacity > 0
