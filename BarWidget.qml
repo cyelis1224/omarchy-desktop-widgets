@@ -426,7 +426,11 @@ BarWidget {
         checkProc.buffer += str
         try {
           var data = JSON.parse(checkProc.buffer)
-          root.updateAvailable = (data.update_available === true)
+          var isAvail = (data.update_available === true)
+          if (data.current_version && data.new_version && data.current_version === data.new_version && !data.is_mock) {
+            isAvail = false
+          }
+          root.updateAvailable = isAvail
           if (data.current_version) root.currentVersion = data.current_version
           if (data.current_commit) root.currentCommit = data.current_commit
           if (data.new_version) root.newVersion = data.new_version
@@ -442,7 +446,11 @@ BarWidget {
       if (checkProc.buffer !== "") {
         try {
           var data = JSON.parse(checkProc.buffer)
-          root.updateAvailable = (data.update_available === true)
+          var isAvail = (data.update_available === true)
+          if (data.current_version && data.new_version && data.current_version === data.new_version && !data.is_mock) {
+            isAvail = false
+          }
+          root.updateAvailable = isAvail
           if (data.current_version) root.currentVersion = data.current_version
           if (data.current_commit) root.currentCommit = data.current_commit
           if (data.new_version) root.newVersion = data.new_version

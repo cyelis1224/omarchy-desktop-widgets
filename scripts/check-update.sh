@@ -13,11 +13,16 @@ MOCK_FLAG_FILE="/tmp/omarchy-desktop-widgets-mock-update"
 export GIT_TERMINAL_PROMPT=0
 export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -oBatchMode=yes}"
 
+version_gt() {
+  # returns 0 (true) if $1 is strictly newer than $2
+  [[ -n "$1" && -n "$2" && "$1" != "$2" && "$(printf '%s\n%s' "$1" "$2" | sort -V | head -n1)" == "$2" ]]
+}
+
 find_repo_dir() {
-  if [[ -d "$PLUGIN_DIR/.git" ]]; then
-    echo "$PLUGIN_DIR"
-  elif [[ -d "$LIVE_DIR/.git" ]]; then
+  if [[ -d "$LIVE_DIR/.git" ]]; then
     echo "$LIVE_DIR"
+  elif [[ -d "$PLUGIN_DIR/.git" ]]; then
+    echo "$PLUGIN_DIR"
   elif [[ -d "$DEV_DIR/.git" ]]; then
     echo "$DEV_DIR"
   else
@@ -28,7 +33,7 @@ find_repo_dir() {
 cmd_mock_on() {
   cat <<'EOF' > "$MOCK_FLAG_FILE"
 {
-  "new_version": "1.1.0",
+  "new_version": "1.2.0",
   "new_commit": "4c8f2a1",
   "commits_behind": 3,
   "commit_message": "Feature: interactive widget resizing & update indicator"
@@ -63,7 +68,7 @@ cmd_check() {
     local mock_data
     mock_data=$(cat "$MOCK_FLAG_FILE" 2>/dev/null || echo "{}")
     local mock_ver
-    mock_ver=$(echo "$mock_data" | jq -r '.new_version // "1.1.0"')
+    mock_ver=$(echo "$mock_data" | jq -r '.new_version // "1.2.0"')
     local mock_cmt
     mock_cmt=$(echo "$mock_data" | jq -r '.new_commit // "f4a8b29"')
     local mock_behind
@@ -97,7 +102,7 @@ cmd_check() {
 
   local remote_commit=""
   local remote_short=""
-  local remote_version="$local_version"
+  local remote_version=""
   local commits_behind=0
   local commit_msg=""
   local update_available="false"
@@ -110,30 +115,27 @@ cmd_check() {
       remote_short=$(git -C "$repo_dir" rev-parse --short "$remote_commit" 2>/dev/null || true)
       commits_behind=$(git -C "$repo_dir" rev-list --count HEAD.."$remote_commit" 2>/dev/null || echo 0)
       commit_msg=$(git -C "$repo_dir" log -1 --format="%s" "$remote_commit" 2>/dev/null || echo "")
+
+      # Extract remote manifest version directly from the fetched git commit
+      local git_ver
+      git_ver=$(git -C "$repo_dir" show "$remote_commit:manifest.json" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)
+      if [[ -n "$git_ver" ]]; then
+        remote_version="$git_ver"
+      fi
     fi
   fi
 
-  # Network fallback if git fetch was empty
-  if [[ -z "$remote_commit" ]]; then
-    local ls_out
-    ls_out=$(timeout 8 git ls-remote "$REMOTE_REPO_URL" refs/heads/master 2>/dev/null || true)
-    if [[ -n "$ls_out" ]]; then
-      remote_commit=$(echo "$ls_out" | awk '{print $1}')
-      remote_short="${remote_commit:0:7}"
+  # Fallback ONLY if git was not available or could not resolve remote commit
+  if [[ -z "$remote_version" ]]; then
+    if [[ -z "$remote_commit" ]]; then
+      local ls_out
+      ls_out=$(timeout 8 git ls-remote "$REMOTE_REPO_URL" refs/heads/master 2>/dev/null || true)
+      if [[ -n "$ls_out" ]]; then
+        remote_commit=$(echo "$ls_out" | awk '{print $1}')
+        remote_short="${remote_commit:0:7}"
+      fi
     fi
-  fi
 
-  # Attempt to extract remote manifest version directly from git commit
-  if [[ -n "$repo_dir" && -n "$remote_commit" ]]; then
-    local git_ver
-    git_ver=$(git -C "$repo_dir" show "$remote_commit:manifest.json" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)
-    if [[ -n "$git_ver" ]]; then
-      remote_version="$git_ver"
-    fi
-  fi
-
-  # Network fallback if git manifest was not extracted
-  if [[ "$remote_version" == "$local_version" ]]; then
     local remote_manifest
     remote_manifest=$(curl -s --max-time 4 "${RAW_MANIFEST_URL}?v=$(date +%s)" 2>/dev/null || true)
     if [[ -n "$remote_manifest" ]]; then
@@ -145,15 +147,19 @@ cmd_check() {
     fi
   fi
 
-  # Compare versions / commits
-  if (( commits_behind > 0 )); then
+  # If remote_version could still not be determined, default to local_version
+  if [[ -z "$remote_version" ]]; then
+    remote_version="$local_version"
+  fi
+
+  # STRICT UPDATE CHECK:
+  # An update is available ONLY if remote_version is strictly newer than local_version.
+  # This prevents downgrades (e.g. from cached CDN 1.1.2) and prevents prompting to update
+  # to the exact same version (1.1.3 -> 1.1.3).
+  if version_gt "$remote_version" "$local_version"; then
     update_available="true"
-  elif [[ -n "$remote_version" && "$remote_version" != "$local_version" ]]; then
-    if [[ "$(printf '%s\n%s' "$local_version" "$remote_version" | sort -V | tail -n1)" == "$remote_version" ]]; then
-      update_available="true"
-    fi
-  elif [[ -z "$repo_dir" && -n "$remote_commit" && "$remote_commit" != "$local_commit" ]]; then
-    update_available="true"
+  else
+    update_available="false"
   fi
 
   if [[ -z "$commit_msg" && "$update_available" == "true" ]]; then
@@ -192,17 +198,18 @@ cmd_apply() {
     echo "Cleared mock update state."
   fi
 
-  local repo_dir
-  repo_dir=$(find_repo_dir)
-
-  if [[ -n "$repo_dir" && -d "$repo_dir/.git" ]]; then
-    echo "Updating git repository at $repo_dir..."
-    git -C "$repo_dir" pull --ff-only origin master 2>&1 || git -C "$repo_dir" pull origin master 2>&1 || true
+  # If LIVE_DIR is a git repository, fetch and reset to ensure a clean sync
+  if [[ -d "$LIVE_DIR/.git" ]]; then
+    echo "Updating live plugin git repository at $LIVE_DIR..."
+    git -C "$LIVE_DIR" fetch --quiet origin master 2>&1 || true
+    git -C "$LIVE_DIR" reset --hard origin/master 2>&1 || true
+    git -C "$LIVE_DIR" clean -fd 2>&1 || true
   fi
 
-  # Sync DEV_DIR to LIVE_DIR if needed
-  if [[ -d "$DEV_DIR" && -d "$LIVE_DIR" && "$DEV_DIR" != "$LIVE_DIR" ]]; then
-    echo "Syncing $DEV_DIR to $LIVE_DIR..."
+  # If DEV_DIR is separate and git-managed, pull it
+  if [[ -d "$DEV_DIR/.git" && "$DEV_DIR" != "$LIVE_DIR" ]]; then
+    echo "Updating dev repository at $DEV_DIR..."
+    git -C "$DEV_DIR" pull --ff-only origin master 2>&1 || git -C "$DEV_DIR" pull origin master 2>&1 || true
     rsync -a --exclude='.git' "$DEV_DIR/" "$LIVE_DIR/" 2>/dev/null || cp -r "$DEV_DIR/"* "$LIVE_DIR/" 2>/dev/null || true
   fi
 
