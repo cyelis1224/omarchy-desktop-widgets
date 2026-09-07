@@ -10,8 +10,28 @@ Item {
   id: prefsDialogRoot
 
   property var rootRef: null
-  property bool isOpen: false
+  property bool isOpen: (rootRef && rootRef.preferencesOpen !== undefined) ? rootRef.preferencesOpen : false
   property int activeTab: 0
+
+  signal closeRequested()
+
+  function closeDialog() {
+    closeRequested()
+    if (rootRef && rootRef.preferencesOpen !== undefined) {
+      rootRef.preferencesOpen = false
+    }
+  }
+
+  Connections {
+    target: rootRef
+    function onPreferencesOpenChanged() {
+      if (rootRef && prefsDialogRoot.isOpen !== rootRef.preferencesOpen) {
+        prefsDialogRoot.isOpen = Qt.binding(function() {
+          return (rootRef && rootRef.preferencesOpen !== undefined) ? rootRef.preferencesOpen : false
+        })
+      }
+    }
+  }
 
   readonly property real curOpacity: (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85
   readonly property int curRadius: (rootRef && rootRef.appearance && rootRef.appearance.corner_radius !== undefined) ? rootRef.appearance.corner_radius : 18
@@ -37,7 +57,7 @@ Item {
     MouseArea {
       anchors.fill: parent
       acceptedButtons: Qt.LeftButton | Qt.RightButton
-      onClicked: prefsDialogRoot.isOpen = false
+      onClicked: prefsDialogRoot.closeDialog()
     }
   }
 
@@ -63,6 +83,12 @@ Item {
       shadowColor: Qt.rgba(0, 0, 0, 0.90)
       shadowBlur: 1.0
       shadowVerticalOffset: 8
+    }
+
+    // Catch unhandled clicks inside dialog surface so they don't bubble to backdrop dimmer
+    MouseArea {
+      anchors.fill: parent
+      onClicked: {}
     }
 
     ColumnLayout {
@@ -99,7 +125,7 @@ Item {
           spacing: 2
 
           Text {
-            text: "Widget Appearance & Preferences"
+            text: "Widget Preferences"
             font.family: Style.font.family
             font.pixelSize: 16
             font.weight: Font.Bold
@@ -107,11 +133,10 @@ Item {
           }
 
           Text {
-            text: "Customize card acrylic blur, corner styling, grid snap & auto-hide"
+            text: "Global appearance, snapping & behavior controls"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
-            elide: Text.ElideRight
+            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.60)
           }
         }
 
@@ -120,8 +145,8 @@ Item {
           width: 32
           height: 32
           radius: 16
-          color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: closeMouse.containsMouse ? Color.urgent : "transparent"
+          color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+          border.color: closeMouse.containsMouse ? Color.urgent : Qt.rgba(1, 1, 1, 0.12)
           border.width: 1
 
           Text {
@@ -137,7 +162,7 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: prefsDialogRoot.isOpen = false
+            onClicked: prefsDialogRoot.closeDialog()
           }
         }
       }
@@ -992,7 +1017,7 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: prefsDialogRoot.isOpen = false
+            onClicked: prefsDialogRoot.closeDialog()
           }
         }
       }

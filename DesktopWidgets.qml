@@ -1700,7 +1700,7 @@ Item {
           id: prefsDialog
           rootRef: root
           isOpen: root.preferencesOpen
-          onIsOpenChanged: root.preferencesOpen = isOpen
+          onCloseRequested: root.preferencesOpen = false
         }
 
         // 🍞 Floating Profile Notification Toast
