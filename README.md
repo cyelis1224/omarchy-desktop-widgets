@@ -147,6 +147,89 @@ The desktop widgets feature an interactive shaded backdrop overlay that elevates
 
 ---
 
+## 🗂️ Multi-Profile Layouts & Sharing
+
+Omarchy Desktop Widgets features a complete profile management system allowing you to switch between distinct widget workflows, back up arrangements, share configurations, and retain monitor-specific coordinates.
+
+### 🌟 Named Layout Presets
+Five curated profiles are built-in and ready out of the box:
+- **Default**: Standard balanced desktop setup with Hero Clock, Photo Deck, Network Sparklines, MPRIS Media, and System Specs.
+- **Minimal**: Distraction-free glance layout featuring only the centerpiece clock and weather forecast.
+- **Productivity**: Focus workspace equipped with Pomodoro timer, Kanban todos, Git radar, and Folder view.
+- **Full Dashboard**: Comprehensive 12-widget command center arranged across the canvas.
+- **Gaming**: Performance telemetry layout tracking CPU/GPU stats, RAM, multi-drive storage, and network bandwidth.
+
+### ⚡ Quick-Switching & IPC Commands
+- **Top Move Mode Banner**: When Move Mode is unlocked, click any preset pill (`Default`, `Minimal`, `Productivity`, `Full Dashboard`, `Gaming`) to switch immediately.
+- **Desktop Right-Click Menu**: Right-click blank desktop wallpaper ➜ **Layout Presets ▸** to view the active checkmark and switch profiles.
+- **CLI / Scripting IPC**:
+  ```bash
+  # Switch to any layout preset via CLI or hotkey
+  omarchy-shell -q dagyr.desktop-widgets profile "Productivity"
+  omarchy-shell -q dagyr.desktop-widgets profile "Minimal"
+  ```
+
+### 💾 Import & Export Profiles
+- **Exporting**: Right-click wallpaper ➜ **Layout Presets ▸** ➜ **Export Current Preset...** opens a native file dialog to save a portable `.json` layout profile.
+- **Importing**: Select **Import Preset JSON...** to load community profiles or restore previous layouts.
+- **File Format**: Standard portable JSON schema:
+  ```json
+  {
+    "version": "1.0",
+    "type": "omarchy-desktop-widgets-profile",
+    "profile": {
+      "name": "My Setup",
+      "enabled_widgets": ["clock", "weather", "media"],
+      "positions": {
+        "clock": { "x": 780, "y": 40 },
+        "weather": { "x": 780, "y": 240, "w": 340, "h": 260 }
+      }
+    }
+  }
+  ```
+
+### 🖥️ Multi-Monitor Awareness
+Desktop Widgets automatically tracks which display you place each widget on (`eDP-1`, `DP-1`, `HDMI-A-1`). When disconnecting an external monitor or docking your laptop, widget coordinates are remembered independently per display output without overlapping or resetting your arrangements.
+
+---
+
+## 🎨 Visual Polish & Appearance Controls
+
+Personalize every visual aspect of your desktop widgets using the integrated **Widget Preferences Dialog**.
+
+### ⚙️ Preferences Dialog (`PreferencesDialog.qml`)
+Open the preferences dialog at any time via:
+- Right-click desktop wallpaper ➜ **Widget Preferences...**
+- Click the **Preferences** button in the top Move Mode banner.
+- CLI: `omarchy-shell -q dagyr.desktop-widgets preferences`
+
+### 🎛️ Customization Controls
+
+1. **Card Background Transparency & Acrylic Blur**:
+   - Live continuous slider from 15% (ultra glassy acrylic) to 100% (solid opaque cards).
+   - Quick preset chips: *Glassy 30%*, *Translucent 60%*, *Standard 85%*, *Solid 100%*.
+2. **Corner Curvature Radius**:
+   - Live continuous slider from 0px (sharp square) to 32px (smoothly rounded).
+   - Quick preset chips: *Sharp (0px)*, *Subtle (8px)*, *Standard (18px)*, *Rounded (28px)*.
+3. **Drop Shadows**:
+   - High-depth hardware-accelerated ambient drop shadows with smooth on/off toggle.
+4. **Grid Snapping Precision**:
+   - Choose your snapping precision during drag and resize operations:
+     - **Freeform (1px)**: Pixel-perfect freedom with no snapping restriction.
+     - **Fine (10px)**: Compact, high-precision layout alignment.
+     - **Standard (20px)**: Default balanced alignment grid.
+     - **Coarse (40px)**: Bold modular alignment for large displays.
+5. **Auto-Hide Behavior Modes**:
+   - Customize when widgets automatically hide beneath applications:
+     - **Hide on Any Window (Tiled)** *(Default)*: Widgets hide whenever any window is active on the current workspace.
+     - **Hide on Fullscreen Only**: Widgets stay visible beneath floating and tiled windows, hiding only when an app goes fullscreen.
+     - **Always Keep Visible**: Widgets remain permanently rendered on the desktop canvas behind windows.
+     - **Manual Toggle Only**: Widgets disregard window states; toggle manually via top bar or shortcut.
+6. **Workspace Slide & Fade Transitions**:
+   - Smooth fluid slide and fade animations when switching between virtual workspaces.
+
+---
+
 ## 🛠️ Developing Custom Widgets with `WidgetCard.qml`
 
 All desktop widgets inherit from the base card component (`shared/WidgetCard.qml` / `widgets/WidgetCard.qml`). This base architecture provides all container styling, windowing physics, and settings persistence so you (or your AI coding agent) only need to focus on building the inner content of your widget.

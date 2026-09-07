@@ -38,19 +38,24 @@ Item {
   }
 
   property bool transparentBg: false
+  property string monitorName: ""
+  readonly property int gridSnap: (rootRef && rootRef.appearance && rootRef.appearance.grid_snap !== undefined) ? rootRef.appearance.grid_snap : 20
+  function snapVal(val) {
+    return gridSnap > 1 ? (Math.round(val / gridSnap) * gridSnap) : Math.round(val)
+  }
 
   // Visual container
   Rectangle {
     id: cardSurface
     anchors.fill: parent
-    radius: 18
-    color: widgetCardRoot.transparentBg ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.20)) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.85)
+    radius: (rootRef && rootRef.appearance && rootRef.appearance.corner_radius !== undefined) ? rootRef.appearance.corner_radius : 18
+    color: widgetCardRoot.transparentBg ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.20)) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85)
     border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Color.accent : (widgetCardRoot.transparentBg ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.12))
     border.width: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? 2 : 1
 
     layer.enabled: true
     layer.effect: MultiEffect {
-      shadowEnabled: !widgetCardRoot.transparentBg || widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode)
+      shadowEnabled: ((rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true) && (!widgetCardRoot.transparentBg || widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode))
       shadowColor: Qt.rgba(0, 0, 0, widgetCardRoot.isDragging ? 0.90 : 0.70)
       shadowBlur: widgetCardRoot.isDragging ? 0.95 : 0.65
       shadowVerticalOffset: widgetCardRoot.isDragging ? 8 : 4
@@ -105,14 +110,14 @@ Item {
             onReleased: function() {
               var maxX = Math.max(10, widgetCardRoot.screenWidth - widgetCardRoot.width - 10)
               var maxY = Math.max(10, widgetCardRoot.screenHeight - widgetCardRoot.height - 10)
-              var snappedX = Math.round(widgetCardRoot.targetItem.x / 20) * 20
-              var snappedY = Math.round(widgetCardRoot.targetItem.y / 20) * 20
+              var snappedX = widgetCardRoot.snapVal(widgetCardRoot.targetItem.x)
+              var snappedY = widgetCardRoot.snapVal(widgetCardRoot.targetItem.y)
               snappedX = Math.max(10, Math.min(maxX, snappedX))
               snappedY = Math.max(10, Math.min(maxY, snappedY))
               widgetCardRoot.targetItem.x = snappedX
               widgetCardRoot.targetItem.y = snappedY
               if (rootRef && rootRef.saveWidgetPos) {
-                rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, Math.round(widgetCardRoot.width / 20) * 20, Math.round(widgetCardRoot.height / 20) * 20)
+                rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, widgetCardRoot.snapVal(widgetCardRoot.width), widgetCardRoot.snapVal(widgetCardRoot.height), widgetCardRoot.monitorName)
               }
             }
           }
@@ -185,14 +190,14 @@ Item {
             onReleased: function() {
               var maxX = Math.max(10, widgetCardRoot.screenWidth - widgetCardRoot.width - 10)
               var maxY = Math.max(10, widgetCardRoot.screenHeight - widgetCardRoot.height - 10)
-              var snappedX = Math.round(widgetCardRoot.targetItem.x / 20) * 20
-              var snappedY = Math.round(widgetCardRoot.targetItem.y / 20) * 20
+              var snappedX = widgetCardRoot.snapVal(widgetCardRoot.targetItem.x)
+              var snappedY = widgetCardRoot.snapVal(widgetCardRoot.targetItem.y)
               snappedX = Math.max(10, Math.min(maxX, snappedX))
               snappedY = Math.max(10, Math.min(maxY, snappedY))
               widgetCardRoot.targetItem.x = snappedX
               widgetCardRoot.targetItem.y = snappedY
               if (rootRef && rootRef.saveWidgetPos) {
-                rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, Math.round(widgetCardRoot.width / 20) * 20, Math.round(widgetCardRoot.height / 20) * 20)
+                rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, widgetCardRoot.snapVal(widgetCardRoot.width), widgetCardRoot.snapVal(widgetCardRoot.height), widgetCardRoot.monitorName)
               }
             }
           }
@@ -236,14 +241,14 @@ Item {
     onReleased: function() {
       var maxX = Math.max(10, widgetCardRoot.screenWidth - widgetCardRoot.width - 10)
       var maxY = Math.max(10, widgetCardRoot.screenHeight - widgetCardRoot.height - 10)
-      var snappedX = Math.round(widgetCardRoot.targetItem.x / 20) * 20
-      var snappedY = Math.round(widgetCardRoot.targetItem.y / 20) * 20
+      var snappedX = widgetCardRoot.snapVal(widgetCardRoot.targetItem.x)
+      var snappedY = widgetCardRoot.snapVal(widgetCardRoot.targetItem.y)
       snappedX = Math.max(10, Math.min(maxX, snappedX))
       snappedY = Math.max(10, Math.min(maxY, snappedY))
       widgetCardRoot.targetItem.x = snappedX
       widgetCardRoot.targetItem.y = snappedY
       if (rootRef && rootRef.saveWidgetPos) {
-        rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, Math.round(widgetCardRoot.width / 20) * 20, Math.round(widgetCardRoot.height / 20) * 20)
+        rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, widgetCardRoot.snapVal(widgetCardRoot.width), widgetCardRoot.snapVal(widgetCardRoot.height), widgetCardRoot.monitorName)
       }
     }
   }
@@ -316,14 +321,14 @@ Item {
     onReleased: function() {
       if (isResizingNow) {
         isResizingNow = false
-        var snappedW = Math.round(widgetCardRoot.width / 20) * 20
-        var snappedH = Math.round(widgetCardRoot.height / 20) * 20
+        var snappedW = widgetCardRoot.snapVal(widgetCardRoot.width)
+        var snappedH = widgetCardRoot.snapVal(widgetCardRoot.height)
         snappedW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, snappedW))
         snappedH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, snappedH))
         widgetCardRoot.width = snappedW
         widgetCardRoot.height = snappedH
         if (rootRef && rootRef.saveWidgetPos) {
-          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, snappedW, snappedH)
+          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, snappedW, snappedH, widgetCardRoot.monitorName)
         }
       }
     }
@@ -364,11 +369,11 @@ Item {
     onReleased: function() {
       if (isResizingNow) {
         isResizingNow = false
-        var snappedW = Math.round(widgetCardRoot.width / 20) * 20
+        var snappedW = widgetCardRoot.snapVal(widgetCardRoot.width)
         snappedW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, snappedW))
         widgetCardRoot.width = snappedW
         if (rootRef && rootRef.saveWidgetPos) {
-          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, snappedW, Math.round(widgetCardRoot.height / 20) * 20)
+          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, snappedW, widgetCardRoot.snapVal(widgetCardRoot.height), widgetCardRoot.monitorName)
         }
       }
     }
@@ -409,11 +414,11 @@ Item {
     onReleased: function() {
       if (isResizingNow) {
         isResizingNow = false
-        var snappedH = Math.round(widgetCardRoot.height / 20) * 20
+        var snappedH = widgetCardRoot.snapVal(widgetCardRoot.height)
         snappedH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, snappedH))
         widgetCardRoot.height = snappedH
         if (rootRef && rootRef.saveWidgetPos) {
-          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, Math.round(widgetCardRoot.width / 20) * 20, snappedH)
+          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, widgetCardRoot.snapVal(widgetCardRoot.width), snappedH, widgetCardRoot.monitorName)
         }
       }
     }

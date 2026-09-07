@@ -16,7 +16,7 @@ Item {
   id: root
 
   // ---------------------------------------------------------------------------
-  // 📍 Desktop Widgets State, Positions, Registry & Persistence
+  // 📍 Desktop Widgets State, Positions, Profiles, Registry & Persistence
   // ---------------------------------------------------------------------------
   property var widgetPositions: ({})
   property var enabledWidgets: ["clock", "gallery", "network", "media", "system"]
@@ -25,6 +25,8 @@ Item {
   property real screenHeight: 1080
   property bool layoutEditMode: false
   property bool selectorOpen: false
+  property bool preferencesOpen: false
+  property bool presetsSubmenuOpen: false
   property bool manualHide: false
   property bool overlayActive: false
   property bool keyboardFocusRequested: false
@@ -32,6 +34,34 @@ Item {
   property int activeDragCount: 0
   readonly property bool isAnyWidgetDragging: activeDragCount > 0
   readonly property bool showSnapGrid: layoutEditMode || isAnyWidgetDragging
+
+  // Multi-Profile Layouts & Appearance State
+  property string activeProfile: "Default"
+  property var layoutProfiles: []
+  property var appearance: ({
+    bg_opacity: 0.85,
+    corner_radius: 18,
+    grid_snap: 20,
+    auto_hide_mode: "tiled",
+    shadows_enabled: true,
+    animations_enabled: true
+  })
+  property var monitorPositions: ({})
+  property string profileNoticeText: ""
+  property bool profileNoticeVisible: false
+
+  Timer {
+    id: profileNoticeTimer
+    interval: 2500
+    repeat: false
+    onTriggered: root.profileNoticeVisible = false
+  }
+
+  function showProfileNotice(txt) {
+    root.profileNoticeText = txt
+    root.profileNoticeVisible = true
+    profileNoticeTimer.restart()
+  }
 
   function closeOverlay() {
     overlayActive = false
@@ -85,12 +115,16 @@ Item {
           if (Array.isArray(res.custom_widgets)) widgetRegistry.customWidgets = res.custom_widgets
           if (res.widget_settings) root.widgetSettings = res.widget_settings
           if (res.has_saved_layout !== undefined) root.hasSavedLayout = res.has_saved_layout
+          if (res.active_profile) root.activeProfile = res.active_profile
+          if (Array.isArray(res.profiles)) root.layoutProfiles = res.profiles
+          if (res.appearance) root.appearance = res.appearance
+          if (res.monitor_positions) root.monitorPositions = res.monitor_positions
         } catch (e) {}
       }
     }
   }
 
-  function saveWidgetPos(id, x, y, w, h) {
+  function saveWidgetPos(id, x, y, w, h, monitorName) {
     var p = Object.assign({}, root.widgetPositions)
     var current = p[id] || {}
     var targetW = (w !== undefined && w > 0) ? w : (current.w || 0)
@@ -102,13 +136,21 @@ Item {
       entry.h = targetH
       p[id] = entry
       root.widgetPositions = p
-      Quickshell.execDetached([root.manageScriptPath, "save_pos", id, x.toString(), y.toString(), targetW.toString(), targetH.toString()])
+      if (monitorName) {
+        Quickshell.execDetached([root.manageScriptPath, "save_pos", id, x.toString(), y.toString(), targetW.toString(), targetH.toString(), monitorName])
+      } else {
+        Quickshell.execDetached([root.manageScriptPath, "save_pos", id, x.toString(), y.toString(), targetW.toString(), targetH.toString()])
+      }
     } else {
       if (current.w) entry.w = current.w
       if (current.h) entry.h = current.h
       p[id] = entry
       root.widgetPositions = p
-      Quickshell.execDetached([root.manageScriptPath, "save_pos", id, x.toString(), y.toString()])
+      if (monitorName) {
+        Quickshell.execDetached([root.manageScriptPath, "save_pos", id, x.toString(), y.toString(), monitorName])
+      } else {
+        Quickshell.execDetached([root.manageScriptPath, "save_pos", id, x.toString(), y.toString()])
+      }
     }
   }
 
@@ -152,6 +194,132 @@ Item {
   function resetWidgetPositions() {
     resetProc.command = [root.manageScriptPath, "reset"]
     if (!resetProc.running) resetProc.running = true
+  }
+
+  function switchProfile(name) {
+    switchProfileProc.command = [root.manageScriptPath, "switch_profile", name]
+    if (!switchProfileProc.running) switchProfileProc.running = true
+  }
+
+  function saveCurrentProfile(name) {
+    saveProfileProc.command = [root.manageScriptPath, "save_profile", name || root.activeProfile]
+    if (!saveProfileProc.running) saveProfileProc.running = true
+  }
+
+  function saveNewProfileDialog() {
+    saveProfileDialogProc.command = [root.manageScriptPath, "save_profile_dialog"]
+    if (!saveProfileDialogProc.running) saveProfileDialogProc.running = true
+  }
+
+  function exportCurrentProfile(name) {
+    exportProfileProc.command = [root.manageScriptPath, "export_profile", name || root.activeProfile]
+    if (!exportProfileProc.running) exportProfileProc.running = true
+  }
+
+  function importProfile() {
+    importProfileProc.command = [root.manageScriptPath, "import_profile"]
+    if (!importProfileProc.running) importProfileProc.running = true
+  }
+
+  function updateAppearance(key, val) {
+    var app = Object.assign({}, root.appearance)
+    app[key] = val
+    root.appearance = app
+    Quickshell.execDetached([root.manageScriptPath, "save_appearance", JSON.stringify(app)])
+  }
+
+  function setAppearanceAll(app) {
+    root.appearance = app
+    Quickshell.execDetached([root.manageScriptPath, "save_appearance", JSON.stringify(app)])
+  }
+
+  Process {
+    id: switchProfileProc
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var res = JSON.parse(String(line).trim())
+          if (res.status === "profile_switched") {
+            root.activeProfile = res.active_profile
+            if (res.positions) root.widgetPositions = res.positions
+            if (Array.isArray(res.enabled_widgets)) root.enabledWidgets = res.enabled_widgets
+            if (res.widget_settings) root.widgetSettings = res.widget_settings
+            root.showProfileNotice("Switched to '" + res.active_profile + "' preset")
+            if (!posProc.running) posProc.running = true
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  Process {
+    id: saveProfileProc
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var res = JSON.parse(String(line).trim())
+          if (res.status === "profile_saved") {
+            root.activeProfile = res.active_profile
+            root.showProfileNotice("Saved preset '" + res.active_profile + "'")
+            if (!posProc.running) posProc.running = true
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  Process {
+    id: saveProfileDialogProc
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var res = JSON.parse(String(line).trim())
+          if (res.status === "profile_saved") {
+            root.activeProfile = res.active_profile
+            root.showProfileNotice("Created preset '" + res.active_profile + "'")
+            if (!posProc.running) posProc.running = true
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  Process {
+    id: exportProfileProc
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var res = JSON.parse(String(line).trim())
+          if (res.status === "exported") {
+            root.showProfileNotice("Exported preset to " + (res.path ? res.path.split("/").pop() : "file"))
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  Process {
+    id: importProfileProc
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var res = JSON.parse(String(line).trim())
+          if (res.status === "imported") {
+            root.activeProfile = res.name
+            if (res.positions) root.widgetPositions = res.positions
+            if (Array.isArray(res.enabled_widgets)) root.enabledWidgets = res.enabled_widgets
+            if (res.widget_settings) root.widgetSettings = res.widget_settings
+            root.showProfileNotice("Imported preset '" + res.name + "'")
+            if (!posProc.running) posProc.running = true
+          }
+        } catch (e) {}
+      }
+    }
   }
 
   Process {
@@ -256,6 +424,15 @@ Item {
     function menu() {
       root.menuOpenRequested = !root.menuOpenRequested
     }
+
+    function preferences() {
+      root.preferencesOpen = !root.preferencesOpen
+    }
+
+    function profile(name: string): string {
+      if (name) root.switchProfile(name)
+      return "switched to " + name
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -283,12 +460,12 @@ Item {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "omarchy-desktop-shade"
         WlrLayershell.layer: WlrLayer.Overlay
-        visible: root.overlayActive
+        visible: root.overlayActive || root.preferencesOpen
 
         Rectangle {
           anchors.fill: parent
           color: Qt.rgba(10/255, 10/255, 16/255, 0.72)
-          opacity: root.overlayActive ? 1.0 : 0.0
+          opacity: (root.overlayActive || root.preferencesOpen) ? 1.0 : 0.0
 
           Behavior on opacity {
             NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
@@ -298,7 +475,10 @@ Item {
         MouseArea {
           anchors.fill: parent
           acceptedButtons: Qt.LeftButton | Qt.RightButton
-          onClicked: root.closeOverlay()
+          onClicked: {
+            if (root.preferencesOpen) root.preferencesOpen = false
+            if (root.overlayActive) root.closeOverlay()
+          }
         }
       }
     }
@@ -328,13 +508,16 @@ Item {
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "omarchy-desktop-widgets"
-        WlrLayershell.layer: root.overlayActive ? WlrLayer.Overlay : WlrLayer.Bottom
-        WlrLayershell.keyboardFocus: root.overlayActive ? WlrKeyboardFocus.OnDemand : ((!desktopWindow.hasOpenWindows && (root.selectorOpen || root.keyboardFocusRequested)) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None)
+        WlrLayershell.layer: (root.overlayActive || root.preferencesOpen) ? WlrLayer.Overlay : WlrLayer.Bottom
+        WlrLayershell.keyboardFocus: (root.overlayActive || root.preferencesOpen) ? WlrKeyboardFocus.OnDemand : ((!desktopWindow.hasOpenWindows && (root.selectorOpen || root.keyboardFocusRequested)) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None)
 
         Shortcut {
           sequence: "Escape"
-          enabled: root.overlayActive
-          onActivated: root.closeOverlay()
+          enabled: root.overlayActive || root.preferencesOpen
+          onActivated: {
+            if (root.preferencesOpen) root.preferencesOpen = false
+            if (root.overlayActive) root.closeOverlay()
+          }
         }
 
         onWidthChanged: if (width > 0) root.screenWidth = width
@@ -344,10 +527,65 @@ Item {
           if (height > 0) root.screenHeight = height
         }
 
+        readonly property string monitorName: (modelData && modelData.name) ? modelData.name : ""
+
+        readonly property string autoHideMode: (root.appearance && root.appearance.auto_hide_mode) ? root.appearance.auto_hide_mode : "tiled"
+
         readonly property bool hasOpenWindows: {
           var dummy = ToplevelManager.toplevels.values.length
           var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
           return !!(ws && ws.toplevels && ws.toplevels.values.length > 0)
+        }
+
+        readonly property bool hasFullscreenWindows: {
+          var dummy = ToplevelManager.toplevels.values.length
+          var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
+          if (!ws || !ws.toplevels) return false
+          for (var i = 0; i < ws.toplevels.values.length; i++) {
+            if (ws.toplevels.values[i].fullscreen) return true
+          }
+          return false
+        }
+
+        readonly property bool isAutoHidden: {
+          if (autoHideMode === "tiled") return desktopWindow.hasOpenWindows
+          if (autoHideMode === "fullscreen") return desktopWindow.hasFullscreenWindows
+          if (autoHideMode === "always") return false
+          if (autoHideMode === "manual") return false
+          return desktopWindow.hasOpenWindows
+        }
+
+        // Workspace Transitions
+        property real wsSlideOffset: 0
+        property real wsAnimOpacity: 1.0
+
+        Connections {
+          target: typeof Hyprland !== "undefined" ? Hyprland : null
+          ignoreUnknownSignals: true
+          function onFocusedWorkspaceChanged() {
+            if (root.appearance && root.appearance.animations_enabled === false) return
+            wsAnimOpacity = 0.35
+            wsSlideOffset = 18
+            wsResetAnim.restart()
+          }
+        }
+
+        ParallelAnimation {
+          id: wsResetAnim
+          NumberAnimation {
+            target: desktopWindow
+            property: "wsSlideOffset"
+            to: 0
+            duration: 280
+            easing.type: Easing.OutCubic
+          }
+          NumberAnimation {
+            target: desktopWindow
+            property: "wsAnimOpacity"
+            to: 1.0
+            duration: 280
+            easing.type: Easing.OutCubic
+          }
         }
 
         // 🖱️ Desktop Background Click & Context Menu Handler
@@ -380,10 +618,11 @@ Item {
         Item {
           id: widgetContainer
           anchors.fill: parent
+          x: desktopWindow.wsSlideOffset
           z: 1
 
-          readonly property bool shouldShow: root.overlayActive || (!root.manualHide && !desktopWindow.hasOpenWindows)
-          opacity: shouldShow ? 1.0 : 0.0
+          readonly property bool shouldShow: root.overlayActive || (!root.manualHide && !desktopWindow.isAutoHidden)
+          opacity: shouldShow ? (1.0 * desktopWindow.wsAnimOpacity) : 0.0
           scale: shouldShow ? 1.0 : 0.96
           visible: opacity > 0
 
@@ -401,6 +640,7 @@ Item {
             id: snapGridLayer
             z: 0
             active: root.showSnapGrid && widgetContainer.shouldShow
+            minorGridSize: (root.appearance && root.appearance.grid_snap !== undefined) ? (root.appearance.grid_snap > 0 ? root.appearance.grid_snap : 0) : 20
             highlightCenterX: root.activeDragCenterX
             highlightCenterY: root.activeDragCenterY
             highlightWidth: root.activeDragWidth
@@ -444,11 +684,145 @@ Item {
               }
 
               Text {
-                text: "Layout Move Mode Active · Drag any widget to place"
+                text: "Move Mode"
                 font.family: Style.font.family
                 font.pixelSize: 12
                 font.weight: Font.DemiBold
                 color: Color.foreground
+              }
+
+              Rectangle {
+                width: 1
+                height: 18
+                color: Qt.rgba(1, 1, 1, 0.15)
+              }
+
+              // Presets Pill Bar
+              RowLayout {
+                spacing: Style.space(4)
+
+                Text {
+                  text: "Preset:"
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  font.weight: Font.DemiBold
+                  color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                }
+
+                Repeater {
+                  model: root.layoutProfiles.length > 0 ? root.layoutProfiles : [
+                    { name: "Default" }, { name: "Minimal" }, { name: "Productivity" }, { name: "Full Dashboard" }, { name: "Gaming" }
+                  ]
+
+                  Rectangle {
+                    required property var modelData
+                    implicitWidth: presetPillText.implicitWidth + 16
+                    implicitHeight: 26
+                    radius: 13
+                    color: (modelData.name === root.activeProfile)
+                      ? Color.accent
+                      : (presetMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+
+                    Text {
+                      id: presetPillText
+                      anchors.centerIn: parent
+                      text: modelData.name
+                      font.family: Style.font.family
+                      font.pixelSize: 10
+                      font.weight: (modelData.name === root.activeProfile) ? Font.Bold : Font.Normal
+                      color: (modelData.name === root.activeProfile) ? Color.background : Color.foreground
+                    }
+
+                    MouseArea {
+                      id: presetMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: root.switchProfile(modelData.name)
+                    }
+                  }
+                }
+
+                // + New Preset Button
+                Rectangle {
+                  implicitWidth: newPresetText.implicitWidth + 14
+                  implicitHeight: 26
+                  radius: 13
+                  color: newPresetMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.06)
+                  border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+                  border.width: 1
+
+                  RowLayout {
+                    id: newPresetText
+                    anchors.centerIn: parent
+                    spacing: 4
+                    Text {
+                      text: "\uf067"
+                      font.family: Style.font.family
+                      font.pixelSize: 9
+                      color: Color.accent
+                    }
+                    Text {
+                      text: "Preset"
+                      font.family: Style.font.family
+                      font.pixelSize: 10
+                      font.weight: Font.DemiBold
+                      color: Color.foreground
+                    }
+                  }
+
+                  MouseArea {
+                    id: newPresetMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.saveNewProfileDialog()
+                  }
+                }
+              }
+
+              Rectangle {
+                width: 1
+                height: 18
+                color: Qt.rgba(1, 1, 1, 0.15)
+              }
+
+              // ⚙️ Appearance Preferences Button
+              Rectangle {
+                implicitWidth: prefsBtnText.implicitWidth + 18
+                implicitHeight: 28
+                radius: 14
+                color: prefsBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.1)
+                border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+                border.width: 1
+
+                RowLayout {
+                  id: prefsBtnText
+                  anchors.centerIn: parent
+                  spacing: Style.space(4)
+
+                  Text {
+                    text: "\uf013"
+                    font.family: Style.font.family
+                    font.pixelSize: 10
+                    color: Color.accent
+                  }
+                  Text {
+                    text: "Preferences"
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                    color: Color.foreground
+                  }
+                }
+
+                MouseArea {
+                  id: prefsBtnMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.preferencesOpen = true
+                }
               }
 
               // ➕ Add Widget Button (Opens Selector)
@@ -577,7 +951,9 @@ Item {
               property real defaultY: item && item.defaultY !== undefined ? item.defaultY : Style.space(64)
               property bool isDragging: item && item.isDragging ? true : false
 
-              readonly property var savedPos: (root.widgetPositions && root.widgetPositions[modelData.id]) ? root.widgetPositions[modelData.id] : null
+              readonly property string monitorName: desktopWindow.monitorName
+              readonly property var monitorPos: (root.monitorPositions && monitorName && root.monitorPositions[monitorName] && root.monitorPositions[monitorName][modelData.id]) ? root.monitorPositions[monitorName][modelData.id] : null
+              readonly property var savedPos: monitorPos ? monitorPos : ((root.widgetPositions && root.widgetPositions[modelData.id]) ? root.widgetPositions[modelData.id] : null)
               readonly property real targetX: (savedPos && savedPos.x !== undefined) ? savedPos.x : defaultX
               readonly property real targetY: (savedPos && savedPos.y !== undefined) ? savedPos.y : defaultY
               readonly property real savedWidth: (savedPos && savedPos.w !== undefined) ? savedPos.w : 0
@@ -605,6 +981,7 @@ Item {
                   item.rootRef = root
                   item.widgetId = modelData.id
                   item.loaderItem = widgetLoader
+                  item.monitorName = desktopWindow.monitorName
                   if (savedWidth > 0 && item.resizable) {
                     item.width = savedWidth
                   }
@@ -850,7 +1227,262 @@ Item {
                 }
               }
 
-              // 3. Save Layout
+              // 3. Layout Presets (Expandable Submenu)
+              Rectangle {
+                Layout.fillWidth: true
+                height: 32
+                radius: 8
+                color: presetsItemMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (root.presetsSubmenuOpen ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : "transparent")
+
+                RowLayout {
+                  anchors.fill: parent
+                  anchors.leftMargin: 10
+                  anchors.rightMargin: 10
+                  spacing: 10
+
+                  Item {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf0c9"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      color: Color.accent
+                    }
+                  }
+
+                  Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    text: "Layout Presets"
+                    font.family: Style.font.family
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    color: Color.foreground
+                    elide: Text.ElideRight
+                  }
+
+                  Text {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: root.presetsSubmenuOpen ? "\uf107" : "\uf105"
+                    font.family: Style.font.family
+                    font.pixelSize: 12
+                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+                  }
+                }
+
+                MouseArea {
+                  id: presetsItemMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.presetsSubmenuOpen = !root.presetsSubmenuOpen
+                }
+              }
+
+              // Presets Expanded List
+              ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 14
+                Layout.rightMargin: 4
+                visible: root.presetsSubmenuOpen
+                spacing: 2
+
+                Repeater {
+                  model: root.layoutProfiles.length > 0 ? root.layoutProfiles : [
+                    { name: "Default" }, { name: "Minimal" }, { name: "Productivity" }, { name: "Full Dashboard" }, { name: "Gaming" }
+                  ]
+
+                  Rectangle {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    height: 28
+                    radius: 6
+                    color: (modelData.name === root.activeProfile)
+                      ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                      : (rowMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 8
+                      anchors.rightMargin: 8
+                      spacing: 8
+
+                      Text {
+                        text: (modelData.name === root.activeProfile) ? "\uf00c" : "\uf111"
+                        font.family: Style.font.family
+                        font.pixelSize: (modelData.name === root.activeProfile) ? 10 : 6
+                        color: (modelData.name === root.activeProfile) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+                        Layout.preferredWidth: 12
+                        horizontalAlignment: Text.AlignHCenter
+                      }
+
+                      Text {
+                        Layout.fillWidth: true
+                        text: modelData.name
+                        font.family: Style.font.family
+                        font.pixelSize: 11
+                        font.weight: (modelData.name === root.activeProfile) ? Font.Bold : Font.Normal
+                        color: (modelData.name === root.activeProfile) ? Color.accent : Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
+
+                    MouseArea {
+                      id: rowMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        root.switchProfile(modelData.name)
+                      }
+                    }
+                  }
+                }
+
+                Rectangle {
+                  Layout.fillWidth: true
+                  height: 1
+                  color: Qt.rgba(1, 1, 1, 0.06)
+                  Layout.topMargin: 2
+                  Layout.bottomMargin: 2
+                }
+
+                // Save As New Preset
+                Rectangle {
+                  Layout.fillWidth: true
+                  height: 26
+                  radius: 6
+                  color: saveNewMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+                  RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    spacing: 8
+                    Text { text: "\uf067"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                    Text { text: "Save As New Preset..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
+                  }
+                  MouseArea {
+                    id: saveNewMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      desktopContextMenu.isOpen = false
+                      root.saveNewProfileDialog()
+                    }
+                  }
+                }
+
+                // Import Preset
+                Rectangle {
+                  Layout.fillWidth: true
+                  height: 26
+                  radius: 6
+                  color: importMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+                  RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    spacing: 8
+                    Text { text: "\uf093"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                    Text { text: "Import Preset JSON..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
+                  }
+                  MouseArea {
+                    id: importMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      desktopContextMenu.isOpen = false
+                      root.importProfile()
+                    }
+                  }
+                }
+
+                // Export Preset
+                Rectangle {
+                  Layout.fillWidth: true
+                  height: 26
+                  radius: 6
+                  color: exportMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+                  RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    spacing: 8
+                    Text { text: "\uf019"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                    Text { text: "Export Current Preset..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
+                  }
+                  MouseArea {
+                    id: exportMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      desktopContextMenu.isOpen = false
+                      root.exportCurrentProfile()
+                    }
+                  }
+                }
+              }
+
+              // 4. Widget Preferences Dialog
+              Rectangle {
+                Layout.fillWidth: true
+                height: 32
+                radius: 8
+                color: prefsMenuMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+
+                RowLayout {
+                  anchors.fill: parent
+                  anchors.leftMargin: 10
+                  anchors.rightMargin: 10
+                  spacing: 10
+
+                  Item {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf013"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      color: Color.accent
+                    }
+                  }
+
+                  Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    text: "Widget Preferences..."
+                    font.family: Style.font.family
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    color: Color.foreground
+                    elide: Text.ElideRight
+                  }
+                }
+
+                MouseArea {
+                  id: prefsMenuMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    desktopContextMenu.isOpen = false
+                    root.preferencesOpen = true
+                  }
+                }
+              }
+
+              // 5. Save Layout
               Rectangle {
                 Layout.fillWidth: true
                 height: 32
@@ -901,7 +1533,7 @@ Item {
                 }
               }
 
-              // 4. Revert / Reset Layout
+              // 6. Revert / Reset Layout
               Rectangle {
                 Layout.fillWidth: true
                 height: 32
@@ -1059,6 +1691,62 @@ Item {
                   }
                 }
               }
+            }
+          }
+        }
+
+        // ⚙️ Global Widget Preferences Dialog
+        PreferencesDialog {
+          id: prefsDialog
+          rootRef: root
+          isOpen: root.preferencesOpen
+          onIsOpenChanged: root.preferencesOpen = isOpen
+        }
+
+        // 🍞 Floating Profile Notification Toast
+        Rectangle {
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: Style.space(36)
+          anchors.horizontalCenter: parent.horizontalCenter
+          z: 650
+          visible: opacity > 0
+          opacity: root.profileNoticeVisible ? 1.0 : 0.0
+          implicitWidth: noticeRow.implicitWidth + Style.space(28)
+          implicitHeight: 38
+          radius: 19
+          color: Qt.rgba(18/255, 18/255, 26/255, 0.96)
+          border.color: Color.accent
+          border.width: 1.5
+
+          Behavior on opacity {
+            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+          }
+
+          layer.enabled: true
+          layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.85)
+            shadowBlur: 0.9
+            shadowVerticalOffset: 4
+          }
+
+          RowLayout {
+            id: noticeRow
+            anchors.centerIn: parent
+            spacing: Style.space(8)
+
+            Text {
+              text: "\uf058"
+              font.family: Style.font.family
+              font.pixelSize: 13
+              color: Color.accent
+            }
+            Text {
+              text: root.profileNoticeText
+              font.family: Style.font.family
+              font.pixelSize: 12
+              font.weight: Font.DemiBold
+              color: Color.foreground
             }
           }
         }

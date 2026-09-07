@@ -41,6 +41,16 @@ Item {
     onHeightChanged: requestPaint()
 
     Connections {
+      target: gridRoot
+      function onMinorGridSizeChanged() {
+        gridCanvas.requestPaint()
+      }
+      function onMajorGridSizeChanged() {
+        gridCanvas.requestPaint()
+      }
+    }
+
+    Connections {
       target: Color
       function onAccentChanged() {
         gridCanvas.requestPaint()
@@ -60,31 +70,35 @@ Item {
       var majorLineColor = Qt.rgba(c.r, c.g, c.b, 0.06)
 
       // 1. Major grid hairline guidelines (100px)
-      ctx.beginPath()
-      ctx.lineWidth = 1
-      ctx.strokeStyle = majorLineColor
-      for (var lx = gridRoot.majorGridSize; lx < w; lx += gridRoot.majorGridSize) {
-        ctx.moveTo(lx + 0.5, 0)
-        ctx.lineTo(lx + 0.5, h)
+      if (gridRoot.majorGridSize > 0) {
+        ctx.beginPath()
+        ctx.lineWidth = 1
+        ctx.strokeStyle = majorLineColor
+        for (var lx = gridRoot.majorGridSize; lx < w; lx += gridRoot.majorGridSize) {
+          ctx.moveTo(lx + 0.5, 0)
+          ctx.lineTo(lx + 0.5, h)
+        }
+        for (var ly = gridRoot.majorGridSize; ly < h; ly += gridRoot.majorGridSize) {
+          ctx.moveTo(0, ly + 0.5)
+          ctx.lineTo(w, ly + 0.5)
+        }
+        ctx.stroke()
       }
-      for (var ly = gridRoot.majorGridSize; ly < h; ly += gridRoot.majorGridSize) {
-        ctx.moveTo(0, ly + 0.5)
-        ctx.lineTo(w, ly + 0.5)
-      }
-      ctx.stroke()
 
-      // 2. Minor snap dots (20px)
-      ctx.fillStyle = minorDotColor
+      // 2. Minor snap dots
       var minorStep = gridRoot.minorGridSize
       var majorStep = gridRoot.majorGridSize
-      for (var gx = minorStep; gx < w; gx += minorStep) {
-        var isMajorX = (gx % majorStep === 0)
-        for (var gy = minorStep; gy < h; gy += minorStep) {
-          var isMajorY = (gy % majorStep === 0)
-          if (!isMajorX || !isMajorY) {
-            ctx.beginPath()
-            ctx.arc(gx, gy, 1.2, 0, 2 * Math.PI)
-            ctx.fill()
+      if (minorStep > 0 && majorStep > 0) {
+        ctx.fillStyle = minorDotColor
+        for (var gx = minorStep; gx < w; gx += minorStep) {
+          var isMajorX = (gx % majorStep === 0)
+          for (var gy = minorStep; gy < h; gy += minorStep) {
+            var isMajorY = (gy % majorStep === 0)
+            if (!isMajorX || !isMajorY) {
+              ctx.beginPath()
+              ctx.arc(gx, gy, 1.2, 0, 2 * Math.PI)
+              ctx.fill()
+            }
           }
         }
       }
