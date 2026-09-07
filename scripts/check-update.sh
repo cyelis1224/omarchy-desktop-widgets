@@ -215,8 +215,12 @@ cmd_check() {
   fi
 
   # STRICT UPDATE CHECK:
-  # An update is available ONLY if remote_version is strictly newer than local_version.
-  if version_gt "$remote_version" "$local_version"; then
+  # 1. An update is available ONLY if remote_version is strictly newer than local_version.
+  # 2. If the local commit is already identical to the remote commit (commits_behind == 0),
+  #    we are already on the target commit.
+  if [[ -n "$repo_dir" && -n "$local_commit" && -n "$remote_commit" && "$local_commit" == "$remote_commit" && "$commits_behind" -eq 0 ]]; then
+    update_available="false"
+  elif version_gt "$remote_version" "$local_version"; then
     update_available="true"
   else
     update_available="false"
