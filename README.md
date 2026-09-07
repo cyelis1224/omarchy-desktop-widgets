@@ -1,6 +1,6 @@
 # Omarchy Desktop Widgets
 
-A suite of high-performance, aesthetic desktop widgets for [Omarchy Linux](https://github.com/omarchy) running on Hyprland and Quickshell.
+A suite of high-performance, aesthetic desktop widgets for Omarchy Linux running on Hyprland and Quickshell.
 
 Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GPU hardware telemetry, an 84-day git activity radar, a Pomodoro timer, scratchpad notes, an ambient hero clock, MPRIS media controls, and multi-disk system monitors.
 
