@@ -2,6 +2,8 @@
 import sys
 import os
 import json
+import shutil
+import subprocess
 
 STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
@@ -15,6 +17,60 @@ BUILTIN_MIGRATION = {
     "PomodoroWidget.qml": "pomodoro",
     "QuickNotesWidget.qml": "quick_notes"
 }
+
+def pick_file_dialog(title="Import Custom QML Widget", extensions="qml", directory=False):
+    # 1. omarchy-file-select (Standard Omarchy XDG Desktop Portal FileChooser)
+    omarchy_select = shutil.which('omarchy-file-select')
+    if omarchy_select:
+        cmd = [omarchy_select, '--title', title]
+        if directory:
+            cmd.append('--directory')
+        elif extensions:
+            cmd.extend(['--extensions', extensions])
+        try:
+            p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+            if p.returncode == 0 and p.stdout.strip():
+                return p.stdout.strip().splitlines()[0]
+            elif p.returncode != 0:
+                return None
+        except Exception:
+            pass
+
+    # 2. zenity fallback
+    zenity = shutil.which('zenity')
+    if zenity:
+        cmd = [zenity, '--file-selection', f'--title={title}']
+        if directory:
+            cmd.append('--directory')
+        elif extensions:
+            ext_filter = ' '.join(f'*.{ext}' for ext in extensions.split())
+            cmd.append(f'--file-filter=Files ({ext_filter}) | {ext_filter}')
+        try:
+            p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+            if p.returncode == 0 and p.stdout.strip():
+                return p.stdout.strip()
+        except Exception:
+            pass
+
+    # 3. kdialog fallback
+    kdialog = shutil.which('kdialog')
+    if kdialog:
+        cmd = [kdialog, '--title', title]
+        if directory:
+            cmd.append('--getexistingdirectory')
+        elif extensions:
+            ext_filter = ' '.join(f'*.{ext}' for ext in extensions.split())
+            cmd.extend(['--getopenfilename', '.', ext_filter])
+        else:
+            cmd.extend(['--getopenfilename', '.'])
+        try:
+            p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+            if p.returncode == 0 and p.stdout.strip():
+                return p.stdout.strip()
+        except Exception:
+            pass
+
+    return None
 
 def migrate_custom_builtins(data):
     changed = False
@@ -208,11 +264,10 @@ def main():
         save_settings(settings)
         print(json.dumps({"status": "custom_removed", "id": target, "custom_widgets": customs}))
     elif action == 'pick_widget_dialog':
-        import subprocess
         try:
-            p = subprocess.run(['zenity', '--file-selection', '--title=Import Custom QML Widget', '--file-filter=QML Files (*.qml) | *.qml'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if p.returncode == 0 and p.stdout.strip():
-                selected_file = os.path.abspath(os.path.expanduser(p.stdout.strip()))
+            picked = pick_file_dialog(title='Import Custom QML Widget', extensions='qml')
+            if picked:
+                selected_file = os.path.abspath(os.path.expanduser(picked))
                 name = os.path.splitext(os.path.basename(selected_file))[0]
                 customs = settings.get('custom_widgets', [])
                 existing = next((c for c in customs if os.path.abspath(c.get('path', '')) == selected_file), None)

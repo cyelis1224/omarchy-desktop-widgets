@@ -226,19 +226,54 @@ def sync_remote_repo(url):
     return repo_cache_dir
 
 def pick_repo_dialog():
-    try:
-        p = subprocess.run(
-            ['zenity', '--file-selection', '--directory', '--title=Select Local Git Repository'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True
-        )
-        if p.returncode == 0 and p.stdout.strip():
-            chosen = p.stdout.strip()
-            if os.path.exists(os.path.join(chosen, '.git')):
-                return chosen
-    except Exception:
-        pass
+    omarchy_select = shutil.which('omarchy-file-select')
+    if omarchy_select:
+        try:
+            p = subprocess.run(
+                [omarchy_select, '--title', 'Select Local Git Repository', '--directory'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
+            if p.returncode == 0 and p.stdout.strip():
+                chosen = p.stdout.strip().splitlines()[0]
+                if os.path.exists(os.path.join(chosen, '.git')):
+                    return chosen
+        except Exception:
+            pass
+
+    zenity = shutil.which('zenity')
+    if zenity:
+        try:
+            p = subprocess.run(
+                ['zenity', '--file-selection', '--directory', '--title=Select Local Git Repository'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
+            if p.returncode == 0 and p.stdout.strip():
+                chosen = p.stdout.strip()
+                if os.path.exists(os.path.join(chosen, '.git')):
+                    return chosen
+        except Exception:
+            pass
+
+    kdialog = shutil.which('kdialog')
+    if kdialog:
+        try:
+            p = subprocess.run(
+                [kdialog, '--title', 'Select Local Git Repository', '--getexistingdirectory'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
+            if p.returncode == 0 and p.stdout.strip():
+                chosen = p.stdout.strip()
+                if os.path.exists(os.path.join(chosen, '.git')):
+                    return chosen
+        except Exception:
+            pass
+
     return None
 
 def pick_remote_url_dialog():

@@ -2,6 +2,7 @@
 import sys
 import os
 import json
+import shutil
 import subprocess
 import urllib.parse
 
@@ -41,17 +42,50 @@ def save_settings(settings):
         pass
 
 def pick_folder_dialog():
-    try:
-        p = subprocess.run(
-            ['zenity', '--file-selection', '--directory', '--title=Select Photo Gallery Folder'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True
-        )
-        if p.returncode == 0 and p.stdout.strip():
-            return p.stdout.strip()
-    except Exception:
-        pass
+    omarchy_select = shutil.which('omarchy-file-select')
+    if omarchy_select:
+        try:
+            p = subprocess.run(
+                [omarchy_select, '--title', 'Select Photo Gallery Folder', '--directory'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
+            if p.returncode == 0 and p.stdout.strip():
+                return p.stdout.strip().splitlines()[0]
+            elif p.returncode != 0:
+                return None
+        except Exception:
+            pass
+
+    zenity = shutil.which('zenity')
+    if zenity:
+        try:
+            p = subprocess.run(
+                [zenity, '--file-selection', '--directory', '--title=Select Photo Gallery Folder'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
+            if p.returncode == 0 and p.stdout.strip():
+                return p.stdout.strip()
+        except Exception:
+            pass
+
+    kdialog = shutil.which('kdialog')
+    if kdialog:
+        try:
+            p = subprocess.run(
+                [kdialog, '--title', 'Select Photo Gallery Folder', '--getexistingdirectory'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
+            if p.returncode == 0 and p.stdout.strip():
+                return p.stdout.strip()
+        except Exception:
+            pass
+
     return None
 
 def find_images(target_dir):

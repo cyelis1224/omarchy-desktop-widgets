@@ -5,7 +5,8 @@ import os
 import sys
 import subprocess
 
-CACHE_FILE = "/tmp/omarchy_net_stats.json"
+runtime_dir = os.environ.get('XDG_RUNTIME_DIR') or '/tmp'
+CACHE_FILE = os.path.join(runtime_dir, f'omarchy_net_stats_{os.getuid()}.json')
 STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
 LEGACY_CONFIG = os.path.expanduser('~/.config/omarchy/plugins/dagyr.desktop-widgets/settings.json')
@@ -56,15 +57,19 @@ def read_net_dev():
         return stats
     try:
         with open('/proc/net/dev', 'r') as f:
-            lines = f.readlines()
-        for line in lines[2:]:
-            parts = line.strip().split()
-            if not parts:
-                continue
-            iface = parts[0].rstrip(':')
-            rx_bytes = int(parts[1])
-            tx_bytes = int(parts[9])
-            stats[iface] = {'rx': rx_bytes, 'tx': tx_bytes}
+            for line in f:
+                if ':' not in line:
+                    continue
+                try:
+                    iface, data = line.split(':', 1)
+                    iface = iface.strip()
+                    cols = data.split()
+                    if len(cols) >= 9:
+                        rx_bytes = int(cols[0])
+                        tx_bytes = int(cols[8])
+                        stats[iface] = {'rx': rx_bytes, 'tx': tx_bytes}
+                except Exception:
+                    continue
     except Exception:
         pass
     return stats
@@ -114,7 +119,7 @@ def get_primary_iface(stats, ip_data):
                 return iface
         return 'lo'
 
-    return best_iface or 'wlan0'
+    return best_iface or (next(iter(stats.keys())) if stats else 'lo')
 
 def build_available_devices(stats, ip_data, active_iface, selected_iface):
     """Builds a structured list of devices for the QML popout menu."""
@@ -263,10 +268,13 @@ def main():
     else:
         monitored_iface = selected_iface
 
+    if monitored_iface not in current_stats and current_stats:
+        monitored_iface = next(iter(current_stats.keys()))
+
     available_devices = build_available_devices(current_stats, ip_data, auto_primary, selected_iface)
 
-    curr_rx = current_stats[monitored_iface]['rx']
-    curr_tx = current_stats[monitored_iface]['tx']
+    curr_rx = current_stats[monitored_iface]['rx'] if monitored_iface in current_stats else 0
+    curr_tx = current_stats[monitored_iface]['tx'] if monitored_iface in current_stats else 0
 
     prev_data = {}
     if os.path.exists(CACHE_FILE):

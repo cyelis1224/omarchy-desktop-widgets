@@ -317,8 +317,7 @@ WidgetCard {
 
   readonly property string disksScriptPath: {
     var u = Qt.resolvedUrl("../get-disks.sh").toString()
-    if (u.indexOf("file://") === 0) return u.substring(7)
-    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-disks.sh"
+    return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
   Process {

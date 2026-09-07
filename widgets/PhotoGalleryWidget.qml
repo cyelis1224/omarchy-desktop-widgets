@@ -86,8 +86,7 @@ Item {
 
   readonly property string photosScriptPath: {
     var u = Qt.resolvedUrl("../get-photos.sh").toString()
-    if (u.indexOf("file://") === 0) return u.substring(7)
-    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-photos.sh"
+    return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
   function selectFolder(folderPath) {
@@ -168,7 +167,7 @@ Item {
 
   function shufflePhotos() {
     if (!photoList || photoList.length <= 1) return
-    var arr = photoList.slice()
+    var arr = [].concat(photoList)
     for (var i = arr.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1))
       var temp = arr[i]
@@ -181,9 +180,8 @@ Item {
 
   function openPicturesFolder() {
     var target = galleryWidgetRoot.photoFolder
-    if (!target || target === "ALL" || target === "pick_dialog") target = "/home/dagyr/Pictures"
-    if (target.indexOf("~") === 0) target = target.replace("~", "/home/dagyr")
-    Quickshell.execDetached(["xdg-open", target])
+    if (!target || target === "ALL" || target === "pick_dialog") target = "~/Pictures"
+    Quickshell.execDetached(["bash", "-c", "xdg-open \"${1/#~/$HOME}\"", "_", target])
   }
 
   // Auto-cycle photo timer

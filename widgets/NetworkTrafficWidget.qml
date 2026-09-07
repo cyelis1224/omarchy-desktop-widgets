@@ -64,8 +64,7 @@ WidgetCard {
 
   readonly property string netScriptPath: {
     var u = Qt.resolvedUrl("../get-network.sh").toString()
-    if (u.indexOf("file://") === 0) return u.substring(7)
-    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-network.sh"
+    return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
   function selectNetworkDevice(devId) {

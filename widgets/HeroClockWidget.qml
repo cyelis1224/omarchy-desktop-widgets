@@ -99,8 +99,7 @@ Item {
   property string weatherIcon: "\uf185"
   readonly property string weatherScriptPath: {
     var u = Qt.resolvedUrl("../get-weather.sh").toString()
-    if (u.indexOf("file://") === 0) return u.substring(7)
-    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-weather.sh"
+    return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
   Process {

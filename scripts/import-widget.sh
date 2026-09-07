@@ -2,7 +2,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MANAGE_SCRIPT="/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh"
+MANAGE_SCRIPT="${OMARCHY_DESKTOP_WIDGETS_DIR:-$HOME/.config/omarchy/plugins/dagyr.desktop-widgets}/manage-positions.sh"
+if [[ ! -f "$MANAGE_SCRIPT" ]]; then
+  MANAGE_SCRIPT="$SCRIPT_DIR/../manage-positions.sh"
+fi
 
 if [[ $# -eq 0 ]]; then
   echo "Usage: $0 <path_to_widget.qml> [Display Name]"

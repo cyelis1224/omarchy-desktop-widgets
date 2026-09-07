@@ -29,8 +29,7 @@ BarWidget {
 
   readonly property string checkerScriptPath: {
     var u = Qt.resolvedUrl("scripts/check-update.sh").toString()
-    if (u.indexOf("file://") === 0) return u.substring(7)
-    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/scripts/check-update.sh"
+    return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
   function refresh() {

@@ -56,8 +56,7 @@ WidgetCard {
 
   readonly property string scriptPath: {
     var u = Qt.resolvedUrl("git_pulse.py").toString()
-    if (u.indexOf("file://") === 0) return u.substring(7)
-    return "/home/dagyr/Projects/desktop-widgets/widgets/git-activity/git_pulse.py"
+    return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
   function updateFromGitData(data) {
