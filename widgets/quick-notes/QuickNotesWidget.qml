@@ -422,7 +422,7 @@ WidgetCard {
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: {
-            Quickshell.execDetached(["xdg-open", "/home/dagyr/Projects/desktop-widgets/widgets/quick-notes/notes.md"])
+            Quickshell.execDetached(["xdg-open", "/home/dagyr/.local/state/omarchy/dagyr.desktop-widgets/notes.md"])
             notesWidgetRoot.contextMenuOpen = false
           }
         }

@@ -3,9 +3,9 @@ import sys
 import os
 import json
 
-DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-DATA_FILE = os.path.join(DIR_PATH, "notes.json")
-MD_FILE = os.path.join(DIR_PATH, "notes.md")
+STATE_DIR = os.path.expanduser("~/.local/state/omarchy/dagyr.desktop-widgets")
+DATA_FILE = os.path.join(STATE_DIR, "notes.json")
+MD_FILE = os.path.join(STATE_DIR, "notes.md")
 
 DEFAULT_DATA = {
     "todos": [
@@ -23,6 +23,7 @@ DEFAULT_DATA = {
 }
 
 def load_data():
+    os.makedirs(STATE_DIR, exist_ok=True)
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -49,11 +50,22 @@ def load_data():
                 return data
         except Exception:
             pass
+    # Legacy migration check
+    legacy_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "notes.json")
+    if os.path.exists(legacy_file):
+        try:
+            with open(legacy_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                save_data(data)
+                return data
+        except Exception:
+            pass
     save_data(DEFAULT_DATA)
     return DEFAULT_DATA
 
 def sync_markdown(data):
     try:
+        os.makedirs(STATE_DIR, exist_ok=True)
         lines = ["# Quick Notes & Tasks\n", "## Tasks\n"]
         for t in data.get("todos", []):
             mark = "x" if t.get("done") else " "
@@ -72,6 +84,7 @@ def sync_markdown(data):
 
 def save_data(data):
     try:
+        os.makedirs(STATE_DIR, exist_ok=True)
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         sync_markdown(data)
