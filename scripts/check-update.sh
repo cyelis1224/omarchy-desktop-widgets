@@ -56,6 +56,15 @@ cmd_check() {
   if [[ -f "$PLUGIN_DIR/manifest.json" ]]; then
     local_version=$(jq -r '.version // "1.0.0"' "$PLUGIN_DIR/manifest.json" 2>/dev/null || echo "1.0.0")
   fi
+  if [[ -d "$DEV_DIR" && -f "$DEV_DIR/manifest.json" ]]; then
+    local dev_ver
+    dev_ver=$(jq -r '.version // empty' "$DEV_DIR/manifest.json" 2>/dev/null || true)
+    if [[ -n "$dev_ver" && "$dev_ver" != "$local_version" ]]; then
+      if version_gt "$local_version" "$dev_ver"; then
+        local_version="$dev_ver"
+      fi
+    fi
+  fi
 
   local repo_dir
   repo_dir=$(find_repo_dir)
@@ -218,10 +227,10 @@ cmd_check() {
   # 1. An update is available ONLY if remote_version is strictly newer than local_version.
   # 2. If the local commit is already identical to the remote commit (commits_behind == 0),
   #    we are already on the target commit.
-  if [[ -n "$repo_dir" && -n "$local_commit" && -n "$remote_commit" && "$local_commit" == "$remote_commit" && "$commits_behind" -eq 0 ]]; then
-    update_available="false"
-  elif version_gt "$remote_version" "$local_version"; then
+  if version_gt "$remote_version" "$local_version"; then
     update_available="true"
+  elif [[ -n "$repo_dir" && -n "$local_commit" && -n "$remote_commit" && "$local_commit" == "$remote_commit" && "$commits_behind" -eq 0 ]]; then
+    update_available="false"
   else
     update_available="false"
   fi
