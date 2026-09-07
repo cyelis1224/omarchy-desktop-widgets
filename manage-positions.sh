@@ -4,6 +4,7 @@ import os
 import json
 import shutil
 import subprocess
+import copy
 
 STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
@@ -290,11 +291,51 @@ def main():
                 print(json.dumps({"status": "cancelled"}))
         except Exception as e:
             print(json.dumps({"status": "error", "error": str(e)}))
-    elif action == 'reset':
-        settings['positions'] = {}
-        settings['enabled_widgets'] = DEFAULT_ENABLED
+    elif action == 'save_layout_backup':
+        backup = {
+            'positions': copy.deepcopy(settings.get('positions', {})),
+            'enabled_widgets': list(settings.get('enabled_widgets', DEFAULT_ENABLED)),
+            'widget_settings': copy.deepcopy(settings.get('widget_settings', {}))
+        }
+        settings['saved_layout'] = backup
         save_settings(settings)
-        print(json.dumps({"status": "reset", "positions": {}, "enabled_widgets": DEFAULT_ENABLED}))
+        print(json.dumps({
+            "status": "layout_backup_saved",
+            "has_saved_layout": True,
+            "saved_layout": backup
+        }))
+    elif action in ('reset', 'revert_layout'):
+        saved = settings.get('saved_layout')
+        if saved and isinstance(saved, dict) and ('positions' in saved or 'enabled_widgets' in saved):
+            settings['positions'] = copy.deepcopy(saved.get('positions', {}))
+            settings['enabled_widgets'] = list(saved.get('enabled_widgets', DEFAULT_ENABLED))
+            if 'widget_settings' in saved:
+                settings['widget_settings'] = copy.deepcopy(saved.get('widget_settings', {}))
+            reverted = True
+        else:
+            settings['positions'] = {}
+            settings['enabled_widgets'] = list(DEFAULT_ENABLED)
+            reverted = False
+        save_settings(settings)
+        print(json.dumps({
+            "status": "reset",
+            "reverted_to_saved": reverted,
+            "has_saved_layout": bool(saved),
+            "positions": settings['positions'],
+            "enabled_widgets": settings['enabled_widgets'],
+            "widget_settings": settings.get('widget_settings', {})
+        }))
+    elif action == 'reset_factory':
+        settings.pop('saved_layout', None)
+        settings['positions'] = {}
+        settings['enabled_widgets'] = list(DEFAULT_ENABLED)
+        save_settings(settings)
+        print(json.dumps({
+            "status": "factory_reset",
+            "has_saved_layout": False,
+            "positions": {},
+            "enabled_widgets": list(DEFAULT_ENABLED)
+        }))
     else: # load
         print(json.dumps({
             "status": "ok",
@@ -303,7 +344,8 @@ def main():
             "custom_widgets": settings.get('custom_widgets', []),
             "gallery_folder": settings.get('gallery_folder', 'ALL'),
             "network_iface": settings.get('network_iface', 'AUTO'),
-            "widget_settings": settings.get('widget_settings', {})
+            "widget_settings": settings.get('widget_settings', {}),
+            "has_saved_layout": bool(settings.get('saved_layout'))
         }))
 
 if __name__ == '__main__':

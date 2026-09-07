@@ -62,6 +62,16 @@ Item {
 
   readonly property string manageScriptPath: Qt.resolvedUrl("manage-positions.sh").toString().replace(/^file:\/\//, "")
 
+  property bool hasSavedLayout: false
+  property bool layoutSavedFeedback: false
+
+  Timer {
+    id: savedFeedbackTimer
+    interval: 2200
+    repeat: false
+    onTriggered: root.layoutSavedFeedback = false
+  }
+
   Process {
     id: posProc
     command: [root.manageScriptPath, "load"]
@@ -74,6 +84,7 @@ Item {
           if (Array.isArray(res.enabled_widgets)) root.enabledWidgets = res.enabled_widgets
           if (Array.isArray(res.custom_widgets)) widgetRegistry.customWidgets = res.custom_widgets
           if (res.widget_settings) root.widgetSettings = res.widget_settings
+          if (res.has_saved_layout !== undefined) root.hasSavedLayout = res.has_saved_layout
         } catch (e) {}
       }
     }
@@ -131,10 +142,48 @@ Item {
     Quickshell.execDetached([root.manageScriptPath, "toggle_widget", id, enable ? "true" : "false"])
   }
 
+  function saveCurrentLayout() {
+    root.layoutSavedFeedback = true
+    savedFeedbackTimer.restart()
+    saveBackupProc.command = [root.manageScriptPath, "save_layout_backup"]
+    if (!saveBackupProc.running) saveBackupProc.running = true
+  }
+
   function resetWidgetPositions() {
-    root.widgetPositions = ({})
-    root.enabledWidgets = ["clock", "gallery", "network", "media", "system"]
-    Quickshell.execDetached([root.manageScriptPath, "reset"])
+    resetProc.command = [root.manageScriptPath, "reset"]
+    if (!resetProc.running) resetProc.running = true
+  }
+
+  Process {
+    id: saveBackupProc
+    command: [root.manageScriptPath, "save_layout_backup"]
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var res = JSON.parse(String(line).trim())
+          if (res.has_saved_layout !== undefined) root.hasSavedLayout = res.has_saved_layout
+          else if (res.status === "layout_backup_saved") root.hasSavedLayout = true
+        } catch (e) {}
+      }
+    }
+  }
+
+  Process {
+    id: resetProc
+    command: [root.manageScriptPath, "reset"]
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var res = JSON.parse(String(line).trim())
+          if (res.positions !== undefined) root.widgetPositions = res.positions
+          if (Array.isArray(res.enabled_widgets)) root.enabledWidgets = res.enabled_widgets
+          if (res.widget_settings) root.widgetSettings = res.widget_settings
+          if (res.has_saved_layout !== undefined) root.hasSavedLayout = res.has_saved_layout
+        } catch (e) {}
+      }
+    }
   }
 
   function importCustomWidget() {
@@ -437,6 +486,49 @@ Item {
                   hoverEnabled: true
                   cursorShape: Qt.PointingHandCursor
                   onClicked: root.selectorOpen = true
+                }
+              }
+
+              // 💾 Save Layout Button
+              Rectangle {
+                implicitWidth: saveBtnText.implicitWidth + 22
+                implicitHeight: 28
+                radius: 14
+                color: root.layoutSavedFeedback
+                  ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+                  : (saveMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.1))
+                border.color: root.layoutSavedFeedback
+                  ? Color.accent
+                  : (saveMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6) : Qt.rgba(1, 1, 1, 0.18))
+                border.width: 1
+
+                RowLayout {
+                  id: saveBtnText
+                  anchors.centerIn: parent
+                  spacing: Style.space(5)
+
+                  Text {
+                    text: root.layoutSavedFeedback ? "\uf00c" : "\uf0c7"
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    color: root.layoutSavedFeedback ? Color.accent : (saveMouse.containsMouse ? Color.accent : Color.foreground)
+                  }
+
+                  Text {
+                    text: root.layoutSavedFeedback ? "Layout Saved!" : "Save Layout"
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                    color: root.layoutSavedFeedback ? Color.accent : Color.foreground
+                  }
+                }
+
+                MouseArea {
+                  id: saveMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.saveCurrentLayout()
                 }
               }
 
@@ -758,7 +850,58 @@ Item {
                 }
               }
 
-              // 3. Reset Layout
+              // 3. Save Layout
+              Rectangle {
+                Layout.fillWidth: true
+                height: 32
+                radius: 8
+                color: saveDesktopLayoutMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+
+                RowLayout {
+                  anchors.fill: parent
+                  anchors.leftMargin: 10
+                  anchors.rightMargin: 10
+                  spacing: 10
+
+                  Item {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf0c7"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      color: saveDesktopLayoutMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                    }
+                  }
+
+                  Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    text: "Save Current Layout"
+                    font.family: Style.font.family
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    color: saveDesktopLayoutMouse.containsMouse ? Color.accent : Color.foreground
+                    elide: Text.ElideRight
+                  }
+                }
+
+                MouseArea {
+                  id: saveDesktopLayoutMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    desktopContextMenu.isOpen = false
+                    root.saveCurrentLayout()
+                  }
+                }
+              }
+
+              // 4. Revert / Reset Layout
               Rectangle {
                 Layout.fillWidth: true
                 height: 32
@@ -788,7 +931,7 @@ Item {
                   Text {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
-                    text: "Reset Widget Layout"
+                    text: root.hasSavedLayout ? "Revert to Saved Layout" : "Reset Widget Layout"
                     font.family: Style.font.family
                     font.pixelSize: 12
                     font.weight: Font.DemiBold

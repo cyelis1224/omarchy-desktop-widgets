@@ -1503,7 +1503,8 @@ Item {
           { label: "Choose Custom Folder...", icon: "\uf07c", value: "pick_dialog" },
           { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
           { label: "Open Widget Selector (+)", icon: "\uf067", value: "OPEN_SELECTOR" },
-          { label: "Reset Widgets Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
+          { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
+          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widgets Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
         ]
 
         Rectangle {
@@ -1511,7 +1512,7 @@ Item {
           Layout.fillWidth: true
           implicitHeight: 26
           radius: 6
-          readonly property bool isActionBtn: modelData.value === "RESET_LAYOUT" || modelData.value === "TOGGLE_EDIT_MODE" || modelData.value === "OPEN_SELECTOR"
+          readonly property bool isActionBtn: modelData.value === "RESET_LAYOUT" || modelData.value === "SAVE_LAYOUT" || modelData.value === "TOGGLE_EDIT_MODE" || modelData.value === "OPEN_SELECTOR"
           readonly property bool isSelected: !isActionBtn && (galleryWidgetRoot.photoFolder === modelData.value || (modelData.value === "pick_dialog" && galleryWidgetRoot.photoFolder !== "ALL" && !galleryWidgetRoot.photoFolder.startsWith("~/.config") && !galleryWidgetRoot.photoFolder.startsWith("~/Wallpapers") && !galleryWidgetRoot.photoFolder.startsWith("~/Pictures")))
           color: optMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : "transparent")
 
@@ -1566,6 +1567,8 @@ Item {
                 if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode
               } else if (modelData.value === "OPEN_SELECTOR") {
                 if (rootRef) rootRef.selectorOpen = true
+              } else if (modelData.value === "SAVE_LAYOUT") {
+                if (rootRef && rootRef.saveCurrentLayout) rootRef.saveCurrentLayout()
               } else if (modelData.value === "RESET_LAYOUT") {
                 if (rootRef) rootRef.resetWidgetPositions()
               } else {

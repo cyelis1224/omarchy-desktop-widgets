@@ -659,7 +659,8 @@ Item {
         model: [
           { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
           { label: "Open Widget Selector (+)", icon: "\uf067", value: "OPEN_SELECTOR" },
-          { label: "Reset Widgets Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
+          { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
+          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widgets Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
         ]
 
         Rectangle {
@@ -712,6 +713,8 @@ Item {
                 if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode
               } else if (modelData.value === "OPEN_SELECTOR") {
                 if (rootRef) rootRef.selectorOpen = true
+              } else if (modelData.value === "SAVE_LAYOUT") {
+                if (rootRef && rootRef.saveCurrentLayout) rootRef.saveCurrentLayout()
               } else if (modelData.value === "RESET_LAYOUT") {
                 if (rootRef) rootRef.resetWidgetPositions()
               }
