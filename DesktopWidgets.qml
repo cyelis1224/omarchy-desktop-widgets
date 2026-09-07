@@ -45,8 +45,11 @@ Item {
     auto_hide_mode: "tiled",
     shadows_enabled: true,
     animations_enabled: true,
-    blur_enabled: false
+    blur_enabled: false,
+    screensaver_enabled: false,
+    screensaver_timeout_mins: 5
   })
+  property int preferencesTab: 0
   property bool surfaceRemapActive: true
 
   Timer {
@@ -414,6 +417,39 @@ Item {
     root.manualHide = false
   }
 
+  function isMediaPlaying() {
+    try {
+      var players = Mpris.players ? Mpris.players.values : []
+      for (var i = 0; i < players.length; i++) {
+        if (players[i].playbackState === MprisPlaybackState.Playing) return true
+      }
+    } catch (e) {}
+    return false
+  }
+
+  function triggerScreensaver(force) {
+    if (!force) {
+      if (!root.appearance || !root.appearance.screensaver_enabled) return "disabled"
+      if (root.overlayActive || root.preferencesOpen) return "already_open"
+      if (root.isMediaPlaying()) return "media_inhibited"
+    }
+
+    root.overlayActive = true
+    return "activated"
+  }
+
+  IdleMonitor {
+    id: screensaverIdleMonitor
+    enabled: (root.appearance && root.appearance.screensaver_enabled === true)
+    timeout: Math.max(30, ((root.appearance && root.appearance.screensaver_timeout_mins) ? root.appearance.screensaver_timeout_mins : 5) * 60)
+    respectInhibitors: false
+    onIsIdleChanged: {
+      if (isIdle) {
+        root.triggerScreensaver(false)
+      }
+    }
+  }
+
   function handleToggleOrJump() {
     if (root.overlayActive) {
       root.closeOverlay()
@@ -450,22 +486,71 @@ Item {
     }
 
     function menu() {
-      root.menuOpenRequested = !root.menuOpenRequested
+      root.menuOpenRequested = true
     }
 
-    function preferences() {
-      root.preferencesOpen = !root.preferencesOpen
+    function preferences(tab: int) {
+      if (tab !== undefined && tab >= 0) {
+        root.preferencesTab = tab
+        root.preferencesOpen = true
+      } else {
+        root.preferencesOpen = !root.preferencesOpen
+      }
     }
 
     function toggleBlur(): string {
       var cur = (root.appearance && root.appearance.blur_enabled) ? true : false
       root.updateAppearance("blur_enabled", !cur)
-      return "blur set to " + (!cur)
+      return !cur ? "blur enabled" : "blur disabled"
     }
 
     function profile(name: string): string {
       if (name) root.switchProfile(name)
       return "switched to " + name
+    }
+
+    function screensaver(): string {
+      return root.triggerScreensaver(false)
+    }
+
+    function triggerScreensaver(): string {
+      return root.triggerScreensaver(false)
+    }
+
+    function triggerScreensaverForce(): string {
+      return root.triggerScreensaver(true)
+    }
+
+    function debugScreensaver(): string {
+      var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
+      var players = Mpris.players ? Mpris.players.values : []
+      var playerList = []
+      for (var i = 0; i < players.length; i++) {
+        var isPlaying = (players[i].playbackState === MprisPlaybackState.Playing)
+        playerList.push((players[i].identity || "unknown") + " (" + (isPlaying ? "PLAYING" : "paused/stopped") + ")")
+      }
+      return JSON.stringify({
+        screensaver_enabled: (root.appearance && root.appearance.screensaver_enabled),
+        screensaver_timeout_mins: (root.appearance && root.appearance.screensaver_timeout_mins),
+        overlayActive: root.overlayActive,
+        preferencesOpen: root.preferencesOpen,
+        mediaPlaying: root.isMediaPlaying(),
+        players: playerList,
+        workspaceId: ws ? ws.id : null,
+        hasWindows: !!(ws && ws.toplevels && ws.toplevels.values.length > 0),
+        idleMonitorTimeout: screensaverIdleMonitor.timeout,
+        idleMonitorIsIdle: screensaverIdleMonitor.isIdle
+      }, null, 2)
+    }
+
+    function setAppearance(key: string, val: string): string {
+      try {
+        var parsed = JSON.parse(val)
+        root.updateAppearance(key, parsed)
+      } catch (e) {
+        root.updateAppearance(key, val)
+      }
+      return key + " set to " + val
     }
   }
 
@@ -493,7 +578,7 @@ Item {
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "omarchy-desktop-shade"
-        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.layer: WlrLayer.Top
         visible: root.overlayActive || root.preferencesOpen
 
         Rectangle {
@@ -1735,6 +1820,7 @@ Item {
           id: prefsDialog
           rootRef: root
           isOpen: root.preferencesOpen
+          activeTab: root.preferencesTab
           onCloseRequested: root.preferencesOpen = false
         }
 

@@ -31,6 +31,11 @@ Item {
         })
       }
     }
+    function onPreferencesTabChanged() {
+      if (rootRef && rootRef.preferencesTab !== undefined) {
+        prefsDialogRoot.activeTab = rootRef.preferencesTab
+      }
+    }
   }
 
   readonly property real curOpacity: (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85
@@ -38,6 +43,8 @@ Item {
   readonly property bool curShadows: (rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true
   readonly property bool curAnimations: (rootRef && rootRef.appearance && rootRef.appearance.animations_enabled !== undefined) ? rootRef.appearance.animations_enabled : true
   readonly property bool curBlur: (rootRef && rootRef.appearance && rootRef.appearance.blur_enabled !== undefined) ? rootRef.appearance.blur_enabled : false
+  readonly property bool curScreensaver: (rootRef && rootRef.appearance && rootRef.appearance.screensaver_enabled !== undefined) ? rootRef.appearance.screensaver_enabled : false
+  readonly property int curScreensaverTimeout: (rootRef && rootRef.appearance && rootRef.appearance.screensaver_timeout_mins !== undefined) ? rootRef.appearance.screensaver_timeout_mins : 5
   readonly property int curGridSnap: (rootRef && rootRef.appearance && rootRef.appearance.grid_snap !== undefined) ? rootRef.appearance.grid_snap : 20
   readonly property string curAutoHide: (rootRef && rootRef.appearance && rootRef.appearance.auto_hide_mode) ? rootRef.appearance.auto_hide_mode : "tiled"
 
@@ -289,6 +296,42 @@ Item {
               hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
               onClicked: prefsDialogRoot.activeTab = 2
+            }
+          }
+
+          // Tab 3: Screensaver
+          Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            radius: 8
+            color: prefsDialogRoot.activeTab === 3 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (tab3Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            border.color: prefsDialogRoot.activeTab === 3 ? Color.accent : "transparent"
+            border.width: 1
+
+            RowLayout {
+              anchors.centerIn: parent
+              spacing: 6
+              Text {
+                text: "\uf108"
+                font.family: Style.font.family
+                font.pixelSize: 12
+                color: prefsDialogRoot.activeTab === 3 ? Color.accent : Color.foreground
+              }
+              Text {
+                text: "Screensaver"
+                font.family: Style.font.family
+                font.pixelSize: 12
+                font.weight: prefsDialogRoot.activeTab === 3 ? Font.Bold : Font.Normal
+                color: prefsDialogRoot.activeTab === 3 ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+              }
+            }
+
+            MouseArea {
+              id: tab3Mouse
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: prefsDialogRoot.activeTab = 3
             }
           }
         }
@@ -997,6 +1040,312 @@ Item {
             }
           }
         }
+
+        // =====================================================================
+        // TAB 3: SCREENSAVER MODE
+        // =====================================================================
+        ColumnLayout {
+          anchors.fill: parent
+          visible: prefsDialogRoot.activeTab === 3
+          spacing: Style.space(12)
+
+          // 1. Master Screensaver Toggle Card
+          Rectangle {
+            Layout.fillWidth: true
+            height: 60
+            radius: 12
+            color: Qt.rgba(0, 0, 0, 0.32)
+            border.color: prefsDialogRoot.curScreensaver ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5) : Qt.rgba(1, 1, 1, 0.08)
+            border.width: 1
+
+            RowLayout {
+              anchors.fill: parent
+              anchors.margins: 14
+              spacing: 12
+
+              Rectangle {
+                width: 36
+                height: 36
+                radius: 10
+                color: prefsDialogRoot.curScreensaver ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+
+                Text {
+                  anchors.centerIn: parent
+                  text: "\uf108"
+                  font.family: Style.font.family
+                  font.pixelSize: 16
+                  color: prefsDialogRoot.curScreensaver ? Color.accent : Color.foreground
+                }
+              }
+
+              ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                Text {
+                  text: "Screensaver Mode"
+                  font.family: Style.font.family
+                  font.pixelSize: 13
+                  font.weight: Font.DemiBold
+                  color: Color.foreground
+                }
+                Text {
+                  text: "Elevates desktop widgets over active windows during user inactivity"
+                  font.family: Style.font.family
+                  font.pixelSize: 10
+                  color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                }
+              }
+
+              Rectangle {
+                width: 44
+                height: 24
+                radius: 12
+                color: prefsDialogRoot.curScreensaver ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
+                border.color: prefsDialogRoot.curScreensaver ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                border.width: 1
+                Behavior on color { ColorAnimation { duration: 160 } }
+
+                Rectangle {
+                  width: 18
+                  height: 18
+                  radius: 9
+                  anchors.verticalCenter: parent.verticalCenter
+                  x: prefsDialogRoot.curScreensaver ? (parent.width - width - 3) : 3
+                  color: "#ffffff"
+                  Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                }
+
+                MouseArea {
+                  anchors.fill: parent
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("screensaver_enabled", !prefsDialogRoot.curScreensaver)
+                }
+              }
+            }
+          }
+
+          // 2. Inactivity Timeout Selection
+          ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.space(6)
+            opacity: prefsDialogRoot.curScreensaver ? 1.0 : 0.45
+
+            RowLayout {
+              Layout.fillWidth: true
+              Text {
+                text: "Activation Inactivity Delay"
+                font.family: Style.font.family
+                font.pixelSize: 12
+                font.weight: Font.DemiBold
+                color: Color.foreground
+              }
+              Item { Layout.fillWidth: true }
+              Text {
+                text: prefsDialogRoot.curScreensaverTimeout + " minute" + (prefsDialogRoot.curScreensaverTimeout === 1 ? "" : "s")
+                font.family: Style.font.family
+                font.pixelSize: 11
+                font.bold: true
+                color: Color.accent
+              }
+            }
+
+            // Timeout Preset Chips
+            RowLayout {
+              Layout.fillWidth: true
+              spacing: Style.space(6)
+
+              Repeater {
+                model: [
+                  { label: "1 min", val: 1 },
+                  { label: "2 min", val: 2 },
+                  { label: "5 min (Default)", val: 5 },
+                  { label: "10 min", val: 10 },
+                  { label: "15 min", val: 15 }
+                ]
+
+                Rectangle {
+                  Layout.fillWidth: true
+                  height: 30
+                  radius: 8
+                  readonly property bool isSelected: prefsDialogRoot.curScreensaverTimeout === modelData.val
+                  color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.30) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25))
+                  border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.08)
+                  border.width: isSelected ? 1.5 : 1
+
+                  Text {
+                    anchors.centerIn: parent
+                    text: modelData.label
+                    font.family: Style.font.family
+                    font.pixelSize: 10
+                    font.weight: isSelected ? Font.Bold : Font.Normal
+                    color: isSelected ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
+                  }
+
+                  MouseArea {
+                    id: chipMouse
+                    anchors.fill: parent
+                    hoverEnabled: prefsDialogRoot.curScreensaver
+                    cursorShape: prefsDialogRoot.curScreensaver ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: if (prefsDialogRoot.curScreensaver && prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("screensaver_timeout_mins", modelData.val)
+                  }
+                }
+              }
+            }
+          }
+
+          // 3. Intelligent Inactivity Guard Badges
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.space(8)
+
+            // Media Suppressed Badge
+            Rectangle {
+              Layout.fillWidth: true
+              height: 52
+              radius: 10
+              color: Qt.rgba(0, 0, 0, 0.25)
+              border.color: Qt.rgba(1, 1, 1, 0.06)
+              border.width: 1
+
+              RowLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 8
+
+                Text {
+                  text: "\uf001"
+                  font.family: Style.font.family
+                  font.pixelSize: 13
+                  color: Color.accent
+                }
+                ColumnLayout {
+                  Layout.fillWidth: true
+                  spacing: 1
+                  Text {
+                    text: "Media Inhibit"
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                    color: Color.foreground
+                  }
+                  Text {
+                    text: "Auto-suppressed during audio or video playback"
+                    font.family: Style.font.family
+                    font.pixelSize: 9
+                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.55)
+                    elide: Text.ElideRight
+                  }
+                }
+              }
+            }
+
+            // Desktop Aware Badge
+            Rectangle {
+              Layout.fillWidth: true
+              height: 52
+              radius: 10
+              color: Qt.rgba(0, 0, 0, 0.25)
+              border.color: Qt.rgba(1, 1, 1, 0.06)
+              border.width: 1
+
+              RowLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 8
+
+                Text {
+                  text: "\uf2d0"
+                  font.family: Style.font.family
+                  font.pixelSize: 13
+                  color: Color.accent
+                }
+                ColumnLayout {
+                  Layout.fillWidth: true
+                  spacing: 1
+                  Text {
+                    text: "Universal Screensaver"
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                    color: Color.foreground
+                  }
+                  Text {
+                    text: "Activates smoothly across any active desktop or workspace"
+                    font.family: Style.font.family
+                    font.pixelSize: 9
+                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.55)
+                    elide: Text.ElideRight
+                  }
+                }
+              }
+            }
+          }
+
+          // 4. Dismissal Guidance Note & Preview Action
+          Rectangle {
+            Layout.fillWidth: true
+            height: 48
+            radius: 10
+            color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.08)
+            border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+            border.width: 1
+
+            RowLayout {
+              anchors.fill: parent
+              anchors.margins: 10
+              spacing: 10
+
+              Text {
+                text: "\uf05a"
+                font.family: Style.font.family
+                font.pixelSize: 13
+                color: Color.accent
+              }
+
+              Text {
+                Layout.fillWidth: true
+                text: "Dismiss screensaver by clicking the backdrop, pressing Esc, switching workspace, or pressing your toggle hotkey."
+                font.family: Style.font.family
+                font.pixelSize: 10
+                color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.85)
+                wrapMode: Text.WordWrap
+              }
+
+              // Test Screensaver Button
+              Rectangle {
+                width: testScreensaverText.implicitWidth + 18
+                height: 26
+                radius: 6
+                color: testBtnMouse.containsMouse ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                border.color: Color.accent
+                border.width: 1
+
+                Text {
+                  id: testScreensaverText
+                  anchors.centerIn: parent
+                  text: "Test Now"
+                  font.family: Style.font.family
+                  font.pixelSize: 10
+                  font.bold: true
+                  color: testBtnMouse.containsMouse ? "#ffffff" : Color.accent
+                }
+
+                MouseArea {
+                  id: testBtnMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    prefsDialogRoot.closeDialog()
+                    if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.triggerScreensaver) {
+                      prefsDialogRoot.rootRef.triggerScreensaver(true)
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
 
       // -----------------------------------------------------------------------
@@ -1053,7 +1402,10 @@ Item {
                   grid_snap: 20,
                   auto_hide_mode: "tiled",
                   shadows_enabled: true,
-                  animations_enabled: true
+                  animations_enabled: true,
+                  blur_enabled: false,
+                  screensaver_enabled: false,
+                  screensaver_timeout_mins: 5
                 })
               }
             }

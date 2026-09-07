@@ -95,7 +95,9 @@ DEFAULT_APPEARANCE = {
     "auto_hide_mode": "tiled",
     "shadows_enabled": True,
     "animations_enabled": True,
-    "blur_enabled": False
+    "blur_enabled": False,
+    "screensaver_enabled": False,
+    "screensaver_timeout_mins": 5
 }
 
 BLUR_TOGGLE_FILE = os.path.expanduser("~/.local/state/omarchy/toggles/hypr/dagyr-desktop-widgets-blur.lua")

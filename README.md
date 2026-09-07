@@ -238,6 +238,13 @@ Open the preferences dialog at any time via:
      - **Manual Toggle Only**: Widgets disregard window states; toggle manually via top bar or shortcut.
 7. **Workspace Slide & Fade Transitions**:
    - Smooth fluid slide and fade animations when switching between virtual workspaces.
+8. **Screensaver Mode & Inactivity Inhibit**:
+   - Automatically elevates the desktop widget suite over active application windows into a full-screen ambient dashboard when the system is idle.
+   - **Configurable Inactivity Presets**: Choose from 1 min, 2 min, 5 min (default), 10 min, or 15 min timeouts.
+   - **Hardware-Calibrated Layering**: Background shade rendered on `WlrLayer.Top` while widgets sit on `WlrLayer.Overlay`, ensuring crisp readability and zero scrim overdraw.
+   - **Direct Input Inactivity**: Evaluates physical keyboard and mouse inactivity directly without being blocked by application-level idle inhibitors (e.g. IDEs).
+   - **Intelligent Media Suppression**: Automatically inhibited if music or video is playing (Spotify, YouTube, MPV, etc.).
+   - **Full Widget Interactivity**: Does not dismiss on mouse motion or typing inside widgets, allowing you to freely interact with widgets, read notes, and inspect telemetry. Dismisses cleanly on backdrop click, `Esc`, workspace switch, or toggle keybinding.
 
 ---
 
