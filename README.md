@@ -82,9 +82,11 @@ If you are developing your own third-party custom widgets, clone to your project
 git clone https://github.com/cyelis1224/omarchy-desktop-widgets ~/Projects/desktop-widgets
 ```
 
-To register any new third-party custom widget with Omarchy:
+### Removal / Uninstallation
+To disable and uninstall Desktop Widgets:
+
 ```bash
-~/Projects/desktop-widgets/scripts/import-widget.sh path/to/MyCustomWidget.qml "My Custom Widget"
+omarchy plugin remove dagyr.desktop-widgets --yes
 ```
 
 ---
