@@ -75,23 +75,82 @@ To register any custom widget with Omarchy:
 
 ## 🎮 Controls & Interaction
 
-- **Right-Click Context Menu**:
-  - Right-click anywhere on any widget body to open its options.
-  - Selecting any setting option automatically saves your preference and dismisses the context menu.
-- **Move Mode (Layout Lock/Unlock)**:
-  - Select **Unlock Widgets Layout (Move Mode)** from any widget's context menu.
-  - Drag widgets freely across your desktop with smooth physics and 20px grid snapping.
-  - Click **Done / Lock** in the floating top banner when finished.
-- **Persistent Preferences**:
-  - All widget positions, enabled states, and right-click menu settings (seconds display, disabled drive mounts, network interface selection, graph fill styles, visualizers, cycle timers) persist across Omarchy shell restarts in `~/.local/state/omarchy/dagyr.desktop-widgets.json`.
-- **Smart Auto-Hide**:
-  - Desktop widgets automatically conceal when application windows are focused and smoothly re-appear when navigating to an empty workspace.
+### 🌓 Shaded Widget Overlay & Keybinding
+The desktop widgets feature an interactive shaded backdrop overlay that elevates your widgets above open application windows and frosted blur on demand.
+
+- **Manual Toggle Command**:
+  ```bash
+  omarchy-shell -q dagyr.desktop-widgets toggle
+  ```
+- **Setting up a Custom Keybinding (Omarchy / Hyprland)**:
+  Add the binding to your `~/.config/hypr/bindings.lua` file:
+  ```lua
+  -- Toggle Desktop Widgets Shaded Overlay (e.g. Super + Shift + W)
+  hl.unbind("SUPER + SHIFT + W") -- Unbind if previously mapped
+  o.bind("SUPER + SHIFT + W", "Toggle Desktop Widgets", "omarchy-shell -q dagyr.desktop-widgets toggle")
+  ```
+  *(Changes to `bindings.lua` take effect immediately upon saving).*
+
+- **Overlay Behavior**:
+  - **Full-Screen Shaded Backdrop**: Deploys a dedicated backdrop surface (`omarchy-desktop-shade`) on `WlrLayer.Overlay` covering all active windows and the top bar (`omarchy-bar`).
+  - **Selective Blur**: Hyprland layer blur is applied behind the backdrop shade, creating a frosted glass effect behind your open apps without blurring the widgets or their drop shadows.
+  - **Interactive Dismissal**: The overlay automatically and smoothly dismisses whenever you:
+    - Press the `Escape` key.
+    - Click anywhere on the dark shaded backdrop.
+    - Switch workspaces (navigating to another workspace immediately resets widgets to their desktop layer).
+    - Trigger the toggle keybinding again.
+
+- **Hyprland Layer Blur Configuration**:
+  To enable backdrop blur for the shaded overlay, ensure `omarchy-desktop-shade` is included in your layer rules in `~/.config/hypr/windowrules.lua`:
+  ```lua
+  local blur_layers = { "omarchy-bar", "rofi", "notifications", "swaync-notification-window", "swaync-control-center", "logout_dialog", "omarchy-desktop-shade" }
+  for _, layer in ipairs(blur_layers) do
+    hl.layer_rule({ match = { namespace = layer }, blur = true, ignore_alpha = 0 })
+  end
+  ```
+  Apply with `hyprctl reload`.
 
 ---
 
-## 🛠️ Developing Custom Widgets
+### 🖱️ Widget Interaction & Management
 
-All widgets inherit from the base `WidgetCard` (`shared/WidgetCard.qml`), giving them glassmorphic cards, drag physics, right-click menus, and persistent settings out of the box:
+- **Right-Click Context Menu**:
+  - Right-click anywhere on any widget body to open its options menu.
+  - Selecting any setting option automatically saves your preference and dismisses the context menu.
+- **Move Mode (Layout Lock/Unlock)**:
+  - Select **Unlock Widgets Layout (Move Mode)** from any widget's context menu.
+  - Drag widgets freely across your desktop with smooth physics, drag scale feedback (`1.025×`), and 20px grid snapping.
+  - Click **Done / Lock** in the floating top banner when finished.
+- **Interactive Resizing**:
+  - In Move Mode, resize handles appear on the bottom-right corner (width & height), right edge (width), and bottom edge (height).
+  - A real-time dimension pill (`W × H px`) displays current size with 20px snap-to-grid on release.
+- **Persistent Preferences**:
+  - All widget positions, dimensions, enabled states, and custom settings (e.g. 12h/24h time, seconds display, monitored network devices, cycle speeds, theme modes) are persisted to `~/.local/state/omarchy/dagyr.desktop-widgets.json`.
+
+---
+
+## 🛠️ Developing Custom Widgets with `WidgetCard.qml`
+
+All desktop widgets inherit from the base card component (`shared/WidgetCard.qml` / `widgets/WidgetCard.qml`). This base architecture provides all container styling, windowing physics, and settings persistence so you (or your AI coding agent) only need to focus on building the inner content of your widget.
+
+### 🧩 What `WidgetCard.qml` Provides Automatically
+
+| Feature | Description |
+| :--- | :--- |
+| **Glassmorphic Surface** | Adaptive translucent background (`Color.bar.background`), 18px corner radius, responsive border highlights, and hardware-accelerated `MultiEffect` drop shadows. |
+| **Default Content Slot** | Any QML child elements declared directly inside `WidgetCard { ... }` automatically populate the inner card body (`default property alias content: contentContainer.data`). |
+| **Optional Header** | Set `showHeader: true`, `title: "..."`, and `icon: "\uf005"` to automatically render a standardized header with icon, title, and close buttons during Move Mode. |
+| **Move & Drag Physics** | Integrated 20px grid snapping, smooth scale-up animation during drag, screen edge collision clamping, and automatic coordinate persistence. |
+| **3-Axis Resizing** | Built-in corner and edge resize handles with min/max boundary constraints (`minWidth`, `minHeight`, `maxWidth`, `maxHeight`) and live dimension tooltip badge. |
+| **Right-Click Context Menu** | Standard menu with "Unlock Widgets Layout", "Reset Positions", and widget toggle, expandable via `customMenuContent: Component { ... }`. |
+| **State Persistence API** | Built-in methods (`saveSetting`, `getSetting`, `saveSettings`, `settingsLoaded`) connected directly to Omarchy's persistent JSON state storage. |
+| **Screen Geometry Access** | `screenWidth`, `screenHeight`, and `rootRef` access for responsive calculations. |
+
+---
+
+### 📋 Custom Widget Boilerplate Template
+
+Here is a complete, production-ready template demonstrating how to create a custom widget with persistent state and custom context menu options:
 
 ```qml
 import QtQuick
@@ -102,30 +161,123 @@ import qs.Ui
 import "../../shared"
 
 WidgetCard {
-  id: myWidgetRoot
+  id: myCustomWidget
   widgetId: "my_custom_widget"
-  title: "My Custom Widget"
-  icon: "\uf005"
+  title: "Pomodoro Focus"
+  icon: "\uf252"          // Nerd Font icon glyph
+  showHeader: true        // Set to true for title bar, false for minimal/borderless cards
   width: 320
-  height: 200
+  height: 220
+  minWidth: 260
+  minHeight: 180
 
-  // Persisted setting helper:
-  // saveSetting("myOption", true)
-  // getSetting("myOption", defaultValue)
+  // 1. Reactive Widget State
+  property bool showExtraDetails: true
+  property int refreshIntervalSeconds: 30
 
-  Text {
-    anchors.centerIn: parent
-    text: "Hello Omarchy!"
-    color: Color.foreground
-    font.family: Style.font.family
+  // 2. Load Saved Preferences on Initialization
+  Component.onCompleted: {
+    showExtraDetails = getSetting("showExtraDetails", true)
+    refreshIntervalSeconds = getSetting("refreshIntervalSeconds", 30)
+  }
+
+  // React if settings are reloaded from disk
+  onSettingsLoaded: {
+    showExtraDetails = getSetting("showExtraDetails", true)
+    refreshIntervalSeconds = getSetting("refreshIntervalSeconds", 30)
+  }
+
+  // 3. Widget Body (Automatically placed into contentContainer)
+  ColumnLayout {
+    anchors.fill: parent
+    anchors.margins: Style.space(16)
+    spacing: Style.space(10)
+
+    Text {
+      text: "Custom Widget Body"
+      font.family: Style.font.family
+      font.pixelSize: Style.font.titleSmall
+      font.weight: Font.Bold
+      color: Color.foreground
+    }
+
+    Text {
+      visible: myCustomWidget.showExtraDetails
+      text: "Detailed telemetry and metrics here..."
+      font.family: Style.font.family
+      font.pixelSize: Style.font.bodySmall
+      color: Color.muted
+    }
+
+    Item { Layout.fillHeight: true }
+  }
+
+  // 4. Custom Right-Click Context Menu Items
+  customMenuContent: Component {
+    ColumnLayout {
+      spacing: Style.space(4)
+
+      // Toggle Option
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 30
+        radius: 6
+        color: optMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: 8
+          anchors.rightMargin: 8
+          spacing: 8
+
+          Text {
+            text: myCustomWidget.showExtraDetails ? "\uf058" : "\uf10c"
+            font.family: Style.font.family
+            font.pixelSize: 12
+            color: myCustomWidget.showExtraDetails ? Color.accent : Color.muted
+          }
+
+          Text {
+            text: "Show Extra Details"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+          }
+        }
+
+        MouseArea {
+          id: optMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            myCustomWidget.showExtraDetails = !myCustomWidget.showExtraDetails
+            myCustomWidget.saveSetting("showExtraDetails", myCustomWidget.showExtraDetails)
+            myCustomWidget.contextMenuOpen = false
+          }
+        }
+      }
+    }
   }
 }
 ```
 
-Validate and test your widget before loading:
-```bash
-~/Projects/desktop-widgets/scripts/test-widget.sh ~/Projects/desktop-widgets/widgets/my-widget/MyWidget.qml
-```
+---
+
+### 📦 Registering & Testing Your Widget
+
+1. **Test with Quickshell Runner**:
+   ```bash
+   ~/Projects/desktop-widgets/scripts/test-widget.sh ~/Projects/desktop-widgets/widgets/my-widget/MyWidget.qml
+   ```
+2. **Register into Omarchy Plugin**:
+   ```bash
+   ~/Projects/desktop-widgets/scripts/import-widget.sh ~/Projects/desktop-widgets/widgets/my-widget/MyWidget.qml "My Custom Widget"
+   ```
+3. **Restart the Omarchy Shell**:
+   ```bash
+   omarchy restart shell
+   ```
 
 ---
 

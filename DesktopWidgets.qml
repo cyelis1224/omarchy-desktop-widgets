@@ -158,14 +158,11 @@ Item {
   }
 
   // 🔄 Automatically handle workspace navigation:
-  // If moving to an empty workspace, drop overlay to regular widget layer on wallpaper.
+  // Close the widget overlay unconditionally whenever the workspace changes.
   readonly property var focusedWorkspace: Hyprland.focusedWorkspace
   onFocusedWorkspaceChanged: {
-    var ws = root.focusedWorkspace
-    var hasWindows = ws && ws.toplevels && ws.toplevels.values.length > 0
-    if (!hasWindows) {
-      root.overlayActive = false
-      root.manualHide = false
+    if (root.overlayActive) {
+      root.closeOverlay()
     }
   }
 
@@ -183,21 +180,9 @@ Item {
   function handleToggleOrJump() {
     if (root.overlayActive) {
       root.closeOverlay()
-      return
-    }
-
-    var currentWs = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
-    var hasWindows = currentWs && currentWs.toplevels && currentWs.toplevels.values.length > 0
-
-    if (hasWindows) {
+    } else {
       root.overlayActive = true
       root.manualHide = false
-    } else {
-      if (root.manualHide) {
-        root.manualHide = false
-      } else {
-        root.overlayActive = true
-      }
     }
   }
 
@@ -227,6 +212,52 @@ Item {
   }
 
   // ---------------------------------------------------------------------------
+  // 🌓 Shaded Transparent Overlay Backdrop Window (Covers full screen & top bar)
+  // ---------------------------------------------------------------------------
+  Variants {
+    model: Quickshell.screens
+
+    delegate: Component {
+      id: scrimDelegate
+
+      PanelWindow {
+        id: scrimWindow
+        required property var modelData
+        screen: modelData
+
+        anchors {
+          top: true
+          bottom: true
+          left: true
+          right: true
+        }
+
+        color: "transparent"
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.namespace: "omarchy-desktop-shade"
+        WlrLayershell.layer: WlrLayer.Overlay
+        visible: root.overlayActive
+
+        Rectangle {
+          anchors.fill: parent
+          color: Qt.rgba(10/255, 10/255, 16/255, 0.72)
+          opacity: root.overlayActive ? 1.0 : 0.0
+
+          Behavior on opacity {
+            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+          }
+        }
+
+        MouseArea {
+          anchors.fill: parent
+          acceptedButtons: Qt.LeftButton | Qt.RightButton
+          onClicked: root.closeOverlay()
+        }
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // 🖥️ Desktop Layer Shell Canvas Window
   // ---------------------------------------------------------------------------
   Variants {
@@ -250,7 +281,7 @@ Item {
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "omarchy-desktop-widgets"
-        WlrLayershell.layer: root.overlayActive ? WlrLayer.Top : WlrLayer.Bottom
+        WlrLayershell.layer: root.overlayActive ? WlrLayer.Overlay : WlrLayer.Bottom
         WlrLayershell.keyboardFocus: root.overlayActive ? WlrKeyboardFocus.OnDemand : ((!desktopWindow.hasOpenWindows && (root.selectorOpen || root.keyboardFocusRequested)) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None)
 
         Shortcut {
@@ -266,44 +297,16 @@ Item {
           if (height > 0) root.screenHeight = height
         }
 
-        readonly property int topBarHeight: (typeof Style !== "undefined" && Style.bar && Style.bar.sizeHorizontal) ? Style.bar.sizeHorizontal : 22
-
         readonly property bool hasOpenWindows: {
           var dummy = ToplevelManager.toplevels.values.length
           var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
           return !!(ws && ws.toplevels && ws.toplevels.values.length > 0)
         }
 
-        // 🌓 Shaded Transparent Overlay Backdrop (kept below the top bar so bar is raised & interactive)
-        Rectangle {
-          id: shadedOverlayBackdrop
-          anchors {
-            top: parent.top
-            topMargin: desktopWindow.topBarHeight
-            bottom: parent.bottom
-            left: parent.left
-            right: parent.right
-          }
-          z: 0
-          color: Qt.rgba(10/255, 10/255, 16/255, 0.62)
-          opacity: root.overlayActive ? 1.0 : 0.0
-          visible: opacity > 0
-
-          Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-          }
-        }
-
         // 🖱️ Desktop Background Click & Context Menu Handler
         MouseArea {
           id: desktopBgMouse
-          anchors {
-            top: parent.top
-            topMargin: root.overlayActive ? desktopWindow.topBarHeight : 0
-            bottom: parent.bottom
-            left: parent.left
-            right: parent.right
-          }
+          anchors.fill: parent
           z: 0
           acceptedButtons: Qt.LeftButton | Qt.RightButton
           onDoubleClicked: function(mouse) {
