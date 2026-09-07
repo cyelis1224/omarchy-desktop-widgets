@@ -29,10 +29,20 @@ def save_settings(settings):
     except Exception:
         pass
 
+def normalize_remote_url(url):
+    if not url or not isinstance(url, str):
+        return ""
+    u = url.strip()
+    if u.startswith('git@') or u.startswith('ssh://') or u.startswith('http://') or u.startswith('https://'):
+        return u
+    if u.startswith('github.com/') or u.startswith('gitlab.com/') or u.startswith('codeberg.org/'):
+        return 'https://' + u
+    return u
+
 def is_remote_url(path):
     if not path or not isinstance(path, str):
         return False
-    p = path.strip()
+    p = normalize_remote_url(path)
     return p.startswith('http://') or p.startswith('https://') or p.startswith('git@') or p.startswith('ssh://')
 
 def get_remote_slug(url):
@@ -189,11 +199,27 @@ def sync_remote_repo(url):
             if os.path.exists(repo_cache_dir):
                 shutil.rmtree(repo_cache_dir, ignore_errors=True)
             return None
+        # Ensure refspec is configured for bare fetch to update local refs
+        subprocess.run(['git', '-C', repo_cache_dir, 'config', 'remote.origin.fetch', '+refs/heads/*:refs/heads/*'],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
         # Fast background fetch
         try:
-            cmd = ['git', '-C', repo_cache_dir, 'fetch', '--depth=200']
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+            # Clean up stale locks that block fetch
+            for lock_name in ('shallow.lock', 'index.lock', 'HEAD.lock'):
+                lock_file = os.path.join(repo_cache_dir, lock_name)
+                if os.path.exists(lock_file):
+                    try:
+                        os.remove(lock_file)
+                    except Exception:
+                        pass
+
+            # Ensure refspec is configured
+            subprocess.run(['git', '-C', repo_cache_dir, 'config', 'remote.origin.fetch', '+refs/heads/*:refs/heads/*'],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            cmd = ['git', '-C', repo_cache_dir, 'fetch', 'origin', '+refs/heads/*:refs/heads/*', '--depth=200', '--update-head-ok']
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
         except Exception:
             pass
 
@@ -225,7 +251,7 @@ def pick_remote_url_dialog():
             text=True
         )
         if p.returncode == 0 and p.stdout.strip():
-            chosen = p.stdout.strip()
+            chosen = normalize_remote_url(p.stdout.strip())
             if is_remote_url(chosen):
                 return chosen
     except Exception:
@@ -538,11 +564,12 @@ def main():
             settings["git_active_repo"] = "ALL"
             save_settings(settings)
         elif is_remote_url(req):
-            sync_remote_repo(req)
-            if req not in custom_repos:
-                custom_repos.append(req)
+            norm_url = normalize_remote_url(req)
+            sync_remote_repo(norm_url)
+            if norm_url not in custom_repos:
+                custom_repos.append(norm_url)
                 settings["git_custom_repos"] = custom_repos
-            settings["git_active_repo"] = req
+            settings["git_active_repo"] = norm_url
             save_settings(settings)
         elif os.path.exists(req) and os.path.exists(os.path.join(req, '.git')):
             if req not in custom_repos:

@@ -53,16 +53,53 @@ WidgetCard {
   property bool showRecentCommits: true
   property bool hasRepos: detectedReposList.length > 0
 
+  readonly property string scriptPath: {
+    var u = Qt.resolvedUrl("git_pulse.py").toString()
+    if (u.indexOf("file://") === 0) return u.substring(7)
+    return "/home/dagyr/Projects/desktop-widgets/widgets/git-activity/git_pulse.py"
+  }
+
+  function updateFromGitData(data) {
+    if (!data) return
+    if (data.repo_name !== undefined) gitWidgetRoot.activeRepoName = data.repo_name
+    if (data.repo_path !== undefined) gitWidgetRoot.activeRepoPath = data.repo_path
+    if (data.branch !== undefined) gitWidgetRoot.branchName = data.branch
+    if (data.is_remote !== undefined) gitWidgetRoot.isRemoteRepo = data.is_remote
+    if (data.status_label !== undefined) gitWidgetRoot.statusLabel = data.status_label
+    if (data.uncommitted_count !== undefined) gitWidgetRoot.uncommittedCount = data.uncommitted_count
+    if (data.total_commits !== undefined) gitWidgetRoot.totalCommits = data.total_commits
+    if (data.streak_days !== undefined) gitWidgetRoot.streakDays = data.streak_days
+    if (Array.isArray(data.heatmap)) gitWidgetRoot.heatmapMatrix = data.heatmap
+    if (Array.isArray(data.recent_commits)) gitWidgetRoot.recentCommitsList = data.recent_commits
+    if (Array.isArray(data.pull_requests)) gitWidgetRoot.pullRequestsList = data.pull_requests
+    if (Array.isArray(data.issues)) gitWidgetRoot.issuesList = data.issues
+    if (data.has_github !== undefined) gitWidgetRoot.hasGithub = data.has_github
+    if (data.github_slug !== undefined) gitWidgetRoot.githubSlug = data.github_slug
+    if (Array.isArray(data.detected_repos)) {
+      gitWidgetRoot.detectedReposList = data.detected_repos
+      gitWidgetRoot.hasRepos = data.has_repos !== undefined ? data.has_repos : (data.detected_repos.length > 0)
+    }
+  }
+
   function selectRepo(path) {
     gitWidgetRoot.contextMenuOpen = false
-    activeRepoPath = path
-    gitPulseProc.command = ["/home/dagyr/Projects/desktop-widgets/widgets/git-activity/git_pulse.py", path]
-    if (!gitPulseProc.running) gitPulseProc.running = true
+    if (path !== "pick_dialog" && path !== "pick_remote_dialog") {
+      activeRepoPath = path
+    }
+    runGitAction([path])
   }
 
   function removeRepo(path) {
-    gitPulseProc.command = ["/home/dagyr/Projects/desktop-widgets/widgets/git-activity/git_pulse.py", "remove:" + path]
-    if (!gitPulseProc.running) gitPulseProc.running = true
+    gitWidgetRoot.contextMenuOpen = false
+    runGitAction(["remove:" + path])
+  }
+
+  function runGitAction(args) {
+    if (gitActionProc.running) {
+      gitActionProc.running = false
+    }
+    gitActionProc.command = [gitWidgetRoot.scriptPath].concat(args)
+    gitActionProc.running = true
   }
 
   function getLevelColor(level) {
@@ -73,34 +110,36 @@ WidgetCard {
     return Qt.rgba(1, 1, 1, 0.06)      // Blank cell
   }
 
+  // 1. Regular background polling process (never mutated, runs with no arguments)
   Process {
     id: gitPulseProc
-    command: ["/home/dagyr/Projects/desktop-widgets/widgets/git-activity/git_pulse.py"]
+    command: [gitWidgetRoot.scriptPath]
     running: true
     stdout: SplitParser {
       onRead: function(line) {
         try {
-          var data = JSON.parse(String(line).trim())
-          if (data.repo_name !== undefined) gitWidgetRoot.activeRepoName = data.repo_name
-          if (data.repo_path !== undefined) gitWidgetRoot.activeRepoPath = data.repo_path
-          if (data.branch !== undefined) gitWidgetRoot.branchName = data.branch
-          if (data.is_remote !== undefined) gitWidgetRoot.isRemoteRepo = data.is_remote
-          if (data.status_label !== undefined) gitWidgetRoot.statusLabel = data.status_label
-          if (data.uncommitted_count !== undefined) gitWidgetRoot.uncommittedCount = data.uncommitted_count
-          if (data.total_commits !== undefined) gitWidgetRoot.totalCommits = data.total_commits
-          if (data.streak_days !== undefined) gitWidgetRoot.streakDays = data.streak_days
-          if (Array.isArray(data.heatmap)) gitWidgetRoot.heatmapMatrix = data.heatmap
-          if (Array.isArray(data.recent_commits)) gitWidgetRoot.recentCommitsList = data.recent_commits
-          if (Array.isArray(data.pull_requests)) gitWidgetRoot.pullRequestsList = data.pull_requests
-          if (Array.isArray(data.issues)) gitWidgetRoot.issuesList = data.issues
-          if (data.has_github !== undefined) gitWidgetRoot.hasGithub = data.has_github
-          if (data.github_slug !== undefined) gitWidgetRoot.githubSlug = data.github_slug
-          if (Array.isArray(data.detected_repos)) {
-            gitWidgetRoot.detectedReposList = data.detected_repos
-            gitWidgetRoot.hasRepos = data.has_repos !== undefined ? data.has_repos : (data.detected_repos.length > 0)
-          }
+          gitWidgetRoot.updateFromGitData(JSON.parse(String(line).trim()))
         } catch (e) {}
       }
+    }
+  }
+
+  // 2. Dedicated one-off action process for user commands (dialogs, repo switching, removal)
+  Process {
+    id: gitActionProc
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          gitWidgetRoot.updateFromGitData(JSON.parse(String(line).trim()))
+        } catch (e) {}
+      }
+    }
+    onExited: function(code) {
+      // Clear command immediately so it can never linger or re-run
+      gitActionProc.command = []
+      // Trigger background poll to sync up data
+      if (!gitPulseProc.running) gitPulseProc.running = true
     }
   }
 
@@ -109,7 +148,10 @@ WidgetCard {
     running: true
     repeat: true
     onTriggered: {
-      if (!gitPulseProc.running) gitPulseProc.running = true
+      // Never poll while an interactive user action (like Zenity picker) is active
+      if (!gitPulseProc.running && !gitActionProc.running) {
+        gitPulseProc.running = true
+      }
     }
   }
 
@@ -590,7 +632,7 @@ WidgetCard {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             gitWidgetRoot.contextMenuOpen = false
-            if (!gitPulseProc.running) gitPulseProc.running = true
+            if (!gitPulseProc.running && !gitActionProc.running) gitPulseProc.running = true
           }
         }
       }
