@@ -194,13 +194,14 @@ BarWidget {
       // Version Comparison Cards
       BorderSurface {
         width: parent.width
+        implicitHeight: versionRow.implicitHeight + Style.space(20)
         radius: Style.space(10)
         color: Util.alpha(root.bar ? root.bar.foreground : Color.foreground, 0.05)
         borderSpec: Border.none()
 
         Row {
+          id: versionRow
           anchors.centerIn: parent
-          anchors.margins: Style.space(14)
           spacing: Style.space(20)
 
           // Current Version Card
@@ -298,13 +299,16 @@ BarWidget {
 
       // 📋 Release Notes & Changelog Card
       BorderSurface {
+        id: changelogCard
         visible: root.releaseNotes !== "" || root.commitMessage !== "" || root.commitsBehind > 0
         width: parent.width
+        implicitHeight: changelogCol.implicitHeight
         radius: Style.space(8)
         color: Util.alpha(Color.accent, 0.07)
         borderSpec: Border.none()
 
         Column {
+          id: changelogCol
           width: parent.width
           spacing: Style.space(8)
           topPadding: Style.space(10)
@@ -315,6 +319,7 @@ BarWidget {
           // Changelog Header Row
           RowLayout {
             width: parent.width
+            implicitHeight: Style.space(22)
             spacing: Style.space(8)
 
             Item {
@@ -384,6 +389,7 @@ BarWidget {
           Rectangle {
             width: parent.width
             height: 1
+            implicitHeight: 1
             color: Util.alpha(Color.accent, 0.15)
           }
 
@@ -391,15 +397,20 @@ BarWidget {
           Flickable {
             id: notesFlickable
             width: parent.width
-            height: Math.max(Style.space(40), Math.min(notesText.implicitHeight, Style.space(180)))
+            implicitHeight: Math.max(Style.space(50), Math.min(notesText.implicitHeight, Style.space(180)))
+            height: implicitHeight
             contentWidth: width
             contentHeight: notesText.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
+            ScrollBar.vertical: ScrollBar {
+              policy: notesText.implicitHeight > Style.space(180) ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+            }
+
             Text {
               id: notesText
-              width: parent.width - (notesText.implicitHeight > Style.space(180) ? Style.space(10) : 0)
+              width: parent.width - (notesText.implicitHeight > Style.space(180) ? Style.space(14) : 0)
               text: root.releaseNotes !== "" ? root.releaseNotes : (root.commitMessage !== "" ? root.commitMessage : "Includes enhancements, bug fixes, and performance updates.")
               textFormat: Text.MarkdownText
               color: root.bar ? root.bar.foreground : Color.foreground
