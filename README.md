@@ -1,5 +1,7 @@
 # Omarchy Desktop Widgets
 
+![Omarchy Desktop Widgets Showcase](preview.png)
+
 A suite of high-performance, aesthetic desktop widgets for Omarchy Linux running on Hyprland and Quickshell.
 
 Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GPU hardware telemetry, an 84-day git activity radar, a Pomodoro timer, scratchpad notes, an ambient hero clock, MPRIS media controls, and multi-disk system monitors.
@@ -159,6 +161,8 @@ Five curated profiles are built-in and ready out of the box:
 - **Full Dashboard**: Comprehensive 12-widget command center arranged across the canvas.
 - **Gaming**: Performance telemetry layout tracking CPU/GPU stats, RAM, multi-drive storage, and network bandwidth.
 
+![Move Mode & Layout Editor](assets/screenshots/move-mode.png)
+
 ### ⚡ Quick-Switching & IPC Commands
 - **Top Move Mode Banner**: When Move Mode is unlocked, click any preset pill (`Default`, `Minimal`, `Productivity`, `Full Dashboard`, `Gaming`) to switch immediately.
 - **Desktop Right-Click Menu**: Right-click blank desktop wallpaper ➜ **Layout Presets ▸** to view the active checkmark and switch profiles.
@@ -202,6 +206,8 @@ Open the preferences dialog at any time via:
 - Right-click desktop wallpaper ➜ **Widget Preferences...**
 - Click the **Preferences** button in the top Move Mode banner.
 - CLI: `omarchy-shell -q dagyr.desktop-widgets preferences`
+
+![Widget Preferences Dialog](assets/screenshots/preferences.png)
 
 ### 🎛️ Customization Controls
 

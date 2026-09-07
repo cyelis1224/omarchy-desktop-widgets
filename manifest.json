@@ -5,7 +5,7 @@
   "version": "1.1.7",
   "author": "Dagyr",
   "license": "MIT",
-  "description": "Aesthetic desktop widgets featuring a hero clock, MPRIS media player, and audio spectrum visualizer that automatically hide when windows are open.",
+  "description": "Aesthetic desktop widget suite featuring 12 interactive widgets, customizable acrylic blur & corner curvature, 5 layout presets, and automatic window-state hiding.",
   "kinds": [
     "service",
     "bar-widget"
