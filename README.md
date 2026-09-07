@@ -47,7 +47,20 @@ Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GP
    - Branch status, uncommitted diff counter, and recent commit history log.
    - **Repository Switcher**: Monitor specific local projects or toggle **All Repositories** aggregate mode.
 
-All 9 widgets are built-in and available right out of the box from the desktop **Add Widgets** drawer or right-click wallpaper menu.
+10. **☀️ Weather Forecast & 3-Day Outlook** (`widgets/WeatherWidget.qml`)
+    - Dedicated live weather card featuring current conditions and temperature with one-click °F / °C toggle.
+    - Atmospheric metrics: feels-like temperature, humidity percentage, wind speed, and condition-tinted icons.
+    - 3-day forecast strip showing upcoming weather icons and daily high/low temperatures.
+11. **🚀 Desktop Application Launcher** (`widgets/AppLauncherWidget.qml`)
+    - Fast desktop app grid with instant live search filtering and category chips (All, Internet, Dev, Media, System, Utilities, Games).
+    - Native system icon theme integration (Papirus / active theme) with fallback category glyphs.
+    - One-click application launching and smooth micro-animations.
+12. **📂 Transparent Folder View Portal** (`widgets/FolderViewWidget.qml`)
+    - Transparent or frosted glass desktop card displaying files and directories (defaults to `~/Desktop`).
+    - Full `.desktop` launcher shortcut support with actual application names and icons.
+    - Interactive directory drill-down with breadcrumb back navigation and native file chooser dialog.
+
+All 12 widgets are built-in and available right out of the box from the desktop **Add Widgets** drawer or right-click wallpaper menu.
 
 ---
 

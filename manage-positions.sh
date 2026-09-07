@@ -16,7 +16,10 @@ BUILTIN_MIGRATION = {
     "GitActivityWidget.qml": "git_activity",
     "HardwareTelemetryWidget.qml": "hardware_telemetry",
     "PomodoroWidget.qml": "pomodoro",
-    "QuickNotesWidget.qml": "quick_notes"
+    "QuickNotesWidget.qml": "quick_notes",
+    "WeatherWidget.qml": "weather",
+    "AppLauncherWidget.qml": "app_launcher",
+    "FolderViewWidget.qml": "folder_view"
 }
 
 def pick_file_dialog(title="Import Custom QML Widget", extensions="qml", directory=False):

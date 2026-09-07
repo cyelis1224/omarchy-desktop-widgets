@@ -37,18 +37,20 @@ Item {
     NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
   }
 
+  property bool transparentBg: false
+
   // Visual container
   Rectangle {
     id: cardSurface
     anchors.fill: parent
     radius: 18
-    color: Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.85)
-    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+    color: widgetCardRoot.transparentBg ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.20)) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.85)
+    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Color.accent : (widgetCardRoot.transparentBg ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.12))
     border.width: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? 2 : 1
 
     layer.enabled: true
     layer.effect: MultiEffect {
-      shadowEnabled: true
+      shadowEnabled: !widgetCardRoot.transparentBg || widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode)
       shadowColor: Qt.rgba(0, 0, 0, widgetCardRoot.isDragging ? 0.90 : 0.70)
       shadowBlur: widgetCardRoot.isDragging ? 0.95 : 0.65
       shadowVerticalOffset: widgetCardRoot.isDragging ? 8 : 4

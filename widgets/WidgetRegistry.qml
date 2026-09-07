@@ -84,6 +84,33 @@ QtObject {
       badge: "Scratchpad",
       description: "Markdown scratchpad and tagged Kanban todo deck with instant local state persistence.",
       componentUrl: Qt.resolvedUrl("quick-notes/QuickNotesWidget.qml")
+    },
+    {
+      id: "weather",
+      name: "Weather Forecast",
+      category: "Glance",
+      icon: "\uf185",
+      badge: "Live",
+      description: "Current temperature, atmospheric conditions, and 3-day forecast with °F/°C switching.",
+      componentUrl: Qt.resolvedUrl("WeatherWidget.qml")
+    },
+    {
+      id: "app_launcher",
+      name: "App Launcher Grid",
+      category: "Productivity",
+      icon: "\uf108",
+      badge: "QuickLaunch",
+      description: "Fast desktop application launcher with live search, category filters, and system icons.",
+      componentUrl: Qt.resolvedUrl("AppLauncherWidget.qml")
+    },
+    {
+      id: "folder_view",
+      name: "Folder View Card",
+      category: "Productivity",
+      icon: "\uf07b",
+      badge: "Transparent",
+      description: "Transparent desktop portal for any directory with .desktop app launching and subfolder navigation.",
+      componentUrl: Qt.resolvedUrl("FolderViewWidget.qml")
     }
   ]
 
