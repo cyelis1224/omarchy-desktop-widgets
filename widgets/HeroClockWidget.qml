@@ -147,10 +147,9 @@ Item {
       ctx.scale(1.0, ry / rx)
 
       var grad = ctx.createRadialGradient(0, 0, 0, 0, 0, rx)
-      grad.addColorStop(0.0, "rgba(0, 0, 0, 0.82)")
-      grad.addColorStop(0.28, "rgba(0, 0, 0, 0.62)")
-      grad.addColorStop(0.58, "rgba(0, 0, 0, 0.35)")
-      grad.addColorStop(0.85, "rgba(0, 0, 0, 0.10)")
+      grad.addColorStop(0.0, "rgba(0, 0, 0, 0.20)")
+      grad.addColorStop(0.35, "rgba(0, 0, 0, 0.12)")
+      grad.addColorStop(0.70, "rgba(0, 0, 0, 0.05)")
       grad.addColorStop(1.0, "rgba(0, 0, 0, 0.0)")
 
       ctx.fillStyle = grad
@@ -269,7 +268,7 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     spacing: Style.space(4)
 
-    layer.enabled: true
+    layer.enabled: false
     layer.effect: MultiEffect {
       shadowEnabled: true
       shadowColor: Qt.rgba(0, 0, 0, 0.95)

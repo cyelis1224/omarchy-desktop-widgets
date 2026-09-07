@@ -56,9 +56,9 @@ Item {
     layer.enabled: true
     layer.effect: MultiEffect {
       shadowEnabled: ((rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true) && (!widgetCardRoot.transparentBg || widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode))
-      shadowColor: Qt.rgba(0, 0, 0, widgetCardRoot.isDragging ? 0.90 : 0.70)
-      shadowBlur: widgetCardRoot.isDragging ? 0.95 : 0.65
-      shadowVerticalOffset: widgetCardRoot.isDragging ? 8 : 4
+      shadowColor: Qt.rgba(0, 0, 0, widgetCardRoot.isDragging ? 0.28 : 0.22)
+      shadowBlur: widgetCardRoot.isDragging ? 0.65 : 0.45
+      shadowVerticalOffset: widgetCardRoot.isDragging ? 5 : 3
     }
 
     ColumnLayout {
