@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "dagyr.desktop-widgets",
   "name": "Desktop Widgets",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "Dagyr",
   "license": "MIT",
   "description": "Aesthetic desktop widgets featuring a hero clock, MPRIS media player, and audio spectrum visualizer that automatically hide when windows are open.",

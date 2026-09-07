@@ -57,8 +57,7 @@ All 9 widgets are built-in and available right out of the box from the desktop *
 Clone directly into your Omarchy plugins directory and reload the shell:
 
 ```bash
-git clone https://github.com/cyelis1224/omarchy-desktop-widgets ~/.config/omarchy/plugins/dagyr.desktop-widgets
-/usr/share/omarchy/bin/omarchy-restart-shell
+omarchy plugin add https://github.com/cyelis1224/omarchy-desktop-widgets.git --enable
 ```
 
 ### Option 2: Custom Widget Development Workspace
