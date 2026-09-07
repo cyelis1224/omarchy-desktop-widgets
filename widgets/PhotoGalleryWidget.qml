@@ -486,45 +486,6 @@ Item {
     border.color: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? Color.accent : "transparent"
     border.width: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? 2 : 0
 
-    // Photo Content Container to mask (Static Images)
-    Item {
-      id: mainCardSrc
-      anchors.fill: parent
-      visible: false
-      layer.enabled: !galleryWidgetRoot.isGif
-
-      Image {
-        id: galleryImg
-        visible: !galleryWidgetRoot.isGif
-        anchors.fill: parent
-        source: !galleryWidgetRoot.isGif ? galleryWidgetRoot.currentPhotoPath : ""
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        smooth: true
-        opacity: status === Image.Ready ? 1.0 : 0.0
-
-        Behavior on opacity {
-          NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
-        }
-
-        property real imgScale: 1.0
-        scale: imgScale
-        onSourceChanged: {
-          imgScale = 1.05
-          scaleBounceAnim.restart()
-        }
-
-        NumberAnimation {
-          id: scaleBounceAnim
-          target: galleryImg
-          property: "imgScale"
-          to: 1.0
-          duration: 650
-          easing.type: Easing.OutCubic
-        }
-      }
-    }
-
     // Mask shape with rounded corners
     Item {
       id: mainCardMask
@@ -539,13 +500,42 @@ Item {
       }
     }
 
-    // Masked Photo Output (Static Images)
-    MultiEffect {
-      anchors.fill: parent
-      source: mainCardSrc
-      maskEnabled: true
-      maskSource: mainCardMask
+    // 🖼️ Static Image (Direct item with dedicated mask)
+    Image {
+      id: galleryImg
       visible: !galleryWidgetRoot.isGif
+      anchors.fill: parent
+      source: !galleryWidgetRoot.isGif ? galleryWidgetRoot.currentPhotoPath : ""
+      fillMode: Image.PreserveAspectCrop
+      asynchronous: true
+      smooth: true
+      opacity: status === Image.Ready ? 1.0 : 0.0
+
+      Behavior on opacity {
+        NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
+      }
+
+      property real imgScale: 1.0
+      scale: imgScale
+      onSourceChanged: {
+        imgScale = 1.05
+        scaleBounceAnim.restart()
+      }
+
+      NumberAnimation {
+        id: scaleBounceAnim
+        target: galleryImg
+        property: "imgScale"
+        to: 1.0
+        duration: 650
+        easing.type: Easing.OutCubic
+      }
+
+      layer.enabled: true
+      layer.effect: MultiEffect {
+        maskEnabled: true
+        maskSource: mainCardMask
+      }
     }
 
     // 🎞️ Animated GIF Player (Direct item with dedicated mask to guarantee SceneGraph damage propagation and continuous playback)
