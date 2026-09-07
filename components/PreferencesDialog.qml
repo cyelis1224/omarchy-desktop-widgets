@@ -13,6 +13,13 @@ Item {
   property bool isOpen: false
   property int activeTab: 0
 
+  readonly property real curOpacity: (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85
+  readonly property int curRadius: (rootRef && rootRef.appearance && rootRef.appearance.corner_radius !== undefined) ? rootRef.appearance.corner_radius : 18
+  readonly property bool curShadows: (rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true
+  readonly property bool curAnimations: (rootRef && rootRef.appearance && rootRef.appearance.animations_enabled !== undefined) ? rootRef.appearance.animations_enabled : true
+  readonly property int curGridSnap: (rootRef && rootRef.appearance && rootRef.appearance.grid_snap !== undefined) ? rootRef.appearance.grid_snap : 20
+  readonly property string curAutoHide: (rootRef && rootRef.appearance && rootRef.appearance.auto_hide_mode) ? rootRef.appearance.auto_hide_mode : "tiled"
+
   anchors.fill: parent
   z: 600
   visible: opacity > 0
@@ -142,7 +149,7 @@ Item {
         Layout.fillWidth: true
         height: 38
         radius: 10
-        color: Qt.rgba(0, 0, 0, 0.35)
+        color: Qt.rgba(0, 0, 0, 0.40)
         border.color: Qt.rgba(1, 1, 1, 0.08)
         border.width: 1
 
@@ -276,18 +283,13 @@ Item {
           visible: prefsDialogRoot.activeTab === 0
           spacing: Style.space(12)
 
-          readonly property real curOpacity: (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85
-          readonly property int curRadius: (rootRef && rootRef.appearance && rootRef.appearance.corner_radius !== undefined) ? rootRef.appearance.corner_radius : 18
-          readonly property bool curShadows: (rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true
-          readonly property bool curAnimations: (rootRef && rootRef.appearance && rootRef.appearance.animations_enabled !== undefined) ? rootRef.appearance.animations_enabled : true
-
           // 1. Background Opacity & Acrylic
           Rectangle {
             Layout.fillWidth: true
             implicitHeight: opacityCol.implicitHeight + 20
             radius: 12
-            color: Qt.rgba(1, 1, 1, 0.04)
-            border.color: Qt.rgba(1, 1, 1, 0.07)
+            color: Qt.rgba(0, 0, 0, 0.30)
+            border.color: Qt.rgba(1, 1, 1, 0.08)
             border.width: 1
 
             ColumnLayout {
@@ -307,7 +309,7 @@ Item {
                 }
                 Item { Layout.fillWidth: true }
                 Text {
-                  text: Math.round(curOpacity * 100) + "%"
+                  text: Math.round(prefsDialogRoot.curOpacity * 100) + "%"
                   font.family: Style.font.family
                   font.pixelSize: 12
                   font.weight: Font.Bold
@@ -325,26 +327,26 @@ Item {
 
                 Rectangle {
                   height: parent.height
-                  width: Math.max(8, Math.min(parent.width, curOpacity * parent.width))
+                  width: Math.max(8, Math.min(parent.width, Math.max(0, (prefsDialogRoot.curOpacity - 0.15) / 0.85) * parent.width))
                   radius: 4
                   color: Color.accent
                 }
 
                 Rectangle {
-                  x: Math.max(0, Math.min(parent.width - width, (curOpacity - 0.15) / 0.85 * (parent.width - width)))
+                  x: Math.max(0, Math.min(parent.width - width, (prefsDialogRoot.curOpacity - 0.15) / 0.85 * (parent.width - width)))
                   anchors.verticalCenter: parent.verticalCenter
                   width: 18
                   height: 18
                   radius: 9
-                  color: Color.foreground
-                  border.color: Color.accent
+                  color: Color.accent
+                  border.color: "#ffffff"
                   border.width: 2
 
                   layer.enabled: true
                   layer.effect: MultiEffect {
                     shadowEnabled: true
-                    shadowColor: Qt.rgba(0, 0, 0, 0.5)
-                    shadowBlur: 0.4
+                    shadowColor: Qt.rgba(0, 0, 0, 0.6)
+                    shadowBlur: 0.5
                   }
                 }
 
@@ -356,7 +358,7 @@ Item {
                     var frac = Math.max(0.0, Math.min(1.0, (mx - 10) / opacityTrack.width))
                     var op = 0.15 + frac * 0.85
                     op = Math.round(op * 100) / 100
-                    if (rootRef && rootRef.updateAppearance) rootRef.updateAppearance("bg_opacity", op)
+                    if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("bg_opacity", op)
                   }
                   onPressed: function(mouse) { setVal(mouse.x) }
                   onPositionChanged: function(mouse) { if (pressed) setVal(mouse.x) }
@@ -378,19 +380,20 @@ Item {
 
                   Rectangle {
                     Layout.fillWidth: true
-                    height: 24
+                    height: 26
                     radius: 6
-                    color: Math.abs(curOpacity - modelData.val) < 0.05 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
-                    border.color: Math.abs(curOpacity - modelData.val) < 0.05 ? Color.accent : Qt.rgba(1, 1, 1, 0.1)
-                    border.width: 1
+                    readonly property bool isSelected: Math.abs(prefsDialogRoot.curOpacity - modelData.val) < 0.05
+                    color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.28) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.35))
+                    border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+                    border.width: isSelected ? 1.5 : 1
 
                     Text {
                       anchors.centerIn: parent
                       text: modelData.label
                       font.family: Style.font.family
                       font.pixelSize: 10
-                      font.weight: Math.abs(curOpacity - modelData.val) < 0.05 ? Font.Bold : Font.Normal
-                      color: Math.abs(curOpacity - modelData.val) < 0.05 ? Color.accent : Color.foreground
+                      font.weight: isSelected ? Font.Bold : Font.Normal
+                      color: isSelected ? Color.accent : Color.foreground
                     }
 
                     MouseArea {
@@ -398,7 +401,7 @@ Item {
                       anchors.fill: parent
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
-                      onClicked: if (rootRef && rootRef.updateAppearance) rootRef.updateAppearance("bg_opacity", modelData.val)
+                      onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("bg_opacity", modelData.val)
                     }
                   }
                 }
@@ -411,8 +414,8 @@ Item {
             Layout.fillWidth: true
             implicitHeight: radiusCol.implicitHeight + 20
             radius: 12
-            color: Qt.rgba(1, 1, 1, 0.04)
-            border.color: Qt.rgba(1, 1, 1, 0.07)
+            color: Qt.rgba(0, 0, 0, 0.30)
+            border.color: Qt.rgba(1, 1, 1, 0.08)
             border.width: 1
 
             ColumnLayout {
@@ -432,7 +435,7 @@ Item {
                 }
                 Item { Layout.fillWidth: true }
                 Text {
-                  text: curRadius + " px"
+                  text: prefsDialogRoot.curRadius + " px"
                   font.family: Style.font.family
                   font.pixelSize: 12
                   font.weight: Font.Bold
@@ -449,26 +452,26 @@ Item {
 
                 Rectangle {
                   height: parent.height
-                  width: Math.max(8, Math.min(parent.width, curRadius / 32 * parent.width))
+                  width: Math.max(8, Math.min(parent.width, prefsDialogRoot.curRadius / 32 * parent.width))
                   radius: 4
                   color: Color.accent
                 }
 
                 Rectangle {
-                  x: Math.max(0, Math.min(parent.width - width, (curRadius / 32) * (parent.width - width)))
+                  x: Math.max(0, Math.min(parent.width - width, (prefsDialogRoot.curRadius / 32) * (parent.width - width)))
                   anchors.verticalCenter: parent.verticalCenter
                   width: 18
                   height: 18
                   radius: 9
-                  color: Color.foreground
-                  border.color: Color.accent
+                  color: Color.accent
+                  border.color: "#ffffff"
                   border.width: 2
 
                   layer.enabled: true
                   layer.effect: MultiEffect {
                     shadowEnabled: true
-                    shadowColor: Qt.rgba(0, 0, 0, 0.5)
-                    shadowBlur: 0.4
+                    shadowColor: Qt.rgba(0, 0, 0, 0.6)
+                    shadowBlur: 0.5
                   }
                 }
 
@@ -479,7 +482,7 @@ Item {
                   function setRad(mx) {
                     var frac = Math.max(0.0, Math.min(1.0, (mx - 10) / radiusTrack.width))
                     var rad = Math.round(frac * 32)
-                    if (rootRef && rootRef.updateAppearance) rootRef.updateAppearance("corner_radius", rad)
+                    if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("corner_radius", rad)
                   }
                   onPressed: function(mouse) { setRad(mouse.x) }
                   onPositionChanged: function(mouse) { if (pressed) setRad(mouse.x) }
@@ -501,19 +504,20 @@ Item {
 
                   Rectangle {
                     Layout.fillWidth: true
-                    height: 24
+                    height: 26
                     radius: 6
-                    color: curRadius === modelData.val ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : (radMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
-                    border.color: curRadius === modelData.val ? Color.accent : Qt.rgba(1, 1, 1, 0.1)
-                    border.width: 1
+                    readonly property bool isSelected: prefsDialogRoot.curRadius === modelData.val
+                    color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.28) : (radMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.35))
+                    border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+                    border.width: isSelected ? 1.5 : 1
 
                     Text {
                       anchors.centerIn: parent
                       text: modelData.label
                       font.family: Style.font.family
                       font.pixelSize: 10
-                      font.weight: curRadius === modelData.val ? Font.Bold : Font.Normal
-                      color: curRadius === modelData.val ? Color.accent : Color.foreground
+                      font.weight: isSelected ? Font.Bold : Font.Normal
+                      color: isSelected ? Color.accent : Color.foreground
                     }
 
                     MouseArea {
@@ -521,7 +525,7 @@ Item {
                       anchors.fill: parent
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
-                      onClicked: if (rootRef && rootRef.updateAppearance) rootRef.updateAppearance("corner_radius", modelData.val)
+                      onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("corner_radius", modelData.val)
                     }
                   }
                 }
@@ -539,8 +543,8 @@ Item {
               Layout.fillWidth: true
               height: 48
               radius: 12
-              color: Qt.rgba(1, 1, 1, 0.04)
-              border.color: Qt.rgba(1, 1, 1, 0.07)
+              color: Qt.rgba(0, 0, 0, 0.30)
+              border.color: Qt.rgba(1, 1, 1, 0.08)
               border.width: 1
 
               RowLayout {
@@ -567,26 +571,28 @@ Item {
                 }
 
                 Rectangle {
-                  width: 38
-                  height: 22
-                  radius: 11
-                  color: curShadows ? Color.accent : Qt.rgba(1, 1, 1, 0.15)
+                  width: 40
+                  height: 24
+                  radius: 12
+                  color: prefsDialogRoot.curShadows ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
+                  border.color: prefsDialogRoot.curShadows ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
                   Rectangle {
-                    width: 16
-                    height: 16
-                    radius: 8
+                    width: 18
+                    height: 18
+                    radius: 9
                     anchors.verticalCenter: parent.verticalCenter
-                    x: curShadows ? (parent.width - width - 3) : 3
-                    color: Color.foreground
+                    x: prefsDialogRoot.curShadows ? (parent.width - width - 3) : 3
+                    color: "#ffffff"
                     Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                   }
 
                   MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: if (rootRef && rootRef.updateAppearance) rootRef.updateAppearance("shadows_enabled", !curShadows)
+                    onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("shadows_enabled", !prefsDialogRoot.curShadows)
                   }
                 }
               }
@@ -597,8 +603,8 @@ Item {
               Layout.fillWidth: true
               height: 48
               radius: 12
-              color: Qt.rgba(1, 1, 1, 0.04)
-              border.color: Qt.rgba(1, 1, 1, 0.07)
+              color: Qt.rgba(0, 0, 0, 0.30)
+              border.color: Qt.rgba(1, 1, 1, 0.08)
               border.width: 1
 
               RowLayout {
@@ -625,26 +631,28 @@ Item {
                 }
 
                 Rectangle {
-                  width: 38
-                  height: 22
-                  radius: 11
-                  color: curAnimations ? Color.accent : Qt.rgba(1, 1, 1, 0.15)
+                  width: 40
+                  height: 24
+                  radius: 12
+                  color: prefsDialogRoot.curAnimations ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
+                  border.color: prefsDialogRoot.curAnimations ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
                   Rectangle {
-                    width: 16
-                    height: 16
-                    radius: 8
+                    width: 18
+                    height: 18
+                    radius: 9
                     anchors.verticalCenter: parent.verticalCenter
-                    x: curAnimations ? (parent.width - width - 3) : 3
-                    color: Color.foreground
+                    x: prefsDialogRoot.curAnimations ? (parent.width - width - 3) : 3
+                    color: "#ffffff"
                     Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                   }
 
                   MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: if (rootRef && rootRef.updateAppearance) rootRef.updateAppearance("animations_enabled", !curAnimations)
+                    onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("animations_enabled", !prefsDialogRoot.curAnimations)
                   }
                 }
               }
@@ -659,8 +667,6 @@ Item {
           anchors.fill: parent
           visible: prefsDialogRoot.activeTab === 1
           spacing: Style.space(10)
-
-          readonly property int curGridSnap: (rootRef && rootRef.appearance && rootRef.appearance.grid_snap !== undefined) ? rootRef.appearance.grid_snap : 20
 
           Text {
             text: "Select snapping precision when dragging and resizing widgets:"
@@ -701,9 +707,10 @@ Item {
               Layout.fillWidth: true
               height: 54
               radius: 12
-              color: curGridSnap === modelData.snap ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.20) : (gridMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
-              border.color: curGridSnap === modelData.snap ? Color.accent : Qt.rgba(1, 1, 1, 0.08)
-              border.width: curGridSnap === modelData.snap ? 1.5 : 1
+              readonly property bool isSelected: prefsDialogRoot.curGridSnap === modelData.snap
+              color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (gridMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.28))
+              border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.08)
+              border.width: isSelected ? 1.5 : 1
 
               RowLayout {
                 anchors.fill: parent
@@ -714,14 +721,14 @@ Item {
                   width: 32
                   height: 32
                   radius: 8
-                  color: curGridSnap === modelData.snap ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+                  color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
 
                   Text {
                     anchors.centerIn: parent
                     text: modelData.icon
                     font.family: Style.font.family
                     font.pixelSize: 14
-                    color: curGridSnap === modelData.snap ? Color.accent : Color.foreground
+                    color: isSelected ? Color.accent : Color.foreground
                   }
                 }
 
@@ -729,6 +736,7 @@ Item {
                   Layout.fillWidth: true
                   spacing: 2
                   Text {
+                    Layout.fillWidth: true
                     text: modelData.title
                     font.family: Style.font.family
                     font.pixelSize: 12
@@ -736,6 +744,7 @@ Item {
                     color: Color.foreground
                   }
                   Text {
+                    Layout.fillWidth: true
                     text: modelData.desc
                     font.family: Style.font.family
                     font.pixelSize: 10
@@ -748,17 +757,17 @@ Item {
                   width: 20
                   height: 20
                   radius: 10
-                  color: curGridSnap === modelData.snap ? Color.accent : "transparent"
-                  border.color: curGridSnap === modelData.snap ? Color.accent : Qt.rgba(1, 1, 1, 0.3)
+                  color: isSelected ? Color.accent : "transparent"
+                  border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.3)
                   border.width: 1.5
 
                   Text {
-                    visible: curGridSnap === modelData.snap
+                    visible: isSelected
                     anchors.centerIn: parent
                     text: "\uf00c"
                     font.family: Style.font.family
                     font.pixelSize: 10
-                    color: Color.background
+                    color: "#ffffff"
                   }
                 }
               }
@@ -768,7 +777,7 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: if (rootRef && rootRef.updateAppearance) rootRef.updateAppearance("grid_snap", modelData.snap)
+                onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("grid_snap", modelData.snap)
               }
             }
           }
@@ -781,8 +790,6 @@ Item {
           anchors.fill: parent
           visible: prefsDialogRoot.activeTab === 2
           spacing: Style.space(10)
-
-          readonly property string curAutoHide: (rootRef && rootRef.appearance && rootRef.appearance.auto_hide_mode) ? rootRef.appearance.auto_hide_mode : "tiled"
 
           Text {
             text: "Choose how widgets respond to application windows on the desktop:"
@@ -823,9 +830,10 @@ Item {
               Layout.fillWidth: true
               height: 54
               radius: 12
-              color: curAutoHide === modelData.idVal ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.20) : (hideMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
-              border.color: curAutoHide === modelData.idVal ? Color.accent : Qt.rgba(1, 1, 1, 0.08)
-              border.width: curAutoHide === modelData.idVal ? 1.5 : 1
+              readonly property bool isSelected: prefsDialogRoot.curAutoHide === modelData.idVal
+              color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (hideMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.28))
+              border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.08)
+              border.width: isSelected ? 1.5 : 1
 
               RowLayout {
                 anchors.fill: parent
@@ -836,14 +844,14 @@ Item {
                   width: 32
                   height: 32
                   radius: 8
-                  color: curAutoHide === modelData.idVal ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+                  color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
 
                   Text {
                     anchors.centerIn: parent
                     text: modelData.icon
                     font.family: Style.font.family
                     font.pixelSize: 14
-                    color: curAutoHide === modelData.idVal ? Color.accent : Color.foreground
+                    color: isSelected ? Color.accent : Color.foreground
                   }
                 }
 
@@ -851,6 +859,7 @@ Item {
                   Layout.fillWidth: true
                   spacing: 2
                   Text {
+                    Layout.fillWidth: true
                     text: modelData.title
                     font.family: Style.font.family
                     font.pixelSize: 12
@@ -858,6 +867,7 @@ Item {
                     color: Color.foreground
                   }
                   Text {
+                    Layout.fillWidth: true
                     text: modelData.desc
                     font.family: Style.font.family
                     font.pixelSize: 10
@@ -870,17 +880,17 @@ Item {
                   width: 20
                   height: 20
                   radius: 10
-                  color: curAutoHide === modelData.idVal ? Color.accent : "transparent"
-                  border.color: curAutoHide === modelData.idVal ? Color.accent : Qt.rgba(1, 1, 1, 0.3)
+                  color: isSelected ? Color.accent : "transparent"
+                  border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.3)
                   border.width: 1.5
 
                   Text {
-                    visible: curAutoHide === modelData.idVal
+                    visible: isSelected
                     anchors.centerIn: parent
                     text: "\uf00c"
                     font.family: Style.font.family
                     font.pixelSize: 10
-                    color: Color.background
+                    color: "#ffffff"
                   }
                 }
               }
@@ -890,7 +900,7 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: if (rootRef && rootRef.updateAppearance) rootRef.updateAppearance("auto_hide_mode", modelData.idVal)
+                onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("auto_hide_mode", modelData.idVal)
               }
             }
           }
@@ -944,8 +954,8 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-              if (rootRef && rootRef.setAppearanceAll) {
-                rootRef.setAppearanceAll({
+              if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.setAppearanceAll) {
+                prefsDialogRoot.rootRef.setAppearanceAll({
                   bg_opacity: 0.85,
                   corner_radius: 18,
                   grid_snap: 20,
@@ -974,7 +984,7 @@ Item {
             font.family: Style.font.family
             font.pixelSize: 12
             font.weight: Font.Bold
-            color: Color.background
+            color: "#ffffff"
           }
 
           MouseArea {
