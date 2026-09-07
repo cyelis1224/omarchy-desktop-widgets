@@ -44,8 +44,29 @@ Item {
     grid_snap: 20,
     auto_hide_mode: "tiled",
     shadows_enabled: true,
-    animations_enabled: true
+    animations_enabled: true,
+    blur_enabled: false
   })
+  property bool surfaceRemapActive: true
+
+  Timer {
+    id: remapDelayTimer
+    interval: 120
+    repeat: false
+    onTriggered: root.remapLayerSurface()
+  }
+
+  Timer {
+    id: remapTimer
+    interval: 60
+    repeat: false
+    onTriggered: root.surfaceRemapActive = true
+  }
+
+  function remapLayerSurface() {
+    root.surfaceRemapActive = false
+    remapTimer.restart()
+  }
   property var monitorPositions: ({})
   property string profileNoticeText: ""
   property bool profileNoticeVisible: false
@@ -226,11 +247,18 @@ Item {
     app[key] = val
     root.appearance = app
     Quickshell.execDetached([root.manageScriptPath, "save_appearance", JSON.stringify(app)])
+    if (key === "blur_enabled") {
+      remapDelayTimer.restart()
+    }
   }
 
   function setAppearanceAll(app) {
+    var blurChanged = (root.appearance && root.appearance.blur_enabled !== app.blur_enabled)
     root.appearance = app
     Quickshell.execDetached([root.manageScriptPath, "save_appearance", JSON.stringify(app)])
+    if (blurChanged) {
+      remapDelayTimer.restart()
+    }
   }
 
   Process {
@@ -429,6 +457,12 @@ Item {
       root.preferencesOpen = !root.preferencesOpen
     }
 
+    function toggleBlur(): string {
+      var cur = (root.appearance && root.appearance.blur_enabled) ? true : false
+      root.updateAppearance("blur_enabled", !cur)
+      return "blur set to " + (!cur)
+    }
+
     function profile(name: string): string {
       if (name) root.switchProfile(name)
       return "switched to " + name
@@ -497,6 +531,7 @@ Item {
         id: desktopWindow
         required property var modelData
         screen: modelData
+        visible: root.surfaceRemapActive
 
         anchors {
           top: true

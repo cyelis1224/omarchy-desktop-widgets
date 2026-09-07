@@ -94,8 +94,40 @@ DEFAULT_APPEARANCE = {
     "grid_snap": 20,
     "auto_hide_mode": "tiled",
     "shadows_enabled": True,
-    "animations_enabled": True
+    "animations_enabled": True,
+    "blur_enabled": False
 }
+
+BLUR_TOGGLE_FILE = os.path.expanduser("~/.local/state/omarchy/toggles/hypr/dagyr-desktop-widgets-blur.lua")
+OLD_BLUR_TOGGLE_FILE = os.path.expanduser("~/.local/state/omarchy/toggles/hypr/dagyr.desktop-widgets-blur.lua")
+
+def sync_blur_toggle(blur_enabled):
+    try:
+        # Clean up legacy file with dot in basename that breaks Lua require_all
+        if os.path.exists(OLD_BLUR_TOGGLE_FILE):
+            os.remove(OLD_BLUR_TOGGLE_FILE)
+
+        rule_content = '-- Managed dynamically by dagyr.desktop-widgets\nhl.layer_rule({ match = { namespace = "omarchy-desktop-widgets" }, blur = true, ignore_alpha = 0.30 })\n'
+        if blur_enabled:
+            os.makedirs(os.path.dirname(BLUR_TOGGLE_FILE), exist_ok=True)
+            if not os.path.exists(BLUR_TOGGLE_FILE):
+                with open(BLUR_TOGGLE_FILE, 'w') as f:
+                    f.write(rule_content)
+                subprocess.run(["hyprctl", "reload", "config-only"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+            else:
+                with open(BLUR_TOGGLE_FILE, 'r') as f:
+                    curr = f.read()
+                if curr != rule_content:
+                    with open(BLUR_TOGGLE_FILE, 'w') as f:
+                        f.write(rule_content)
+                    subprocess.run(["hyprctl", "reload", "config-only"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        else:
+            if os.path.exists(BLUR_TOGGLE_FILE):
+                os.remove(BLUR_TOGGLE_FILE)
+                subprocess.run(["hyprctl", "reload", "config-only"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    except Exception:
+        pass
+
 
 def pick_file_dialog(title="Select File", extensions="json", directory=False, save=False):
     # 1. omarchy-file-select (Standard Omarchy XDG Desktop Portal FileChooser)
@@ -373,6 +405,7 @@ def main():
         app.update(val_map)
         settings['appearance'] = app
         save_settings(settings)
+        sync_blur_toggle(bool(app.get('blur_enabled', False)))
         print(json.dumps({"status": "appearance_saved", "appearance": app}))
     elif action == 'list_profiles':
         profiles = []
@@ -639,6 +672,7 @@ def main():
         settings['active_profile'] = "Default"
         settings['layout_profiles'] = copy.deepcopy(BUILTIN_PROFILES)
         save_settings(settings)
+        sync_blur_toggle(False)
         print(json.dumps({
             "status": "factory_reset",
             "has_saved_layout": False,
@@ -647,6 +681,7 @@ def main():
             "active_profile": "Default"
         }))
     else: # load
+        sync_blur_toggle(bool(settings.get('appearance', {}).get('blur_enabled', False)))
         profs = settings.get('layout_profiles', {})
         active = settings.get('active_profile', 'Default')
         profile_list = []

@@ -37,6 +37,7 @@ Item {
   readonly property int curRadius: (rootRef && rootRef.appearance && rootRef.appearance.corner_radius !== undefined) ? rootRef.appearance.corner_radius : 18
   readonly property bool curShadows: (rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true
   readonly property bool curAnimations: (rootRef && rootRef.appearance && rootRef.appearance.animations_enabled !== undefined) ? rootRef.appearance.animations_enabled : true
+  readonly property bool curBlur: (rootRef && rootRef.appearance && rootRef.appearance.blur_enabled !== undefined) ? rootRef.appearance.blur_enabled : false
   readonly property int curGridSnap: (rootRef && rootRef.appearance && rootRef.appearance.grid_snap !== undefined) ? rootRef.appearance.grid_snap : 20
   readonly property string curAutoHide: (rootRef && rootRef.appearance && rootRef.appearance.auto_hide_mode) ? rootRef.appearance.auto_hide_mode : "tiled"
 
@@ -558,10 +559,10 @@ Item {
             }
           }
 
-          // 3. Toggles: Drop Shadows & Workspace Transitions
+          // 3. Toggles: Drop Shadows, Frosted Blur & Workspace Transitions
           RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: 8
 
             // Drop Shadows Toggle
             Rectangle {
@@ -574,8 +575,8 @@ Item {
 
               RowLayout {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 8
+                anchors.margins: 10
+                spacing: 6
 
                 ColumnLayout {
                   Layout.fillWidth: true
@@ -586,28 +587,30 @@ Item {
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
                     color: Color.foreground
+                    elide: Text.ElideRight
                   }
                   Text {
-                    text: "Depth drop shadows"
+                    text: "Depth shadows"
                     font.family: Style.font.family
                     font.pixelSize: 9
                     color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                    elide: Text.ElideRight
                   }
                 }
 
                 Rectangle {
-                  width: 40
-                  height: 24
-                  radius: 12
+                  width: 38
+                  height: 22
+                  radius: 11
                   color: prefsDialogRoot.curShadows ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
                   border.color: prefsDialogRoot.curShadows ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
                   border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
                   Rectangle {
-                    width: 18
-                    height: 18
-                    radius: 9
+                    width: 16
+                    height: 16
+                    radius: 8
                     anchors.verticalCenter: parent.verticalCenter
                     x: prefsDialogRoot.curShadows ? (parent.width - width - 3) : 3
                     color: "#ffffff"
@@ -618,6 +621,68 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("shadows_enabled", !prefsDialogRoot.curShadows)
+                  }
+                }
+              }
+            }
+
+            // Frosted Blur Toggle
+            Rectangle {
+              Layout.fillWidth: true
+              height: 48
+              radius: 12
+              color: Qt.rgba(0, 0, 0, 0.30)
+              border.color: Qt.rgba(1, 1, 1, 0.08)
+              border.width: 1
+
+              RowLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 6
+
+                ColumnLayout {
+                  Layout.fillWidth: true
+                  spacing: 1
+                  Text {
+                    text: "Frosted Blur"
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                    color: Color.foreground
+                    elide: Text.ElideRight
+                  }
+                  Text {
+                    text: "Hyprland blur"
+                    font.family: Style.font.family
+                    font.pixelSize: 9
+                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                    elide: Text.ElideRight
+                  }
+                }
+
+                Rectangle {
+                  width: 38
+                  height: 22
+                  radius: 11
+                  color: prefsDialogRoot.curBlur ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
+                  border.color: prefsDialogRoot.curBlur ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  border.width: 1
+                  Behavior on color { ColorAnimation { duration: 160 } }
+
+                  Rectangle {
+                    width: 16
+                    height: 16
+                    radius: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: prefsDialogRoot.curBlur ? (parent.width - width - 3) : 3
+                    color: "#ffffff"
+                    Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                  }
+
+                  MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: if (prefsDialogRoot.rootRef && prefsDialogRoot.rootRef.updateAppearance) prefsDialogRoot.rootRef.updateAppearance("blur_enabled", !prefsDialogRoot.curBlur)
                   }
                 }
               }
@@ -634,40 +699,42 @@ Item {
 
               RowLayout {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 8
+                anchors.margins: 10
+                spacing: 6
 
                 ColumnLayout {
                   Layout.fillWidth: true
                   spacing: 1
                   Text {
-                    text: "Workspace Motion"
+                    text: "Transitions"
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
                     color: Color.foreground
+                    elide: Text.ElideRight
                   }
                   Text {
-                    text: "Slide & fade transitions"
+                    text: "Slide animation"
                     font.family: Style.font.family
                     font.pixelSize: 9
                     color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                    elide: Text.ElideRight
                   }
                 }
 
                 Rectangle {
-                  width: 40
-                  height: 24
-                  radius: 12
+                  width: 38
+                  height: 22
+                  radius: 11
                   color: prefsDialogRoot.curAnimations ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
                   border.color: prefsDialogRoot.curAnimations ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
                   border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
                   Rectangle {
-                    width: 18
-                    height: 18
-                    radius: 9
+                    width: 16
+                    height: 16
+                    radius: 8
                     anchors.verticalCenter: parent.verticalCenter
                     x: prefsDialogRoot.curAnimations ? (parent.width - width - 3) : 3
                     color: "#ffffff"

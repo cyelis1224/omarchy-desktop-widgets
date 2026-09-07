@@ -213,27 +213,30 @@ Open the preferences dialog at any time via:
 
 ### 🎛️ Customization Controls
 
-1. **Card Background Transparency & Acrylic Blur**:
+1. **Card Background Transparency**:
    - Live continuous slider from 15% (ultra glassy acrylic) to 100% (solid opaque cards).
    - Quick preset chips: *Glassy 30%*, *Translucent 60%*, *Standard 85%*, *Solid 100%*.
 2. **Corner Curvature Radius**:
    - Live continuous slider from 0px (sharp square) to 32px (smoothly rounded).
    - Quick preset chips: *Sharp (0px)*, *Subtle (8px)*, *Standard (18px)*, *Rounded (28px)*.
-3. **Drop Shadows**:
+3. **Frosted Acrylic Blur**:
+   - Toggle Hyprland hardware-accelerated dual-kawase background blur behind translucent widget cards.
+   - Managed automatically and dynamically via Omarchy's toggle system—no manual edits to `windowrules.lua` needed!
+4. **Drop Shadows**:
    - High-depth hardware-accelerated ambient drop shadows with smooth on/off toggle.
-4. **Grid Snapping Precision**:
+5. **Grid Snapping Precision**:
    - Choose your snapping precision during drag and resize operations:
      - **Freeform (1px)**: Pixel-perfect freedom with no snapping restriction.
      - **Fine (10px)**: Compact, high-precision layout alignment.
      - **Standard (20px)**: Default balanced alignment grid.
      - **Coarse (40px)**: Bold modular alignment for large displays.
-5. **Auto-Hide Behavior Modes**:
+6. **Auto-Hide Behavior Modes**:
    - Customize when widgets automatically hide beneath applications:
      - **Hide on Any Window (Tiled)** *(Default)*: Widgets hide whenever any window is active on the current workspace.
      - **Hide on Fullscreen Only**: Widgets stay visible beneath floating and tiled windows, hiding only when an app goes fullscreen.
      - **Always Keep Visible**: Widgets remain permanently rendered on the desktop canvas behind windows.
      - **Manual Toggle Only**: Widgets disregard window states; toggle manually via top bar or shortcut.
-6. **Workspace Slide & Fade Transitions**:
+7. **Workspace Slide & Fade Transitions**:
    - Smooth fluid slide and fade animations when switching between virtual workspaces.
 
 ---
