@@ -164,25 +164,21 @@ Item {
     if (root.overlayActive) {
       root.closeOverlay()
     }
-  }
-
-  Connections {
-    target: ToplevelManager
-    function onActiveToplevelChanged() {
-      var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
-      var hasWindows = ws && ws.toplevels && ws.toplevels.values.length > 0
-      if (!hasWindows) {
-        root.manualHide = false
-      }
-    }
+    root.manualHide = false
   }
 
   function handleToggleOrJump() {
     if (root.overlayActive) {
       root.closeOverlay()
     } else {
-      root.overlayActive = true
-      root.manualHide = false
+      var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
+      var hasWindows = ws && ws.toplevels && ws.toplevels.values.length > 0
+      if (hasWindows) {
+        root.overlayActive = true
+        root.manualHide = false
+      } else {
+        root.manualHide = !root.manualHide
+      }
     }
   }
 
@@ -310,12 +306,8 @@ Item {
           z: 0
           acceptedButtons: Qt.LeftButton | Qt.RightButton
           onDoubleClicked: function(mouse) {
-            if (root.overlayActive) {
-              root.closeOverlay()
-              return
-            }
             if (mouse.button === Qt.LeftButton) {
-              Quickshell.execDetached(["bash", "-c", "background=$(omarchy-theme-bg-switcher); [[ -n $background ]] && omarchy-theme-bg-set \"$background\""])
+              root.handleToggleOrJump()
             }
           }
           onClicked: function(mouse) {

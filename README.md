@@ -114,6 +114,10 @@ The desktop widgets feature an interactive shaded backdrop overlay that elevates
 
 ### 🖱️ Widget Interaction & Management
 
+- **Double-Click Blank Desktop to Show/Hide**:
+  - Double-clicking on empty wallpaper or blank space between windows toggles widget visibility.
+  - On an empty workspace: smoothly fades out all desktop widgets to display an uncluttered wallpaper; double-clicking blank space again instantly restores them.
+  - On a workspace with open windows: double-clicking exposed desktop gaps summons the shaded frosted overlay.
 - **Right-Click Context Menu**:
   - Right-click anywhere on any widget body to open its options menu.
   - Selecting any setting option automatically saves your preference and dismisses the context menu.
