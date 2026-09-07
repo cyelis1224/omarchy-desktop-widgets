@@ -157,12 +157,14 @@ Item {
     }
   }
 
-  // 🔄 Automatically re-enable widgets when switching to an empty workspace
+  // 🔄 Automatically handle workspace navigation:
+  // If moving to an empty workspace, drop overlay to regular widget layer on wallpaper.
   readonly property var focusedWorkspace: Hyprland.focusedWorkspace
   onFocusedWorkspaceChanged: {
     var ws = root.focusedWorkspace
     var hasWindows = ws && ws.toplevels && ws.toplevels.values.length > 0
     if (!hasWindows) {
+      root.overlayActive = false
       root.manualHide = false
     }
   }
@@ -248,8 +250,8 @@ Item {
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "omarchy-desktop-widgets"
-        WlrLayershell.layer: root.overlayActive ? WlrLayer.Overlay : WlrLayer.Bottom
-        WlrLayershell.keyboardFocus: root.overlayActive ? WlrKeyboardFocus.Exclusive : ((!desktopWindow.hasOpenWindows && (root.selectorOpen || root.keyboardFocusRequested)) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None)
+        WlrLayershell.layer: root.overlayActive ? WlrLayer.Top : WlrLayer.Bottom
+        WlrLayershell.keyboardFocus: root.overlayActive ? WlrKeyboardFocus.OnDemand : ((!desktopWindow.hasOpenWindows && (root.selectorOpen || root.keyboardFocusRequested)) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None)
 
         Shortcut {
           sequence: "Escape"
@@ -264,16 +266,24 @@ Item {
           if (height > 0) root.screenHeight = height
         }
 
+        readonly property int topBarHeight: (typeof Style !== "undefined" && Style.bar && Style.bar.sizeHorizontal) ? Style.bar.sizeHorizontal : 22
+
         readonly property bool hasOpenWindows: {
           var dummy = ToplevelManager.toplevels.values.length
           var ws = (typeof Hyprland !== "undefined" && Hyprland.focusedWorkspace) ? Hyprland.focusedWorkspace : null
           return !!(ws && ws.toplevels && ws.toplevels.values.length > 0)
         }
 
-        // 🌓 Shaded Transparent Overlay Backdrop
+        // 🌓 Shaded Transparent Overlay Backdrop (kept below the top bar so bar is raised & interactive)
         Rectangle {
           id: shadedOverlayBackdrop
-          anchors.fill: parent
+          anchors {
+            top: parent.top
+            topMargin: desktopWindow.topBarHeight
+            bottom: parent.bottom
+            left: parent.left
+            right: parent.right
+          }
           z: 0
           color: Qt.rgba(10/255, 10/255, 16/255, 0.62)
           opacity: root.overlayActive ? 1.0 : 0.0
@@ -287,7 +297,13 @@ Item {
         // 🖱️ Desktop Background Click & Context Menu Handler
         MouseArea {
           id: desktopBgMouse
-          anchors.fill: parent
+          anchors {
+            top: parent.top
+            topMargin: root.overlayActive ? desktopWindow.topBarHeight : 0
+            bottom: parent.bottom
+            left: parent.left
+            right: parent.right
+          }
           z: 0
           acceptedButtons: Qt.LeftButton | Qt.RightButton
           onDoubleClicked: function(mouse) {
