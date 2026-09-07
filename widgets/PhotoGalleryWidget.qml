@@ -24,6 +24,7 @@ Item {
   property real maxWidth: Math.min(1200, screenWidth - 40)
   property real maxHeight: Math.min(900, screenHeight - 80)
   property bool resizable: true
+  readonly property bool isResizing: (resizeCornerArea && resizeCornerArea.isResizingNow) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
 
   width: 360
   height: 228
@@ -60,7 +61,7 @@ Item {
   property var layer1PhotoObj: (photoList && photoList.length > 2) ? photoList[(photoIndex + 3) % photoList.length] : null
   readonly property string layer1PhotoPath: layer1PhotoObj ? layer1PhotoObj.path : ""
 
-  readonly property bool isHovered: cardHoverTracker.containsMouse && !folderMenuOpen
+  readonly property bool isHovered: cardHoverHandler.hovered && !folderMenuOpen
   readonly property bool isGif: (currentPhotoPath !== "" && currentPhotoPath.toLowerCase().indexOf(".gif") !== -1) || (currentPhotoRawPath !== "" && currentPhotoRawPath.toLowerCase().indexOf(".gif") !== -1)
 
   function nextPhoto() {
@@ -83,9 +84,15 @@ Item {
     }
   }
 
+  readonly property string photosScriptPath: {
+    var u = Qt.resolvedUrl("../get-photos.sh").toString()
+    if (u.indexOf("file://") === 0) return u.substring(7)
+    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-photos.sh"
+  }
+
   function selectFolder(folderPath) {
     galleryWidgetRoot.folderMenuOpen = false
-    photosProc.command = ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-photos.sh", folderPath]
+    photosProc.command = [galleryWidgetRoot.photosScriptPath, folderPath]
     if (!photosProc.running) photosProc.running = true
   }
 
@@ -99,7 +106,7 @@ Item {
 
   Process {
     id: photosProc
-    command: ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-photos.sh"]
+    command: [galleryWidgetRoot.photosScriptPath]
     running: true
     stdout: SplitParser {
       onRead: function(line) {
@@ -617,7 +624,7 @@ Item {
       anchors.right: parent.right
       height: 48
       radius: 16
-      z: 30
+      z: 50
       opacity: (galleryWidgetRoot.isHovered || (rootRef && rootRef.layoutEditMode) || galleryWidgetRoot.folderMenuOpen) ? 1.0 : 0.0
       Behavior on opacity {
         NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
@@ -660,10 +667,13 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: closePhotoMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(0, 0, 0, 0.55)
-          border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.6)
+          color: closePhotoMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.12)
+          border.color: closePhotoMouse.containsMouse ? Color.urgent : Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.6)
           border.width: 1
-          z: 20
+          z: 120
+
+          Behavior on color { ColorAnimation { duration: 120 } }
+          Behavior on border.color { ColorAnimation { duration: 120 } }
 
           Text {
             anchors.centerIn: parent
@@ -692,10 +702,13 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: galleryGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(0, 0, 0, 0.55)
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
+          color: galleryGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.12)
+          border.color: galleryGripArea.containsMouse ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
           border.width: 1
-          z: 20
+          z: 120
+
+          Behavior on color { ColorAnimation { duration: 120 } }
+          Behavior on border.color { ColorAnimation { duration: 120 } }
 
           Text {
             anchors.centerIn: parent
@@ -727,7 +740,7 @@ Item {
               galleryWidgetRoot.targetItem.x = snappedX
               galleryWidgetRoot.targetItem.y = snappedY
               if (rootRef && rootRef.saveWidgetPos) {
-                rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, snappedX, snappedY)
+                rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, snappedX, snappedY, Math.round(galleryWidgetRoot.width / 20) * 20, Math.round(galleryWidgetRoot.height / 20) * 20)
               }
             }
           }
@@ -764,7 +777,7 @@ Item {
       anchors.right: parent.right
       height: 44
       radius: 16
-      z: 30
+      z: 50
       opacity: galleryWidgetRoot.isHovered ? 1.0 : 0.0
       gradient: Gradient {
         GradientStop { position: 0.0; color: "transparent" }
@@ -860,13 +873,9 @@ Item {
       }
     }
 
-    // Card Hover Tracker for fan-out and controls animation
-    MouseArea {
-      id: cardHoverTracker
-      anchors.fill: parent
-      hoverEnabled: true
-      acceptedButtons: Qt.NoButton
-      z: 40
+    // Card Hover Handler for fan-out and controls animation without intercepting child mouse/hover events
+    HoverHandler {
+      id: cardHoverHandler
     }
 
     // Interactive Click Area (Left-click to cycle, right-click for folder menu)
@@ -899,7 +908,11 @@ Item {
   // Full body drag when in Edit Mode
   MouseArea {
     id: galleryFullDragArea
-    anchors.fill: parent
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    anchors.top: parent.top
+    anchors.topMargin: 58
     z: 100
     visible: rootRef && rootRef.layoutEditMode
     cursorShape: Qt.SizeAllCursor
@@ -909,6 +922,13 @@ Item {
     drag.maximumX: Math.max(10, galleryWidgetRoot.screenWidth - galleryWidgetRoot.width - 10)
     drag.minimumY: 10
     drag.maximumY: Math.max(10, galleryWidgetRoot.screenHeight - galleryWidgetRoot.height - 10)
+
+    onPressed: function(mouse) {
+      if (mouse.y <= 48 && mouse.x >= width - 64) {
+        mouse.accepted = false
+        return
+      }
+    }
 
     onReleased: function() {
       var maxX = Math.max(10, galleryWidgetRoot.screenWidth - galleryWidgetRoot.width - 10)
@@ -920,8 +940,206 @@ Item {
       galleryWidgetRoot.targetItem.x = snappedX
       galleryWidgetRoot.targetItem.y = snappedY
       if (rootRef && rootRef.saveWidgetPos) {
-        rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, snappedX, snappedY)
+        rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, snappedX, snappedY, Math.round(galleryWidgetRoot.width / 20) * 20, Math.round(galleryWidgetRoot.height / 20) * 20)
       }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 📐 Interactive Resizing Handles & Live Dimensions Pill
+  // ---------------------------------------------------------------------------
+
+  // Visual Grip Icon in Bottom-Right Corner
+  Rectangle {
+    id: cornerResizeVisual
+    visible: rootRef && rootRef.layoutEditMode && galleryWidgetRoot.resizable
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    anchors.margins: 6
+    width: 18
+    height: 18
+    radius: 4
+    z: 115
+    color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+    border.color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
+    border.width: 1
+
+    Text {
+      anchors.centerIn: parent
+      text: "\uf424"
+      font.family: Style.font.family
+      font.pixelSize: 10
+      color: Color.accent
+    }
+  }
+
+  // Interactive Bottom-Right Corner Resize Area (Width & Height)
+  MouseArea {
+    id: resizeCornerArea
+    width: 24
+    height: 24
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    z: 125
+    visible: rootRef && rootRef.layoutEditMode && galleryWidgetRoot.resizable
+    cursorShape: Qt.SizeFDiagCursor
+    hoverEnabled: true
+
+    property real startScreenX: 0
+    property real startScreenY: 0
+    property real startWidth: 0
+    property real startHeight: 0
+    property bool isResizingNow: false
+
+    onPressed: function(mouse) {
+      var p = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
+      startScreenX = p.x
+      startScreenY = p.y
+      startWidth = galleryWidgetRoot.width
+      startHeight = galleryWidgetRoot.height
+      isResizingNow = true
+    }
+
+    onPositionChanged: function(mouse) {
+      if (isResizingNow) {
+        var cur = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
+        var newW = Math.max(galleryWidgetRoot.minWidth, Math.min(galleryWidgetRoot.maxWidth, startWidth + (cur.x - startScreenX)))
+        var newH = Math.max(galleryWidgetRoot.minHeight, Math.min(galleryWidgetRoot.maxHeight, startHeight + (cur.y - startScreenY)))
+        galleryWidgetRoot.width = newW
+        galleryWidgetRoot.height = newH
+      }
+    }
+
+    onReleased: function() {
+      if (isResizingNow) {
+        isResizingNow = false
+        var snappedW = Math.round(galleryWidgetRoot.width / 20) * 20
+        var snappedH = Math.round(galleryWidgetRoot.height / 20) * 20
+        snappedW = Math.max(galleryWidgetRoot.minWidth, Math.min(galleryWidgetRoot.maxWidth, snappedW))
+        snappedH = Math.max(galleryWidgetRoot.minHeight, Math.min(galleryWidgetRoot.maxHeight, snappedH))
+        galleryWidgetRoot.width = snappedW
+        galleryWidgetRoot.height = snappedH
+        if (rootRef && rootRef.saveWidgetPos) {
+          rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, galleryWidgetRoot.targetItem.x, galleryWidgetRoot.targetItem.y, snappedW, snappedH)
+        }
+      }
+    }
+  }
+
+  // Interactive Right Edge Resize Area (Width only)
+  MouseArea {
+    id: resizeRightArea
+    width: 10
+    anchors.right: parent.right
+    anchors.top: parent.top
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: 24
+    z: 120
+    visible: rootRef && rootRef.layoutEditMode && galleryWidgetRoot.resizable
+    cursorShape: Qt.SizeHorCursor
+    hoverEnabled: true
+
+    property real startScreenX: 0
+    property real startWidth: 0
+    property bool isResizingNow: false
+
+    onPressed: function(mouse) {
+      var p = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
+      startScreenX = p.x
+      startWidth = galleryWidgetRoot.width
+      isResizingNow = true
+    }
+
+    onPositionChanged: function(mouse) {
+      if (isResizingNow) {
+        var cur = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
+        var newW = Math.max(galleryWidgetRoot.minWidth, Math.min(galleryWidgetRoot.maxWidth, startWidth + (cur.x - startScreenX)))
+        galleryWidgetRoot.width = newW
+      }
+    }
+
+    onReleased: function() {
+      if (isResizingNow) {
+        isResizingNow = false
+        var snappedW = Math.round(galleryWidgetRoot.width / 20) * 20
+        snappedW = Math.max(galleryWidgetRoot.minWidth, Math.min(galleryWidgetRoot.maxWidth, snappedW))
+        galleryWidgetRoot.width = snappedW
+        if (rootRef && rootRef.saveWidgetPos) {
+          rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, galleryWidgetRoot.targetItem.x, galleryWidgetRoot.targetItem.y, snappedW, Math.round(galleryWidgetRoot.height / 20) * 20)
+        }
+      }
+    }
+  }
+
+  // Interactive Bottom Edge Resize Area (Height only)
+  MouseArea {
+    id: resizeBottomArea
+    height: 10
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.rightMargin: 24
+    z: 120
+    visible: rootRef && rootRef.layoutEditMode && galleryWidgetRoot.resizable
+    cursorShape: Qt.SizeVerCursor
+    hoverEnabled: true
+
+    property real startScreenY: 0
+    property real startHeight: 0
+    property bool isResizingNow: false
+
+    onPressed: function(mouse) {
+      var p = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
+      startScreenY = p.y
+      startHeight = galleryWidgetRoot.height
+      isResizingNow = true
+    }
+
+    onPositionChanged: function(mouse) {
+      if (isResizingNow) {
+        var cur = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
+        var newH = Math.max(galleryWidgetRoot.minHeight, Math.min(galleryWidgetRoot.maxHeight, startHeight + (cur.y - startScreenY)))
+        galleryWidgetRoot.height = newH
+      }
+    }
+
+    onReleased: function() {
+      if (isResizingNow) {
+        isResizingNow = false
+        var snappedH = Math.round(galleryWidgetRoot.height / 20) * 20
+        snappedH = Math.max(galleryWidgetRoot.minHeight, Math.min(galleryWidgetRoot.maxHeight, snappedH))
+        galleryWidgetRoot.height = snappedH
+        if (rootRef && rootRef.saveWidgetPos) {
+          rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, galleryWidgetRoot.targetItem.x, galleryWidgetRoot.targetItem.y, Math.round(galleryWidgetRoot.width / 20) * 20, snappedH)
+        }
+      }
+    }
+  }
+
+  // Floating Real-Time Dimensions Pill Badge
+  Rectangle {
+    id: resizeDimPill
+    visible: galleryWidgetRoot.isResizing
+    anchors.bottom: parent.bottom
+    anchors.right: parent.right
+    anchors.bottomMargin: 28
+    anchors.rightMargin: 10
+    z: 150
+    implicitWidth: dimPillText.implicitWidth + Style.space(16)
+    implicitHeight: 22
+    radius: 11
+    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    border.color: Color.accent
+    border.width: 1
+
+    Text {
+      id: dimPillText
+      anchors.centerIn: parent
+      text: Math.round(galleryWidgetRoot.width) + " × " + Math.round(galleryWidgetRoot.height) + " px"
+      font.family: Style.font.family
+      font.pixelSize: 10
+      font.weight: Font.Bold
+      color: Color.accent
     }
   }
 

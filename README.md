@@ -32,20 +32,22 @@ Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GP
    - Integrated live audio spectrum visualizer bar.
    - MPRIS audio source picker to switch between active media players (Spotify, Firefox, Chromium, mpv).
 
-### Custom Interactive Widgets
-6. **📝 Quick Notes & Todo Deck** (`widgets/quick-notes/`)
+### Productivity & Developer Widgets
+6. **📝 Quick Notes & Todo Deck** (`widgets/quick-notes/QuickNotesWidget.qml`)
    - Floating Kanban-style todo deck with tag pills (`#work`, `#todo`, `#idea`, `#done`).
    - Markdown scratchpad instantly synchronized to local markdown and JSON files.
-7. **⏱️ Circular Pomodoro Timer** (`widgets/pomodoro/`)
+7. **⏱️ Circular Pomodoro Timer** (`widgets/pomodoro/PomodoroWidget.qml`)
    - Flow-state countdown timer with SVG circular progress ring.
    - Focus sessions (25m), short breaks (5m), and long breaks (15m) with audio chimes.
-8. **⚡ Hardware Telemetry Monitor** (`widgets/hardware-telemetry/`)
+8. **⚡ Hardware Telemetry Monitor** (`widgets/hardware-telemetry/HardwareTelemetryWidget.qml`)
    - Dual radial gauge matrix for CPU and GPU utilization, clock frequencies, temperatures, and VRAM.
    - Native integration with NVIDIA, AMD, and Intel hardware sensors.
-9. **🌿 Git Activity & Contribution Radar** (`widgets/git-activity/`)
+9. **🌿 Git Activity & Contribution Radar** (`widgets/git-activity/GitActivityWidget.qml`)
    - 84-day GitHub-style contribution heatmap and commit pulse.
    - Branch status, uncommitted diff counter, and recent commit history log.
    - **Repository Switcher**: Monitor specific local projects or toggle **All Repositories** aggregate mode.
+
+All 9 widgets are built-in and available right out of the box from the desktop **Add Widgets** drawer or right-click wallpaper menu.
 
 ---
 
@@ -60,15 +62,15 @@ git clone https://github.com/cyelis1224/omarchy-desktop-widgets ~/.config/omarch
 ```
 
 ### Option 2: Custom Widget Development Workspace
-If you are developing custom widgets, clone to your projects directory:
+If you are developing your own third-party custom widgets, clone to your projects directory:
 
 ```bash
 git clone https://github.com/cyelis1224/omarchy-desktop-widgets ~/Projects/desktop-widgets
 ```
 
-To register any custom widget with Omarchy:
+To register any new third-party custom widget with Omarchy:
 ```bash
-~/Projects/desktop-widgets/scripts/import-widget.sh ~/Projects/desktop-widgets/widgets/pomodoro/PomodoroWidget.qml "Pomodoro Timer"
+~/Projects/desktop-widgets/scripts/import-widget.sh path/to/MyCustomWidget.qml "My Custom Widget"
 ```
 
 ---
@@ -282,6 +284,38 @@ WidgetCard {
    ```bash
    omarchy restart shell
    ```
+
+---
+
+## 🔔 Status Bar Update Indicator & Updater Dialog
+
+The plugin includes an automatic update indicator on the Omarchy status bar:
+- **Zero Bar Clutter**: When up-to-date, the widget remains completely hidden (`visible: false`, 0 width) so it takes up no bar space.
+- **Update Notification**: When an update is detected on the upstream GitHub repository, an indicator icon (`\uf019` with a subtle pulsing accent badge) appears on the top bar.
+- **Interactive Review Window**: Clicking the icon opens a themed dialog window (`PopupCard`) displaying:
+  - **Current Version** vs **New Version** comparison cards with git commit hashes.
+  - **What's New / Summary**: Displays upstream commit count and latest release/commit message.
+  - **"Update Now" Button**: Automatically fetches the update, pulls git changes, validates the plugin, and reloads the shell without losing your layout.
+  - **"Cancel" Button**: Dismisses the review window.
+
+### Testing & Manual Controls
+You can manually check or simulate update states via CLI:
+```bash
+# Check current update status
+~/.config/omarchy/plugins/dagyr.desktop-widgets/scripts/check-update.sh check
+
+# Simulate an update (enables mock update mode and shows the bar icon)
+~/.config/omarchy/plugins/dagyr.desktop-widgets/scripts/check-update.sh mock-on
+omarchy-shell dagyr.desktop-widgets-update check
+
+# Clear simulated update mode
+~/.config/omarchy/plugins/dagyr.desktop-widgets/scripts/check-update.sh mock-off
+omarchy-shell dagyr.desktop-widgets-update check
+
+# Open or close the update dialog via IPC
+omarchy-shell dagyr.desktop-widgets-update open
+omarchy-shell dagyr.desktop-widgets-update close
+```
 
 ---
 

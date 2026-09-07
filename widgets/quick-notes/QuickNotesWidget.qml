@@ -7,8 +7,9 @@ import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
-// Import base WidgetCard from the shared repository link
+// Import base WidgetCard from the shared repository link or parent widgets directory
 import "../../shared"
+import ".."
 
 WidgetCard {
   id: notesWidgetRoot
@@ -49,10 +50,11 @@ WidgetCard {
     return count
   }
   readonly property int completedCount: todosList.length - pendingCount
+  readonly property string notesManagerPath: Qt.resolvedUrl("notes_manager.py").toString().replace(/^file:\/\//, "")
 
   Process {
     id: notesProc
-    command: ["/home/dagyr/Projects/desktop-widgets/widgets/quick-notes/notes_manager.py", "load"]
+    command: [notesWidgetRoot.notesManagerPath, "load"]
     running: true
     stdout: SplitParser {
       onRead: function(line) {
@@ -72,7 +74,7 @@ WidgetCard {
   }
 
   function runAction(args) {
-    var cmd = ["/home/dagyr/Projects/desktop-widgets/widgets/quick-notes/notes_manager.py"].concat(args)
+    var cmd = [notesWidgetRoot.notesManagerPath].concat(args)
     notesProc.running = false
     notesProc.command = cmd
     notesProc.running = true

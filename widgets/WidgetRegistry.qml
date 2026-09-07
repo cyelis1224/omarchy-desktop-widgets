@@ -48,6 +48,42 @@ QtObject {
       badge: "Hardware",
       description: "Live system RAM usage monitor and multi-disk mount storage capacity indicators.",
       componentUrl: Qt.resolvedUrl("SystemResourcesWidget.qml")
+    },
+    {
+      id: "git_activity",
+      name: "Git Activity Radar",
+      category: "Dev",
+      icon: "\uf1d3",
+      badge: "84-Day Radar",
+      description: "84-day contribution pulse heatmap, commit history, branch tracker, and uncommitted diff status.",
+      componentUrl: Qt.resolvedUrl("git-activity/GitActivityWidget.qml")
+    },
+    {
+      id: "hardware_telemetry",
+      name: "Hardware Telemetry",
+      category: "System",
+      icon: "\uf2db",
+      badge: "Sensors",
+      description: "Real-time CPU and GPU utilization, clock frequencies, thermals, and VRAM monitoring.",
+      componentUrl: Qt.resolvedUrl("hardware-telemetry/HardwareTelemetryWidget.qml")
+    },
+    {
+      id: "pomodoro",
+      name: "Flow Pomodoro Timer",
+      category: "Productivity",
+      icon: "\uf252",
+      badge: "Focus",
+      description: "Flow-state countdown timer with circular progress ring, focus cycles, and audio alerts.",
+      componentUrl: Qt.resolvedUrl("pomodoro/PomodoroWidget.qml")
+    },
+    {
+      id: "quick_notes",
+      name: "Quick Notes & Todos",
+      category: "Productivity",
+      icon: "\uf249",
+      badge: "Scratchpad",
+      description: "Markdown scratchpad and tagged Kanban todo deck with instant local state persistence.",
+      componentUrl: Qt.resolvedUrl("quick-notes/QuickNotesWidget.qml")
     }
   ]
 

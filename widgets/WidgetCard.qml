@@ -85,7 +85,36 @@ Item {
           color: Color.foreground
         }
 
-        Item { Layout.fillWidth: true }
+        Item {
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+
+          MouseArea {
+            anchors.fill: parent
+            visible: rootRef && rootRef.layoutEditMode
+            cursorShape: Qt.SizeAllCursor
+            drag.target: widgetCardRoot.targetItem
+            drag.axis: Drag.XAndYAxis
+            drag.minimumX: 10
+            drag.maximumX: Math.max(10, widgetCardRoot.screenWidth - widgetCardRoot.width - 10)
+            drag.minimumY: 10
+            drag.maximumY: Math.max(10, widgetCardRoot.screenHeight - widgetCardRoot.height - 10)
+
+            onReleased: function() {
+              var maxX = Math.max(10, widgetCardRoot.screenWidth - widgetCardRoot.width - 10)
+              var maxY = Math.max(10, widgetCardRoot.screenHeight - widgetCardRoot.height - 10)
+              var snappedX = Math.round(widgetCardRoot.targetItem.x / 20) * 20
+              var snappedY = Math.round(widgetCardRoot.targetItem.y / 20) * 20
+              snappedX = Math.max(10, Math.min(maxX, snappedX))
+              snappedY = Math.max(10, Math.min(maxY, snappedY))
+              widgetCardRoot.targetItem.x = snappedX
+              widgetCardRoot.targetItem.y = snappedY
+              if (rootRef && rootRef.saveWidgetPos) {
+                rootRef.saveWidgetPos(widgetCardRoot.widgetId, snappedX, snappedY, Math.round(widgetCardRoot.width / 20) * 20, Math.round(widgetCardRoot.height / 20) * 20)
+              }
+            }
+          }
+        }
 
         // Remove / Close Widget Button (when in edit mode)
         Rectangle {
@@ -93,6 +122,7 @@ Item {
           width: 22
           height: 22
           radius: 11
+          z: 130
           color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
           border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
           border.width: 1
@@ -125,6 +155,7 @@ Item {
           width: 22
           height: 22
           radius: 11
+          z: 130
           color: gripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
           border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
           border.width: 1
@@ -178,7 +209,11 @@ Item {
   // Full Body Drag Overlay (Active in Layout Move Mode)
   MouseArea {
     id: fullDragArea
-    anchors.fill: parent
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    anchors.top: parent.top
+    anchors.topMargin: 56
     z: 100
     visible: rootRef && rootRef.layoutEditMode
     cursorShape: Qt.SizeAllCursor
@@ -188,6 +223,13 @@ Item {
     drag.maximumX: Math.max(10, widgetCardRoot.screenWidth - widgetCardRoot.width - 10)
     drag.minimumY: 10
     drag.maximumY: Math.max(10, widgetCardRoot.screenHeight - widgetCardRoot.height - 10)
+
+    onPressed: function(mouse) {
+      if (mouse.y <= 56 && mouse.x >= width - 64) {
+        mouse.accepted = false
+        return
+      }
+    }
 
     onReleased: function() {
       var maxX = Math.max(10, widgetCardRoot.screenWidth - widgetCardRoot.width - 10)

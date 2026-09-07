@@ -7,8 +7,9 @@ import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
-// Import base WidgetCard from the shared repository link
+// Import base WidgetCard from the shared repository link or parent widgets directory
 import "../../shared"
+import ".."
 
 WidgetCard {
   id: hwWidgetRoot
@@ -63,10 +64,12 @@ WidgetCard {
     return "#10b981" // Emerald
   }
 
+  readonly property string telemetryScriptPath: Qt.resolvedUrl("telemetry_collector.py").toString().replace(/^file:\/\//, "")
+
   // Backend Process calling telemetry_collector.py
   Process {
     id: telemetryProc
-    command: ["/home/dagyr/Projects/desktop-widgets/widgets/hardware-telemetry/telemetry_collector.py"]
+    command: [hwWidgetRoot.telemetryScriptPath]
     running: true
     stdout: SplitParser {
       onRead: function(line) {

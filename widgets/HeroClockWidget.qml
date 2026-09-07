@@ -97,10 +97,15 @@ Item {
   property string weatherTemp: ""
   property string weatherDesc: ""
   property string weatherIcon: "\uf185"
+  readonly property string weatherScriptPath: {
+    var u = Qt.resolvedUrl("../get-weather.sh").toString()
+    if (u.indexOf("file://") === 0) return u.substring(7)
+    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-weather.sh"
+  }
 
   Process {
     id: weatherProc
-    command: ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-weather.sh"]
+    command: [clockWidgetRoot.weatherScriptPath]
     running: true
     stdout: SplitParser {
       onRead: function(line) {
@@ -216,6 +221,48 @@ Item {
     }
   }
 
+  // Close / Remove Button (when in edit mode)
+  Rectangle {
+    id: clockCloseButton
+    anchors.left: clockGripHandle.right
+    anchors.leftMargin: 8
+    anchors.top: parent.top
+    anchors.topMargin: 2
+    width: 22
+    height: 22
+    radius: 11
+    color: closeClockMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+    border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+    border.width: 1
+    opacity: clockGripArea.containsMouse || clockGripArea.drag.active || (rootRef && rootRef.layoutEditMode) ? 1.0 : 0.0
+    visible: rootRef && rootRef.layoutEditMode
+    z: 110
+
+    Behavior on opacity {
+      NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+    }
+
+    Text {
+      anchors.centerIn: parent
+      text: "\uf00d"
+      font.family: Style.font.family
+      font.pixelSize: 10
+      color: Color.urgent
+    }
+
+    MouseArea {
+      id: closeClockMouse
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onClicked: {
+        if (rootRef && rootRef.toggleWidgetEnabled) {
+          rootRef.toggleWidgetEnabled(clockWidgetRoot.widgetId, false)
+        }
+      }
+    }
+  }
+
   ColumnLayout {
     id: centerClockColumn
     anchors.top: clockGripHandle.bottom
@@ -300,7 +347,11 @@ Item {
   // Full-body drag when in Edit Mode
   MouseArea {
     id: clockFullDragArea
-    anchors.fill: parent
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    anchors.top: parent.top
+    anchors.topMargin: 30
     z: 100
     visible: rootRef && rootRef.layoutEditMode
     cursorShape: Qt.SizeAllCursor
@@ -310,6 +361,13 @@ Item {
     drag.maximumX: Math.max(10, clockWidgetRoot.screenWidth - clockWidgetRoot.width - 10)
     drag.minimumY: 10
     drag.maximumY: Math.max(10, clockWidgetRoot.screenHeight - clockWidgetRoot.height - 10)
+
+    onPressed: function(mouse) {
+      if (mouse.y <= 30) {
+        mouse.accepted = false
+        return
+      }
+    }
 
     onReleased: function() {
       var maxX = Math.max(10, clockWidgetRoot.screenWidth - clockWidgetRoot.width - 10)

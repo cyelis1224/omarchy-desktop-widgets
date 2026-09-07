@@ -9,6 +9,53 @@ LEGACY_CONFIG = os.path.expanduser('~/.config/omarchy/plugins/dagyr.desktop-widg
 
 DEFAULT_ENABLED = ["clock", "gallery", "network", "media", "system"]
 
+BUILTIN_MIGRATION = {
+    "GitActivityWidget.qml": "git_activity",
+    "HardwareTelemetryWidget.qml": "hardware_telemetry",
+    "PomodoroWidget.qml": "pomodoro",
+    "QuickNotesWidget.qml": "quick_notes"
+}
+
+def migrate_custom_builtins(data):
+    changed = False
+    customs = data.get('custom_widgets', [])
+    new_customs = []
+    positions = data.get('positions', {})
+    enabled = data.get('enabled_widgets', [])
+
+    for c in customs:
+        path = c.get('path', '')
+        custom_id = c.get('id', '')
+        matched_builtin = None
+        for filename, b_id in BUILTIN_MIGRATION.items():
+            if path.endswith(filename):
+                matched_builtin = b_id
+                break
+        
+        if matched_builtin:
+            changed = True
+            # Transfer position
+            if custom_id in positions:
+                if matched_builtin not in positions:
+                    positions[matched_builtin] = positions[custom_id]
+                del positions[custom_id]
+            # Transfer enabled status
+            if custom_id in enabled:
+                enabled = [matched_builtin if x == custom_id else x for x in enabled]
+        else:
+            new_customs.append(c)
+
+    if changed:
+        dedup_enabled = []
+        for e in enabled:
+            if e not in dedup_enabled:
+                dedup_enabled.append(e)
+        data['enabled_widgets'] = dedup_enabled
+        data['custom_widgets'] = new_customs
+        data['positions'] = positions
+        save_settings(data)
+    return data
+
 def load_settings():
     if os.path.exists(STATE_FILE):
         try:
@@ -22,7 +69,7 @@ def load_settings():
                     data['custom_widgets'] = []
                 if 'widget_settings' not in data:
                     data['widget_settings'] = {}
-                return data
+                return migrate_custom_builtins(data)
         except Exception:
             pass
     elif os.path.exists(LEGACY_CONFIG):
@@ -37,6 +84,7 @@ def load_settings():
                     data['custom_widgets'] = []
                 if 'widget_settings' not in data:
                     data['widget_settings'] = {}
+                data = migrate_custom_builtins(data)
                 save_settings(data)
                 return data
         except Exception:

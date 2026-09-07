@@ -7,10 +7,19 @@
   "license": "MIT",
   "description": "Aesthetic desktop widgets featuring a hero clock, MPRIS media player, and audio spectrum visualizer that automatically hide when windows are open.",
   "kinds": [
-    "service"
+    "service",
+    "bar-widget"
   ],
   "keepLoaded": true,
   "entryPoints": {
-    "service": "DesktopWidgets.qml"
+    "service": "DesktopWidgets.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Desktop Widgets Update",
+    "description": "Displays an indicator on the status bar when an update is available for Desktop Widgets",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
   }
 }

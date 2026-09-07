@@ -7,8 +7,9 @@ import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
-// Import base WidgetCard from the shared repository link
+// Import base WidgetCard from the shared repository link or parent widgets directory
 import "../../shared"
+import ".."
 
 WidgetCard {
   id: gitWidgetRoot

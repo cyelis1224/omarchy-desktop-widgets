@@ -315,9 +315,15 @@ WidgetCard {
     }
   }
 
+  readonly property string disksScriptPath: {
+    var u = Qt.resolvedUrl("../get-disks.sh").toString()
+    if (u.indexOf("file://") === 0) return u.substring(7)
+    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-disks.sh"
+  }
+
   Process {
     id: disksProc
-    command: ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-disks.sh"]
+    command: [systemWidgetRoot.disksScriptPath]
     running: true
     stdout: SplitParser {
       onRead: function(line) {

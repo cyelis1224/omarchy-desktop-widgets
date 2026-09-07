@@ -62,12 +62,18 @@ WidgetCard {
     }
   }
 
+  readonly property string netScriptPath: {
+    var u = Qt.resolvedUrl("../get-network.sh").toString()
+    if (u.indexOf("file://") === 0) return u.substring(7)
+    return "/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-network.sh"
+  }
+
   function selectNetworkDevice(devId) {
     selectedDeviceId = devId
     netRxHistory = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     netTxHistory = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     netCanvas.requestPaint()
-    netInfoProc.command = ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-network.sh", devId]
+    netInfoProc.command = [networkWidgetRoot.netScriptPath, devId]
     if (!netInfoProc.running) netInfoProc.running = true
     devicePopoutOpen = false
     contextMenuOpen = false
@@ -344,7 +350,7 @@ WidgetCard {
 
   Process {
     id: netInfoProc
-    command: ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/get-network.sh"]
+    command: [networkWidgetRoot.netScriptPath]
     running: true
     stdout: SplitParser {
       onRead: function(line) {

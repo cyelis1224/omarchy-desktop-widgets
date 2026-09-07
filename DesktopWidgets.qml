@@ -60,9 +60,11 @@ Item {
     id: widgetRegistry
   }
 
+  readonly property string manageScriptPath: Qt.resolvedUrl("manage-positions.sh").toString().replace(/^file:\/\//, "")
+
   Process {
     id: posProc
-    command: ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "load"]
+    command: [root.manageScriptPath, "load"]
     running: true
     stdout: SplitParser {
       onRead: function(line) {
@@ -89,13 +91,13 @@ Item {
       entry.h = targetH
       p[id] = entry
       root.widgetPositions = p
-      Quickshell.execDetached(["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "save_pos", id, x.toString(), y.toString(), targetW.toString(), targetH.toString()])
+      Quickshell.execDetached([root.manageScriptPath, "save_pos", id, x.toString(), y.toString(), targetW.toString(), targetH.toString()])
     } else {
       if (current.w) entry.w = current.w
       if (current.h) entry.h = current.h
       p[id] = entry
       root.widgetPositions = p
-      Quickshell.execDetached(["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "save_pos", id, x.toString(), y.toString()])
+      Quickshell.execDetached([root.manageScriptPath, "save_pos", id, x.toString(), y.toString()])
     }
   }
 
@@ -104,7 +106,7 @@ Item {
     if (!ws[id]) ws[id] = {}
     ws[id][key] = val
     root.widgetSettings = ws
-    Quickshell.execDetached(["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "save_setting", id, key, JSON.stringify(val)])
+    Quickshell.execDetached([root.manageScriptPath, "save_setting", id, key, JSON.stringify(val)])
   }
 
   function saveWidgetSettings(id, valMap) {
@@ -114,7 +116,7 @@ Item {
       ws[id][k] = valMap[k]
     }
     root.widgetSettings = ws
-    Quickshell.execDetached(["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "save_widget_settings", id, JSON.stringify(ws[id])])
+    Quickshell.execDetached([root.manageScriptPath, "save_widget_settings", id, JSON.stringify(ws[id])])
   }
 
   function toggleWidgetEnabled(id, enable) {
@@ -126,23 +128,23 @@ Item {
       list.splice(idx, 1)
     }
     root.enabledWidgets = list
-    Quickshell.execDetached(["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "toggle_widget", id, enable ? "true" : "false"])
+    Quickshell.execDetached([root.manageScriptPath, "toggle_widget", id, enable ? "true" : "false"])
   }
 
   function resetWidgetPositions() {
     root.widgetPositions = ({})
     root.enabledWidgets = ["clock", "gallery", "network", "media", "system"]
-    Quickshell.execDetached(["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "reset"])
+    Quickshell.execDetached([root.manageScriptPath, "reset"])
   }
 
   function importCustomWidget() {
-    customImportProc.command = ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "pick_widget_dialog"]
+    customImportProc.command = [root.manageScriptPath, "pick_widget_dialog"]
     if (!customImportProc.running) customImportProc.running = true
   }
 
   Process {
     id: customImportProc
-    command: ["/home/dagyr/.config/omarchy/plugins/dagyr.desktop-widgets/manage-positions.sh", "pick_widget_dialog"]
+    command: [root.manageScriptPath, "pick_widget_dialog"]
     running: false
     stdout: SplitParser {
       onRead: function(line) {

@@ -186,8 +186,10 @@ Item {
           model: [
             { label: "All Widgets", cat: "ALL", icon: "\uf009" },
             { label: "Glance", cat: "Glance", icon: "\uf017" },
-            { label: "Media", cat: "Media", icon: "\uf001" },
+            { label: "Productivity", cat: "Productivity", icon: "\uf249" },
             { label: "System", cat: "System", icon: "\uf2db" },
+            { label: "Dev", cat: "Dev", icon: "\uf1d3" },
+            { label: "Media", cat: "Media", icon: "\uf001" },
             { label: "Custom", cat: "Custom", icon: "\uf12e" }
           ]
 
