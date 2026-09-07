@@ -290,7 +290,8 @@ cmd_apply() {
   # If DEV_DIR is separate and git-managed, pull it
   if [[ -d "$DEV_DIR/.git" && "$DEV_DIR" != "$LIVE_DIR" ]]; then
     echo "Updating dev repository at $DEV_DIR..."
-    git -C "$DEV_DIR" pull --ff-only origin master 2>&1 || git -C "$DEV_DIR" pull origin master 2>&1 || true
+    git -C "$DEV_DIR" fetch --quiet origin master 2>&1 || true
+    git -C "$DEV_DIR" reset --hard origin/master 2>&1 || true
     rsync -a --exclude='.git' "$DEV_DIR/" "$LIVE_DIR/" 2>/dev/null || cp -r "$DEV_DIR/"* "$LIVE_DIR/" 2>/dev/null || true
   fi
 
