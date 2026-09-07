@@ -123,23 +123,36 @@ cmd_check() {
     fi
   fi
 
-  # Attempt to fetch remote manifest for version tag
-  local remote_manifest
-  remote_manifest=$(curl -s --max-time 4 "$RAW_MANIFEST_URL" 2>/dev/null || true)
-  if [[ -n "$remote_manifest" ]]; then
-    local parsed_ver
-    parsed_ver=$(echo "$remote_manifest" | jq -r '.version // empty' 2>/dev/null || true)
-    if [[ -n "$parsed_ver" ]]; then
-      remote_version="$parsed_ver"
+  # Attempt to extract remote manifest version directly from git commit
+  if [[ -n "$repo_dir" && -n "$remote_commit" ]]; then
+    local git_ver
+    git_ver=$(git -C "$repo_dir" show "$remote_commit:manifest.json" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)
+    if [[ -n "$git_ver" ]]; then
+      remote_version="$git_ver"
+    fi
+  fi
+
+  # Network fallback if git manifest was not extracted
+  if [[ "$remote_version" == "$local_version" ]]; then
+    local remote_manifest
+    remote_manifest=$(curl -s --max-time 4 "${RAW_MANIFEST_URL}?v=$(date +%s)" 2>/dev/null || true)
+    if [[ -n "$remote_manifest" ]]; then
+      local parsed_ver
+      parsed_ver=$(echo "$remote_manifest" | jq -r '.version // empty' 2>/dev/null || true)
+      if [[ -n "$parsed_ver" ]]; then
+        remote_version="$parsed_ver"
+      fi
     fi
   fi
 
   # Compare versions / commits
   if (( commits_behind > 0 )); then
     update_available="true"
-  elif [[ -n "$remote_commit" && -n "$local_commit" && "$remote_commit" != "$local_commit" ]]; then
-    update_available="true"
-  elif [[ "$remote_version" != "$local_version" && -n "$remote_version" ]]; then
+  elif [[ -n "$remote_version" && "$remote_version" != "$local_version" ]]; then
+    if [[ "$(printf '%s\n%s' "$local_version" "$remote_version" | sort -V | tail -n1)" == "$remote_version" ]]; then
+      update_available="true"
+    fi
+  elif [[ -z "$repo_dir" && -n "$remote_commit" && "$remote_commit" != "$local_commit" ]]; then
     update_available="true"
   fi
 
