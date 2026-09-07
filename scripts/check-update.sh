@@ -36,7 +36,11 @@ cmd_mock_on() {
   "new_version": "1.2.0",
   "new_commit": "4c8f2a1",
   "commits_behind": 3,
-  "commit_message": "Feature: interactive widget resizing & update indicator"
+  "commit_message": "Feature: interactive widget resizing & changelog viewer",
+  "release_title": "v1.2.0 - Complete Widget Suite & Changelog Viewer",
+  "release_notes": "### 🚀 Major Highlights\n- **In-App Changelog Viewer**: Read full release notes before updating.\n- **Layout Management**: Save and revert widget configurations at any time.\n- **Interactive Resizing**: Live dimension pills and 20px grid snapping.\n\n### 🛠️ Improvements & Fixes\n- Smoother animations and refined hover states.\n- Fixed file selector dialog and network interface discovery.",
+  "release_url": "https://github.com/cyelis1224/omarchy-desktop-widgets/releases/tag/v1.2.0",
+  "published_at": "2026-09-07T18:00:00Z"
 }
 EOF
   echo "Mock update mode ENABLED."
@@ -75,6 +79,14 @@ cmd_check() {
     mock_behind=$(echo "$mock_data" | jq -r '.commits_behind // 2')
     local mock_msg
     mock_msg=$(echo "$mock_data" | jq -r '.commit_message // "Photo gallery resize & update indicator"')
+    local mock_title
+    mock_title=$(echo "$mock_data" | jq -r '.release_title // "v1.2.0 - New Features"')
+    local mock_notes
+    mock_notes=$(echo "$mock_data" | jq -r '.release_notes // "Release notes mock"')
+    local mock_url
+    mock_url=$(echo "$mock_data" | jq -r '.release_url // "https://github.com/cyelis1224/omarchy-desktop-widgets/releases"')
+    local mock_pub
+    mock_pub=$(echo "$mock_data" | jq -r '.published_at // "2026-09-07T18:00:00Z"')
 
     jq -c -n \
       --arg ua "true" \
@@ -84,6 +96,10 @@ cmd_check() {
       --arg nc "$mock_cmt" \
       --argjson cb "$mock_behind" \
       --arg msg "$mock_msg" \
+      --arg rt "$mock_title" \
+      --arg rn "$mock_notes" \
+      --arg ru "$mock_url" \
+      --arg rp "$mock_pub" \
       --arg repo "${repo_dir:-$PLUGIN_DIR}" \
       --argjson mock "true" \
       '{
@@ -94,6 +110,10 @@ cmd_check() {
         new_commit: $nc,
         commits_behind: $cb,
         commit_message: $msg,
+        release_title: $rt,
+        release_notes: $rn,
+        release_url: $ru,
+        published_at: $rp,
         repo_dir: $repo,
         is_mock: $mock
       }'
@@ -106,26 +126,61 @@ cmd_check() {
   local commits_behind=0
   local commit_msg=""
   local update_available="false"
+  local release_title=""
+  local release_notes=""
+  local release_url=""
+  local release_published=""
 
-  # Fast git check if repo exists
+  # 1. Query GitHub Releases API for official release info & changelog
+  local gh_release_json=""
+  if command -v gh >/dev/null 2>&1; then
+    gh_release_json=$(gh api repos/cyelis1224/omarchy-desktop-widgets/releases/latest 2>/dev/null || true)
+  fi
+  if [[ -z "$gh_release_json" ]]; then
+    gh_release_json=$(curl -s --max-time 8 -H "User-Agent: Omarchy-Desktop-Widgets" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/cyelis1224/omarchy-desktop-widgets/releases/latest" 2>/dev/null || true)
+  fi
+
+  if [[ -n "$gh_release_json" && "$gh_release_json" != *"Not Found"* && "$gh_release_json" != *"API rate limit"* ]]; then
+    local release_tag
+    release_tag=$(echo "$gh_release_json" | jq -r '.tag_name // empty' 2>/dev/null || true)
+    if [[ -n "$release_tag" ]]; then
+      remote_version="${release_tag#v}"
+      release_title=$(echo "$gh_release_json" | jq -r '.name // empty' 2>/dev/null || true)
+      release_notes=$(echo "$gh_release_json" | jq -r '.body // empty' 2>/dev/null || true)
+      release_url=$(echo "$gh_release_json" | jq -r '.html_url // empty' 2>/dev/null || true)
+      release_published=$(echo "$gh_release_json" | jq -r '.published_at // empty' 2>/dev/null || true)
+      commit_msg="${release_title:-Update to $release_tag}"
+    fi
+  fi
+
+  # 2. Fast git check to fetch commits & count commits_behind
   if [[ -n "$repo_dir" ]]; then
     timeout 8 git -C "$repo_dir" fetch --quiet origin master 2>/dev/null || timeout 8 git -C "$repo_dir" fetch --quiet 2>/dev/null || true
     remote_commit=$(git -C "$repo_dir" rev-parse FETCH_HEAD 2>/dev/null || git -C "$repo_dir" rev-parse origin/master 2>/dev/null || true)
     if [[ -n "$remote_commit" ]]; then
       remote_short=$(git -C "$repo_dir" rev-parse --short "$remote_commit" 2>/dev/null || true)
       commits_behind=$(git -C "$repo_dir" rev-list --count HEAD.."$remote_commit" 2>/dev/null || echo 0)
-      commit_msg=$(git -C "$repo_dir" log -1 --format="%s" "$remote_commit" 2>/dev/null || echo "")
+      if [[ -z "$commit_msg" ]]; then
+        commit_msg=$(git -C "$repo_dir" log -1 --format="%s" "$remote_commit" 2>/dev/null || echo "")
+      fi
 
-      # Extract remote manifest version directly from the fetched git commit
-      local git_ver
-      git_ver=$(git -C "$repo_dir" show "$remote_commit:manifest.json" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)
-      if [[ -n "$git_ver" ]]; then
-        remote_version="$git_ver"
+      # Fallback version extraction from git if GitHub Release was not available
+      if [[ -z "$remote_version" ]]; then
+        local git_ver
+        git_ver=$(git -C "$repo_dir" show "$remote_commit:manifest.json" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)
+        if [[ -n "$git_ver" ]]; then
+          remote_version="$git_ver"
+        fi
+      fi
+
+      # Fallback changelog from git commit messages if no release notes
+      if [[ -z "$release_notes" && "$commits_behind" -gt 0 ]]; then
+        release_notes=$(git -C "$repo_dir" log -n 5 --pretty=format:"- %s" HEAD.."$remote_commit" 2>/dev/null || true)
       fi
     fi
   fi
 
-  # Fallback ONLY if git was not available or could not resolve remote commit
+  # Fallback ONLY if git and GitHub API both could not resolve remote version
   if [[ -z "$remote_version" ]]; then
     if [[ -z "$remote_commit" ]]; then
       local ls_out
@@ -152,10 +207,15 @@ cmd_check() {
     remote_version="$local_version"
   fi
 
+  if [[ -z "$release_title" ]]; then
+    release_title="Release v$remote_version"
+  fi
+  if [[ -z "$release_url" ]]; then
+    release_url="https://github.com/cyelis1224/omarchy-desktop-widgets/releases"
+  fi
+
   # STRICT UPDATE CHECK:
   # An update is available ONLY if remote_version is strictly newer than local_version.
-  # This prevents downgrades (e.g. from cached CDN 1.1.2) and prevents prompting to update
-  # to the exact same version (1.1.3 -> 1.1.3).
   if version_gt "$remote_version" "$local_version"; then
     update_available="true"
   else
@@ -174,6 +234,10 @@ cmd_check() {
     --arg nc "${remote_short:-HEAD}" \
     --argjson cb "$commits_behind" \
     --arg msg "$commit_msg" \
+    --arg rt "$release_title" \
+    --arg rn "$release_notes" \
+    --arg ru "$release_url" \
+    --arg rp "$release_published" \
     --arg repo "${repo_dir:-$PLUGIN_DIR}" \
     --argjson mock "false" \
     '{
@@ -184,6 +248,10 @@ cmd_check() {
       new_commit: $nc,
       commits_behind: $cb,
       commit_message: $msg,
+      release_title: $rt,
+      release_notes: $rn,
+      release_url: $ru,
+      published_at: $rp,
       repo_dir: $repo,
       is_mock: $mock
     }'

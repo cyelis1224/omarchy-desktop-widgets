@@ -20,6 +20,11 @@ BarWidget {
   property bool isUpdating: false
   property string updateStatusText: ""
 
+  property string releaseTitle: ""
+  property string releaseNotes: ""
+  property string releaseUrl: ""
+  property string publishedAt: ""
+
   property bool popupOpen: false
   readonly property bool opened: popupOpen
 
@@ -106,7 +111,7 @@ BarWidget {
     bar: root.bar
     owner: root
     open: root.popupOpen
-    contentWidth: popup.fittedContentWidth(Style.space(370))
+    contentWidth: popup.fittedContentWidth(Style.space(410))
     contentHeight: popup.fittedContentHeight(mainCol.implicitHeight)
 
     Column {
@@ -291,45 +296,118 @@ BarWidget {
         }
       }
 
-      // Commit & Changelog Summary Box
+      // 📋 Release Notes & Changelog Card
       BorderSurface {
-        visible: root.commitMessage !== "" || root.commitsBehind > 0
+        visible: root.releaseNotes !== "" || root.commitMessage !== "" || root.commitsBehind > 0
         width: parent.width
         radius: Style.space(8)
-        color: Util.alpha(Color.accent, 0.08)
+        color: Util.alpha(Color.accent, 0.07)
         borderSpec: Border.none()
 
         Column {
-          anchors.fill: parent
-          anchors.margins: Style.space(10)
-          spacing: Style.space(4)
+          width: parent.width
+          spacing: Style.space(8)
+          topPadding: Style.space(10)
+          bottomPadding: Style.space(10)
+          leftPadding: Style.space(12)
+          rightPadding: Style.space(12)
 
-          Row {
-            spacing: Style.space(6)
+          // Changelog Header Row
+          RowLayout {
+            width: parent.width
+            spacing: Style.space(8)
 
-            Text {
-              text: "\uf02b"
-              font.family: Style.font.family
-              font.pixelSize: Style.font.caption
-              color: Color.accent
+            Item {
+              Layout.preferredWidth: 16
+              Layout.preferredHeight: 16
+              Layout.alignment: Qt.AlignVCenter
+
+              Text {
+                anchors.centerIn: parent
+                text: "\uf15c"
+                font.family: Style.font.family
+                font.pixelSize: Style.font.caption
+                color: Color.accent
+              }
             }
 
             Text {
-              text: root.commitsBehind > 0 ? (root.commitsBehind + " new commit(s) upstream") : "What's New"
+              Layout.fillWidth: true
+              Layout.alignment: Qt.AlignVCenter
+              text: root.releaseTitle !== "" ? root.releaseTitle : (root.commitsBehind > 0 ? (root.commitsBehind + " new commit(s) upstream") : "What's New")
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
               font.bold: true
               color: Color.accent
+              elide: Text.ElideRight
+            }
+
+            // External link to GitHub Release
+            Rectangle {
+              visible: root.releaseUrl !== ""
+              implicitWidth: ghLinkContent.implicitWidth + Style.space(14)
+              implicitHeight: Style.space(22)
+              radius: Style.space(11)
+              color: ghLinkMouse.containsMouse ? Util.alpha(Color.accent, 0.28) : Util.alpha(Color.accent, 0.14)
+
+              RowLayout {
+                id: ghLinkContent
+                anchors.centerIn: parent
+                spacing: Style.space(4)
+
+                Text {
+                  text: "\uf08e"
+                  font.family: Style.font.family
+                  font.pixelSize: 9
+                  color: Color.accent
+                }
+
+                Text {
+                  text: "GitHub"
+                  font.family: Style.font.family
+                  font.pixelSize: 9
+                  font.bold: true
+                  color: Color.accent
+                }
+              }
+
+              MouseArea {
+                id: ghLinkMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Qt.openUrlExternally(root.releaseUrl)
+              }
             }
           }
 
-          Text {
+          Rectangle {
             width: parent.width
-            text: root.commitMessage !== "" ? root.commitMessage : "Includes enhancements, bug fixes, and performance updates."
-            color: root.bar ? root.bar.foreground : Color.foreground
-            font.family: Style.font.family
-            font.pixelSize: Style.font.caption
-            wrapMode: Text.WordWrap
+            height: 1
+            color: Util.alpha(Color.accent, 0.15)
+          }
+
+          // Scrollable Markdown Changelog Body
+          Flickable {
+            id: notesFlickable
+            width: parent.width
+            height: Math.max(Style.space(40), Math.min(notesText.implicitHeight, Style.space(180)))
+            contentWidth: width
+            contentHeight: notesText.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            Text {
+              id: notesText
+              width: parent.width - (notesText.implicitHeight > Style.space(180) ? Style.space(10) : 0)
+              text: root.releaseNotes !== "" ? root.releaseNotes : (root.commitMessage !== "" ? root.commitMessage : "Includes enhancements, bug fixes, and performance updates.")
+              textFormat: Text.MarkdownText
+              color: root.bar ? root.bar.foreground : Color.foreground
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.WordWrap
+              lineHeight: 1.25
+            }
           }
         }
       }
@@ -437,6 +515,10 @@ BarWidget {
           if (data.new_commit) root.newCommit = data.new_commit
           if (data.commits_behind !== undefined) root.commitsBehind = data.commits_behind
           if (data.commit_message) root.commitMessage = data.commit_message
+          if (data.release_title) root.releaseTitle = data.release_title
+          if (data.release_notes) root.releaseNotes = data.release_notes
+          if (data.release_url) root.releaseUrl = data.release_url
+          if (data.published_at) root.publishedAt = data.published_at
           checkProc.buffer = ""
         } catch (e) {}
       }
@@ -457,6 +539,10 @@ BarWidget {
           if (data.new_commit) root.newCommit = data.new_commit
           if (data.commits_behind !== undefined) root.commitsBehind = data.commits_behind
           if (data.commit_message) root.commitMessage = data.commit_message
+          if (data.release_title) root.releaseTitle = data.release_title
+          if (data.release_notes) root.releaseNotes = data.release_notes
+          if (data.release_url) root.releaseUrl = data.release_url
+          if (data.published_at) root.publishedAt = data.published_at
         } catch (e) {}
         checkProc.buffer = ""
       }
