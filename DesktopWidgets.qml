@@ -27,6 +27,7 @@ Item {
   property bool selectorOpen: false
   property bool manualHide: false
   property bool keyboardFocusRequested: false
+  property bool menuOpenRequested: false
   property int activeDragCount: 0
   readonly property bool isAnyWidgetDragging: activeDragCount > 0
   readonly property bool showSnapGrid: layoutEditMode || isAnyWidgetDragging
@@ -220,6 +221,10 @@ Item {
     function reset() {
       root.resetWidgetPositions()
     }
+
+    function menu() {
+      root.menuOpenRequested = !root.menuOpenRequested
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -270,6 +275,7 @@ Item {
             }
           }
           onClicked: function(mouse) {
+            root.menuOpenRequested = false
             if (mouse.button === Qt.RightButton) {
               desktopContextMenu.x = Math.max(16, Math.min(mouse.x, desktopWindow.width - 256))
               desktopContextMenu.y = Math.max(16, Math.min(mouse.y, desktopWindow.height - 240))
@@ -538,15 +544,18 @@ Item {
           MouseArea {
             anchors.fill: parent
             z: 490
-            visible: desktopContextMenu.isOpen
+            visible: desktopContextMenu.isOpen || root.menuOpenRequested
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: desktopContextMenu.isOpen = false
+            onClicked: {
+              desktopContextMenu.isOpen = false
+              root.menuOpenRequested = false
+            }
           }
 
           Rectangle {
             id: desktopContextMenu
             property bool isOpen: false
-            visible: isOpen && widgetContainer.shouldShow
+            visible: (isOpen || root.menuOpenRequested) && widgetContainer.shouldShow
             z: 500
             width: 240
             implicitHeight: desktopMenuCol.implicitHeight + Style.space(16)
@@ -575,14 +584,22 @@ Item {
                 Layout.leftMargin: 8
                 Layout.topMargin: 4
                 Layout.bottomMargin: 4
-                spacing: 6
-                Text {
-                  text: "\uf108"
-                  font.family: Style.font.family
-                  font.pixelSize: 11
-                  color: Color.accent
+                spacing: 8
+                Item {
+                  Layout.preferredWidth: 18
+                  Layout.preferredHeight: 18
+                  Layout.alignment: Qt.AlignVCenter
+                  Text {
+                    anchors.centerIn: parent
+                    text: "\uf108"
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    color: Color.accent
+                  }
                 }
                 Text {
+                  Layout.fillWidth: true
+                  Layout.alignment: Qt.AlignVCenter
                   text: "Desktop Controls"
                   font.family: Style.font.family
                   font.pixelSize: 11
@@ -597,46 +614,7 @@ Item {
                 color: Qt.rgba(1, 1, 1, 0.08)
               }
 
-              // 1. Add / Browse Widgets
-              Rectangle {
-                Layout.fillWidth: true
-                height: 32
-                radius: 8
-                color: addWidgetsMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
-
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
-                  Text {
-                    text: "\uf067"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    color: Color.accent
-                  }
-                  Text {
-                    text: "Add / Browse Widgets"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: Color.foreground
-                  }
-                }
-
-                MouseArea {
-                  id: addWidgetsMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    desktopContextMenu.isOpen = false
-                    root.selectorOpen = true
-                  }
-                }
-              }
-
-              // 2. Unlock / Lock Layout (Move & Resize)
+              // 1. Unlock / Lock Layout (Moved to top)
               Rectangle {
                 Layout.fillWidth: true
                 height: 32
@@ -648,18 +626,30 @@ Item {
                   anchors.leftMargin: 10
                   anchors.rightMargin: 10
                   spacing: 10
-                  Text {
-                    text: root.layoutEditMode ? "\uf023" : "\uf0b2"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    color: Color.accent
+
+                  Item {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: root.layoutEditMode ? "\uf023" : "\uf0b2"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      color: Color.accent
+                    }
                   }
+
                   Text {
-                    text: root.layoutEditMode ? "Lock Layout" : "Unlock Layout (Move & Resize)"
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    text: root.layoutEditMode ? "Lock Layout" : "Unlock Layout"
                     font.family: Style.font.family
                     font.pixelSize: 12
                     font.weight: Font.DemiBold
                     color: Color.foreground
+                    elide: Text.ElideRight
                   }
                 }
 
@@ -671,6 +661,57 @@ Item {
                   onClicked: {
                     desktopContextMenu.isOpen = false
                     root.layoutEditMode = !root.layoutEditMode
+                  }
+                }
+              }
+
+              // 2. Add / Browse Widgets
+              Rectangle {
+                Layout.fillWidth: true
+                height: 32
+                radius: 8
+                color: addWidgetsMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+
+                RowLayout {
+                  anchors.fill: parent
+                  anchors.leftMargin: 10
+                  anchors.rightMargin: 10
+                  spacing: 10
+
+                  Item {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf067"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      color: Color.accent
+                    }
+                  }
+
+                  Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    text: "Add / Browse Widgets"
+                    font.family: Style.font.family
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    color: Color.foreground
+                    elide: Text.ElideRight
+                  }
+                }
+
+                MouseArea {
+                  id: addWidgetsMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    desktopContextMenu.isOpen = false
+                    root.selectorOpen = true
                   }
                 }
               }
@@ -687,18 +728,30 @@ Item {
                   anchors.leftMargin: 10
                   anchors.rightMargin: 10
                   spacing: 10
-                  Text {
-                    text: "\uf0e2"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    color: resetLayoutMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+
+                  Item {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf0e2"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      color: resetLayoutMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                    }
                   }
+
                   Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
                     text: "Reset Widget Layout"
                     font.family: Style.font.family
                     font.pixelSize: 12
                     font.weight: Font.DemiBold
                     color: resetLayoutMouse.containsMouse ? Color.urgent : Color.foreground
+                    elide: Text.ElideRight
                   }
                 }
 
@@ -732,18 +785,30 @@ Item {
                   anchors.leftMargin: 10
                   anchors.rightMargin: 10
                   spacing: 10
-                  Text {
-                    text: "\uf03e"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    color: Color.accent
+
+                  Item {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf03e"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      color: Color.accent
+                    }
                   }
+
                   Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
                     text: "Change Wallpaper"
                     font.family: Style.font.family
                     font.pixelSize: 12
                     font.weight: Font.DemiBold
                     color: Color.foreground
+                    elide: Text.ElideRight
                   }
                 }
 
@@ -771,18 +836,30 @@ Item {
                   anchors.leftMargin: 10
                   anchors.rightMargin: 10
                   spacing: 10
-                  Text {
-                    text: "\uf53f"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    color: Color.accent
+
+                  Item {
+                    Layout.preferredWidth: 18
+                    Layout.preferredHeight: 18
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                      anchors.centerIn: parent
+                      text: "\uf53f"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      color: Color.accent
+                    }
                   }
+
                   Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
                     text: "Switch Theme"
                     font.family: Style.font.family
                     font.pixelSize: 12
                     font.weight: Font.DemiBold
                     color: Color.foreground
+                    elide: Text.ElideRight
                   }
                 }
 

@@ -61,7 +61,7 @@ Item {
   readonly property string layer1PhotoPath: layer1PhotoObj ? layer1PhotoObj.path : ""
 
   readonly property bool isHovered: cardHoverTracker.containsMouse && !folderMenuOpen
-  readonly property bool isGif: currentPhotoPath.toLowerCase().endsWith(".gif")
+  readonly property bool isGif: (currentPhotoPath !== "" && currentPhotoPath.toLowerCase().indexOf(".gif") !== -1) || (currentPhotoRawPath !== "" && currentPhotoRawPath.toLowerCase().indexOf(".gif") !== -1)
 
   function nextPhoto() {
     if (photoList && photoList.length > 0) {
@@ -461,6 +461,20 @@ Item {
     }
   }
 
+  // Drop shadow caster for main photo card (separated from photoCardMain to prevent nested FBO layer caching)
+  Rectangle {
+    anchors.fill: photoCardMain
+    radius: 16
+    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    layer.enabled: true
+    layer.effect: MultiEffect {
+      shadowEnabled: true
+      shadowColor: Qt.rgba(0, 0, 0, 0.85)
+      shadowBlur: 0.85
+      shadowVerticalOffset: 6
+    }
+  }
+
   // 🎴 Front Active Photo Card (Full bleed, borderless)
   Rectangle {
     id: photoCardMain
@@ -472,20 +486,12 @@ Item {
     border.color: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? Color.accent : "transparent"
     border.width: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? 2 : 0
 
-    layer.enabled: true
-    layer.effect: MultiEffect {
-      shadowEnabled: true
-      shadowColor: Qt.rgba(0, 0, 0, 0.85)
-      shadowBlur: 0.85
-      shadowVerticalOffset: 6
-    }
-
-    // Photo Content Container to mask
+    // Photo Content Container to mask (Static Images)
     Item {
       id: mainCardSrc
       anchors.fill: parent
       visible: false
-      layer.enabled: true
+      layer.enabled: !galleryWidgetRoot.isGif
 
       Image {
         id: galleryImg
@@ -517,54 +523,6 @@ Item {
           easing.type: Easing.OutCubic
         }
       }
-
-      AnimatedImage {
-        id: galleryGif
-        visible: galleryWidgetRoot.isGif
-        anchors.fill: parent
-        source: galleryWidgetRoot.isGif ? galleryWidgetRoot.currentPhotoPath : ""
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        smooth: true
-        playing: true
-        opacity: status === AnimatedImage.Ready ? 1.0 : 0.0
-
-        Behavior on opacity {
-          NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
-        }
-      }
-
-      // Placeholder if no photo
-      ColumnLayout {
-        anchors.centerIn: parent
-        visible: (!galleryWidgetRoot.isGif && galleryImg.status !== Image.Ready) || (galleryWidgetRoot.isGif && galleryGif.status !== AnimatedImage.Ready)
-        spacing: Style.space(6)
-
-        Text {
-          Layout.alignment: Qt.AlignHCenter
-          text: "\uf03e"
-          font.family: Style.font.family
-          font.pixelSize: 28
-          color: Color.accent
-        }
-
-        Text {
-          Layout.alignment: Qt.AlignHCenter
-          text: galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 0 ? "Loading photo..." : "Drop photos in ~/.config/omarchy/plugins/dagyr.desktop-widgets/photos/"
-          font.family: Style.font.family
-          font.pixelSize: 11
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
-        }
-      }
-
-      // Ultra-subtle paper edge highlight
-      Rectangle {
-        anchors.fill: parent
-        radius: 16
-        color: "transparent"
-        border.color: Qt.rgba(255, 255, 255, 0.16)
-        border.width: 1
-      }
     }
 
     // Mask shape with rounded corners
@@ -581,12 +539,85 @@ Item {
       }
     }
 
-    // Masked Photo Output
+    // Masked Photo Output (Static Images)
     MultiEffect {
       anchors.fill: parent
       source: mainCardSrc
       maskEnabled: true
       maskSource: mainCardMask
+      visible: !galleryWidgetRoot.isGif
+    }
+
+    // 🎞️ Animated GIF Player (Direct item with dedicated mask to guarantee SceneGraph damage propagation and continuous playback)
+    AnimatedImage {
+      id: galleryGif
+      visible: galleryWidgetRoot.isGif
+      anchors.fill: parent
+      source: galleryWidgetRoot.isGif ? galleryWidgetRoot.currentPhotoPath : ""
+      fillMode: Image.PreserveAspectCrop
+      asynchronous: false
+      smooth: true
+      playing: galleryWidgetRoot.isGif
+      paused: false
+      cache: false
+      opacity: status === AnimatedImage.Ready ? 1.0 : 0.0
+
+      Behavior on opacity {
+        NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+      }
+
+
+      onSourceChanged: {
+        playing = true
+        paused = false
+      }
+
+      onStatusChanged: {
+        if (status === AnimatedImage.Ready) {
+          playing = true
+          paused = false
+        }
+      }
+
+      layer.enabled: true
+      layer.effect: MultiEffect {
+        maskEnabled: true
+        maskSource: mainCardMask
+      }
+    }
+
+    // Placeholder if no photo
+    ColumnLayout {
+      anchors.centerIn: parent
+      z: 10
+      visible: (!galleryWidgetRoot.isGif && galleryImg.status !== Image.Ready) || (galleryWidgetRoot.isGif && galleryGif.status !== AnimatedImage.Ready)
+      spacing: Style.space(6)
+
+      Text {
+        Layout.alignment: Qt.AlignHCenter
+        text: "\uf03e"
+        font.family: Style.font.family
+        font.pixelSize: 28
+        color: Color.accent
+      }
+
+      Text {
+        Layout.alignment: Qt.AlignHCenter
+        text: galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 0 ? "Loading photo..." : "Drop photos in ~/.config/omarchy/plugins/dagyr.desktop-widgets/photos/"
+        font.family: Style.font.family
+        font.pixelSize: 11
+        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+      }
+    }
+
+    // Ultra-subtle paper edge highlight
+    Rectangle {
+      anchors.fill: parent
+      radius: 16
+      color: "transparent"
+      border.color: Qt.rgba(255, 255, 255, 0.16)
+      border.width: 1
+      z: 25
     }
 
     // Top Vignette / Header Overlay
@@ -1264,7 +1295,7 @@ Item {
           { label: "Pictures", icon: "\uf030", value: "~/Pictures" },
           { label: "Theme Backgrounds", icon: "\uf53f", value: "~/.config/omarchy/backgrounds" },
           { label: "Choose Custom Folder...", icon: "\uf07c", value: "pick_dialog" },
-          { label: (rootRef && rootRef.layoutEditMode) ? "Lock Widgets Layout" : "Unlock Widgets Layout (Move Mode)", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
+          { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
           { label: "Open Widget Selector (+)", icon: "\uf067", value: "OPEN_SELECTOR" },
           { label: "Reset Widgets Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
         ]
@@ -1284,15 +1315,23 @@ Item {
             anchors.rightMargin: Style.space(10)
             spacing: Style.space(8)
 
-            Text {
-              text: modelData.icon
-              font.family: Style.font.family
-              font.pixelSize: 11
-              color: modelData.value === "RESET_LAYOUT" ? (optMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : (isSelected || isActionBtn ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7))
+            Item {
+              Layout.preferredWidth: 16
+              Layout.preferredHeight: 16
+              Layout.alignment: Qt.AlignVCenter
+
+              Text {
+                anchors.centerIn: parent
+                text: modelData.icon
+                font.family: Style.font.family
+                font.pixelSize: 11
+                color: modelData.value === "RESET_LAYOUT" ? (optMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : (isSelected || isActionBtn ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7))
+              }
             }
 
             Text {
               Layout.fillWidth: true
+              Layout.alignment: Qt.AlignVCenter
               text: modelData.label
               font.family: Style.font.family
               font.pixelSize: 11

@@ -615,7 +615,7 @@ Item {
       // Options List
       Repeater {
         model: [
-          { label: (rootRef && rootRef.layoutEditMode) ? "Lock Widgets Layout" : "Unlock Widgets Layout (Move Mode)", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
+          { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
           { label: "Open Widget Selector (+)", icon: "\uf067", value: "OPEN_SELECTOR" },
           { label: "Reset Widgets Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
         ]
@@ -633,15 +633,23 @@ Item {
             anchors.rightMargin: Style.space(10)
             spacing: Style.space(8)
 
-            Text {
-              text: modelData.icon
-              font.family: Style.font.family
-              font.pixelSize: 11
-              color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : Color.accent
+            Item {
+              Layout.preferredWidth: 16
+              Layout.preferredHeight: 16
+              Layout.alignment: Qt.AlignVCenter
+
+              Text {
+                anchors.centerIn: parent
+                text: modelData.icon
+                font.family: Style.font.family
+                font.pixelSize: 11
+                color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : Color.accent
+              }
             }
 
             Text {
               Layout.fillWidth: true
+              Layout.alignment: Qt.AlignVCenter
               text: modelData.label
               font.family: Style.font.family
               font.pixelSize: 11
