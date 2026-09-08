@@ -49,24 +49,32 @@ Item {
   property bool showWeather: true
   property bool showGreeting: true
   property bool compactDate: false
+  property bool useCelsius: false
 
   function applySavedSettings() {
-    if (!rootRef || !rootRef.widgetSettings) return
-    var s = rootRef.widgetSettings[widgetId]
+    if (!rootRef || !rootRef.settingsReady) return
+    var s = rootRef.widgetSettings ? rootRef.widgetSettings[widgetId] : null
     if (!s) return
     if (s.is24Hour !== undefined) is24Hour = s.is24Hour
     if (s.showSeconds !== undefined) showSeconds = s.showSeconds
     if (s.compactDate !== undefined) compactDate = s.compactDate
     if (s.showWeather !== undefined) showWeather = s.showWeather
     if (s.showGreeting !== undefined) showGreeting = s.showGreeting
+    if (s.useCelsius !== undefined) useCelsius = s.useCelsius
   }
 
   signal settingsLoaded()
 
   Connections {
     target: rootRef || null
+    ignoreUnknownSignals: true
     function onWidgetSettingsChanged() {
       clockWidgetRoot.applySavedSettings()
+    }
+    function onSettingsReadyChanged() {
+      if (rootRef && rootRef.settingsReady) {
+        clockWidgetRoot.applySavedSettings()
+      }
     }
   }
 
@@ -77,8 +85,12 @@ Item {
   }
 
   onSettingsLoaded: applySavedSettings()
-  onRootRefChanged: applySavedSettings()
-  Component.onCompleted: applySavedSettings()
+  onRootRefChanged: {
+    if (rootRef && rootRef.settingsReady) applySavedSettings()
+  }
+  Component.onCompleted: {
+    if (rootRef && rootRef.settingsReady) applySavedSettings()
+  }
 
   readonly property string timeString: {
     var fmt = is24Hour ? (showSeconds ? "HH:mm:ss" : "HH:mm") : (showSeconds ? "h:mm:ss AP" : "h:mm AP")
@@ -94,7 +106,9 @@ Item {
     return "Late night vibes"
   }
 
-  property string weatherTemp: ""
+  property string weatherTempF: ""
+  property string weatherTempC: ""
+  property string weatherTemp: useCelsius ? (weatherTempC ? weatherTempC : weatherTempF) : (weatherTempF ? weatherTempF : weatherTempC)
   property string weatherDesc: ""
   property string weatherIcon: "\uf185"
   readonly property string weatherScriptPath: {
@@ -110,7 +124,8 @@ Item {
       onRead: function(line) {
         try {
           var data = JSON.parse(String(line).trim())
-          if (data.temp) clockWidgetRoot.weatherTemp = data.temp
+          if (data.temp) clockWidgetRoot.weatherTempF = data.temp
+          if (data.tempC) clockWidgetRoot.weatherTempC = data.tempC
           if (data.desc) clockWidgetRoot.weatherDesc = data.desc
           if (data.icon) clockWidgetRoot.weatherIcon = data.icon
         } catch (e) {}
@@ -291,30 +306,59 @@ Item {
       styleColor: Qt.rgba(0, 0, 0, 0.75)
     }
 
-    // ⛅ Weather Status Line (Below greeting)
-    RowLayout {
+    // ⛅ Weather Status Line (Below greeting, click to toggle °F / °C)
+    Item {
       Layout.alignment: Qt.AlignHCenter
-      spacing: Style.space(8)
+      implicitWidth: weatherRow.implicitWidth + 16
+      implicitHeight: weatherRow.implicitHeight + 6
       visible: clockWidgetRoot.showWeather && (clockWidgetRoot.weatherTemp !== "" || clockWidgetRoot.weatherDesc !== "")
 
-      Text {
-        text: clockWidgetRoot.weatherIcon
-        font.family: Style.font.family
-        font.pixelSize: 16
-        color: Color.accent
-        opacity: 0.9
-        style: Text.Outline
-        styleColor: Qt.rgba(0, 0, 0, 0.75)
+      Rectangle {
+        anchors.fill: parent
+        radius: 8
+        color: weatherHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+        border.color: weatherHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45) : "transparent"
+        border.width: 1
+
+        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on border.color { ColorAnimation { duration: 150 } }
       }
 
-      Text {
-        text: clockWidgetRoot.weatherTemp ? (clockWidgetRoot.weatherTemp + (clockWidgetRoot.weatherDesc ? ("  ·  " + clockWidgetRoot.weatherDesc) : "")) : clockWidgetRoot.weatherDesc
-        font.family: Style.font.family
-        font.pixelSize: 15
-        color: Color.foreground
-        opacity: 0.85
-        style: Text.Outline
-        styleColor: Qt.rgba(0, 0, 0, 0.75)
+      RowLayout {
+        id: weatherRow
+        anchors.centerIn: parent
+        spacing: Style.space(8)
+
+        Text {
+          text: clockWidgetRoot.weatherIcon
+          font.family: Style.font.family
+          font.pixelSize: 16
+          color: Color.accent
+          opacity: 0.9
+          style: Text.Outline
+          styleColor: Qt.rgba(0, 0, 0, 0.75)
+        }
+
+        Text {
+          text: clockWidgetRoot.weatherTemp ? (clockWidgetRoot.weatherTemp + (clockWidgetRoot.weatherDesc ? ("  ·  " + clockWidgetRoot.weatherDesc) : "")) : clockWidgetRoot.weatherDesc
+          font.family: Style.font.family
+          font.pixelSize: 15
+          color: Color.foreground
+          opacity: 0.85
+          style: Text.Outline
+          styleColor: Qt.rgba(0, 0, 0, 0.75)
+        }
+      }
+
+      MouseArea {
+        id: weatherHover
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: {
+          clockWidgetRoot.useCelsius = !clockWidgetRoot.useCelsius
+          clockWidgetRoot.saveSetting("useCelsius", clockWidgetRoot.useCelsius)
+        }
       }
     }
 
@@ -728,6 +772,62 @@ Item {
         }
       }
 
+      // Temperature Scale Row (°F / °C)
+      Rectangle {
+        visible: clockWidgetRoot.showWeather
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        color: tempUnitMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8)
+          spacing: Style.space(8)
+
+          Text {
+            text: clockWidgetRoot.useCelsius ? "\uf2c9" : "\uf2c7"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.accent
+          }
+          Text {
+            Layout.fillWidth: true
+            text: "Temperature Scale"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+          }
+          Rectangle {
+            implicitWidth: tempUnitLabel.implicitWidth + 12
+            implicitHeight: 18
+            radius: 9
+            color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+            Text {
+              id: tempUnitLabel
+              anchors.centerIn: parent
+              text: clockWidgetRoot.useCelsius ? "Celsius (°C)" : "Fahrenheit (°F)"
+              font.family: Style.font.family
+              font.pixelSize: 9
+              font.weight: Font.Bold
+              color: Color.accent
+            }
+          }
+        }
+        MouseArea {
+          id: tempUnitMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            clockWidgetRoot.useCelsius = !clockWidgetRoot.useCelsius
+            clockWidgetRoot.saveSetting("useCelsius", clockWidgetRoot.useCelsius)
+            clockWidgetRoot.contextMenuOpen = false
+          }
+        }
+      }
+
       // Greeting Toggle Row
       Rectangle {
         Layout.fillWidth: true
@@ -826,9 +926,10 @@ Item {
       Repeater {
         model: [
           { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
-          { label: "Open Widget Selector (+)", icon: "\uf067", value: "OPEN_SELECTOR" },
+          { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
+          { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
           { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
-          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widgets Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
+          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
         ]
 
         Rectangle {
@@ -881,6 +982,8 @@ Item {
                 if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode
               } else if (modelData.value === "OPEN_SELECTOR") {
                 if (rootRef) rootRef.selectorOpen = true
+              } else if (modelData.value === "OPEN_PREFERENCES") {
+                if (rootRef) rootRef.preferencesOpen = true
               } else if (modelData.value === "SAVE_LAYOUT") {
                 if (rootRef && rootRef.saveCurrentLayout) rootRef.saveCurrentLayout()
               } else if (modelData.value === "RESET_LAYOUT") {

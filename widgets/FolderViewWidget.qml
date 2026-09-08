@@ -25,16 +25,19 @@ WidgetCard {
   maxWidth: 900
   maxHeight: 800
 
-  property string currentFolder: "~/Desktop"
+  property string currentFolder: ""
   property string currentFolderName: "Desktop"
   property string parentFolder: ""
   property var folderItems: []
   property bool isLoading: false
 
   function applySavedSettings() {
+    if (!rootRef || !rootRef.settingsReady) return
     var p = getSetting("folder_path", undefined)
-    if (p !== undefined && typeof p === "string" && p !== "") {
-      currentFolder = p
+    var target = (p !== undefined && typeof p === "string" && p !== "") ? p : "~/Desktop"
+    if (currentFolder !== target) {
+      currentFolder = target
+      loadFolder(currentFolder)
     }
     var t = getSetting("transparentBg", undefined)
     if (t !== undefined) {
@@ -42,10 +45,38 @@ WidgetCard {
     }
   }
 
+  Connections {
+    target: rootRef || null
+    ignoreUnknownSignals: true
+    function onSettingsReadyChanged() {
+      if (rootRef && rootRef.settingsReady) {
+        folderWidgetRoot.applySavedSettings()
+      }
+    }
+  }
+
   onSettingsLoaded: applySavedSettings()
+  onRootRefChanged: {
+    if (rootRef && rootRef.settingsReady) applySavedSettings()
+  }
   Component.onCompleted: {
-    applySavedSettings()
-    loadFolder(currentFolder)
+    if (rootRef && rootRef.settingsReady) {
+      applySavedSettings()
+    }
+  }
+
+  // Fallback timer if rootRef or widgetSettings never arrives
+  Timer {
+    id: fallbackLoadTimer
+    interval: 1500
+    running: folderWidgetRoot.currentFolder === ""
+    repeat: false
+    onTriggered: {
+      if (folderWidgetRoot.currentFolder === "") {
+        folderWidgetRoot.currentFolder = "~/Desktop"
+        folderWidgetRoot.loadFolder(folderWidgetRoot.currentFolder)
+      }
+    }
   }
 
   readonly property string folderScriptPath: {
@@ -56,21 +87,25 @@ WidgetCard {
   function loadFolder(path) {
     if (!path) return
     currentFolder = path
+    if (folderProc.running) {
+      folderProc.kill()
+    }
     folderProc.command = [folderWidgetRoot.folderScriptPath, path]
     isLoading = true
-    if (!folderProc.running) folderProc.running = true
+    folderProc.running = true
   }
 
   function pickFolder() {
-    folderProc.command = [folderWidgetRoot.folderScriptPath, "pick"]
+    if (pickProc.running) return
     isLoading = true
-    if (!folderProc.running) folderProc.running = true
+    pickProc.running = true
   }
 
   function openItem(item) {
     if (!item) return
     if (item.is_dir) {
       loadFolder(item.path)
+      folderWidgetRoot.saveSetting("folder_path", item.path)
       return
     }
     Quickshell.execDetached([folderWidgetRoot.folderScriptPath, "open", item.path])
@@ -79,16 +114,44 @@ WidgetCard {
   function navigateUp() {
     if (parentFolder && parentFolder !== "") {
       loadFolder(parentFolder)
+      folderWidgetRoot.saveSetting("folder_path", parentFolder)
     }
   }
 
   function openInFileManager() {
-    Quickshell.execDetached(["xdg-open", currentFolder.replace(/^~/, Quickshell.env("HOME") || "")])
+    Quickshell.execDetached(["xdg-open", (currentFolder || "~/Desktop").replace(/^~/, Quickshell.env("HOME") || "")])
   }
 
   Process {
     id: folderProc
-    command: [folderWidgetRoot.folderScriptPath, folderWidgetRoot.currentFolder]
+    command: [folderWidgetRoot.folderScriptPath, folderWidgetRoot.currentFolder || "~/Desktop"]
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        var str = String(line).trim()
+        if (!str) return
+        try {
+          var data = JSON.parse(str)
+          if (data.status === "ok") {
+            folderWidgetRoot.currentFolder = data.folder || folderWidgetRoot.currentFolder
+            folderWidgetRoot.currentFolderName = data.folder_name || "Folder"
+            folderWidgetRoot.parentFolder = data.parent || ""
+            folderWidgetRoot.folderItems = Array.isArray(data.items) ? data.items : []
+          }
+        } catch (e) {
+          console.warn("[FolderViewWidget] Parse error:", e)
+        }
+        folderWidgetRoot.isLoading = false
+      }
+    }
+    onExited: {
+      folderWidgetRoot.isLoading = false
+    }
+  }
+
+  Process {
+    id: pickProc
+    command: [folderWidgetRoot.folderScriptPath, "pick"]
     running: false
     stdout: SplitParser {
       onRead: function(line) {
@@ -106,7 +169,7 @@ WidgetCard {
             // Pick dialog was cancelled
           }
         } catch (e) {
-          console.warn("[FolderViewWidget] Parse error:", e)
+          console.warn("[FolderViewWidget] Pick parse error:", e)
         }
         folderWidgetRoot.isLoading = false
       }
@@ -119,10 +182,10 @@ WidgetCard {
   // Auto-refresh folder every 10 seconds
   Timer {
     interval: 10000
-    running: !folderWidgetRoot.isLoading && !folderWidgetRoot.contextMenuOpen
+    running: !folderWidgetRoot.isLoading && !folderWidgetRoot.contextMenuOpen && !pickProc.running && folderWidgetRoot.currentFolder !== ""
     repeat: true
     onTriggered: {
-      if (!folderProc.running) {
+      if (!folderProc.running && folderWidgetRoot.currentFolder !== "") {
         folderProc.command = [folderWidgetRoot.folderScriptPath, folderWidgetRoot.currentFolder]
         folderProc.running = true
       }
@@ -289,6 +352,7 @@ WidgetCard {
           onClicked: {
             folderWidgetRoot.contextMenuOpen = false
             folderWidgetRoot.loadFolder("~/Desktop")
+            folderWidgetRoot.saveSetting("folder_path", "~/Desktop")
           }
         }
       }
@@ -330,6 +394,7 @@ WidgetCard {
           onClicked: {
             folderWidgetRoot.contextMenuOpen = false
             folderWidgetRoot.loadFolder("~/Downloads")
+            folderWidgetRoot.saveSetting("folder_path", "~/Downloads")
           }
         }
       }
@@ -500,6 +565,7 @@ WidgetCard {
       // Empty State
       ColumnLayout {
         anchors.centerIn: parent
+        z: 2
         visible: folderWidgetRoot.folderItems.length === 0 && !folderWidgetRoot.isLoading
         spacing: Style.space(6)
 
@@ -565,6 +631,7 @@ WidgetCard {
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        visible: folderWidgetRoot.folderItems.length > 0
 
         readonly property int cols: Math.max(2, Math.floor(width / 88))
         cellWidth: Math.floor(width / cols)

@@ -852,6 +852,7 @@ WidgetCard {
       // Bottom Bar
       RowLayout {
         Layout.fillWidth: true
+        Layout.rightMargin: 10
 
         Text {
           text: notesWidgetRoot.completedCount + " completed"
@@ -864,14 +865,17 @@ WidgetCard {
 
         Rectangle {
           visible: notesWidgetRoot.completedCount > 0
-          implicitWidth: clearText.implicitWidth + 14
+          implicitWidth: clearRow.implicitWidth + 20
           implicitHeight: 22
           radius: 11
-          color: clearMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+          color: clearMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.08)
+          border.color: clearMouse.containsMouse ? Color.urgent : Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.3)
+          border.width: 1
 
           RowLayout {
+            id: clearRow
             anchors.centerIn: parent
-            spacing: 4
+            spacing: 5
             Text {
               text: "\uf1f8"
               font.family: Style.font.family

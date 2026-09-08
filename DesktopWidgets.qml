@@ -21,6 +21,7 @@ Item {
   property var widgetPositions: ({})
   property var enabledWidgets: ["clock", "gallery", "network", "media", "system"]
   property var widgetSettings: ({})
+  property bool settingsReady: false
   property real screenWidth: 1920
   property real screenHeight: 1080
   property bool layoutEditMode: false
@@ -137,7 +138,10 @@ Item {
           if (res.positions) root.widgetPositions = res.positions
           if (Array.isArray(res.enabled_widgets)) root.enabledWidgets = res.enabled_widgets
           if (Array.isArray(res.custom_widgets)) widgetRegistry.customWidgets = res.custom_widgets
-          if (res.widget_settings) root.widgetSettings = res.widget_settings
+          if (res.widget_settings) {
+            root.widgetSettings = res.widget_settings
+            root.settingsReady = true
+          }
           if (res.has_saved_layout !== undefined) root.hasSavedLayout = res.has_saved_layout
           if (res.active_profile) root.activeProfile = res.active_profile
           if (Array.isArray(res.profiles)) root.layoutProfiles = res.profiles
@@ -708,6 +712,48 @@ Item {
           }
         }
 
+        function isPointOverWidget(mouseX, mouseY) {
+          if (root.layoutEditMode) return true
+          if (!widgetContainer.shouldShow || !widgetContainer.visible) return false
+
+          var localX = mouseX - widgetContainer.x
+          var localY = mouseY - widgetContainer.y
+
+          if (typeof widgetRepeater !== "undefined" && widgetRepeater) {
+            for (var i = 0; i < widgetRepeater.count; i++) {
+              var loader = widgetRepeater.itemAt(i)
+              if (!loader || !loader.active || !loader.visible) continue
+              var wItem = loader.item
+              if (!wItem || !wItem.visible) continue
+
+              var w = (wItem.width > 0) ? wItem.width : loader.width
+              var h = (wItem.height > 0) ? wItem.height : loader.height
+              if (w <= 0 || h <= 0) continue
+
+              if (localX >= loader.x && localX <= loader.x + w &&
+                  localY >= loader.y && localY <= loader.y + h) {
+                return true
+              }
+            }
+          }
+
+          if (typeof widgetSelector !== "undefined" && widgetSelector && widgetSelector.isOpen && widgetSelector.visible) {
+            if (localX >= widgetSelector.x && localX <= widgetSelector.x + widgetSelector.width &&
+                localY >= widgetSelector.y && localY <= widgetSelector.y + widgetSelector.height) {
+              return true
+            }
+          }
+
+          if (typeof desktopContextMenu !== "undefined" && desktopContextMenu && desktopContextMenu.isOpen && desktopContextMenu.visible) {
+            if (localX >= desktopContextMenu.x && localX <= desktopContextMenu.x + desktopContextMenu.width &&
+                localY >= desktopContextMenu.y && localY <= desktopContextMenu.y + desktopContextMenu.height) {
+              return true
+            }
+          }
+
+          return false
+        }
+
         // 🖱️ Desktop Background Click & Context Menu Handler
         MouseArea {
           id: desktopBgMouse
@@ -716,10 +762,16 @@ Item {
           acceptedButtons: Qt.LeftButton | Qt.RightButton
           onDoubleClicked: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
+              if (desktopWindow.isPointOverWidget(mouse.x, mouse.y)) {
+                return
+              }
               root.handleToggleOrJump()
             }
           }
           onClicked: function(mouse) {
+            if (desktopWindow.isPointOverWidget(mouse.x, mouse.y)) {
+              return
+            }
             if (root.overlayActive) {
               root.closeOverlay()
               return
@@ -1058,6 +1110,7 @@ Item {
           // 📦 Dynamic Desktop Widgets Instantiation via Registry
           // -------------------------------------------------------------------
           Repeater {
+            id: widgetRepeater
             model: widgetRegistry.allWidgets
 
             Loader {
@@ -1101,7 +1154,7 @@ Item {
                   item.rootRef = root
                   item.widgetId = modelData.id
                   item.loaderItem = widgetLoader
-                  item.monitorName = desktopWindow.monitorName
+                  if ("monitorName" in item) item.monitorName = desktopWindow.monitorName
                   if (savedWidth > 0 && item.resizable) {
                     item.width = savedWidth
                   }
@@ -1111,6 +1164,9 @@ Item {
                   if (!widgetLoader.isDragging) {
                     widgetLoader.x = targetX
                     widgetLoader.y = targetY
+                  }
+                  if (typeof item.applySavedSettings === "function") {
+                    item.applySavedSettings()
                   }
                 }
               }
@@ -1186,6 +1242,8 @@ Item {
           Rectangle {
             id: desktopContextMenu
             property bool isOpen: false
+            x: 100
+            y: 100
             visible: (isOpen || root.menuOpenRequested) && widgetContainer.shouldShow
             z: 500
             width: 240

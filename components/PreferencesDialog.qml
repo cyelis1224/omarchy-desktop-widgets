@@ -129,7 +129,6 @@ Item {
         }
 
         ColumnLayout {
-          Layout.fillWidth: true
           spacing: 2
 
           Text {
@@ -148,8 +147,11 @@ Item {
           }
         }
 
+        Item { Layout.fillWidth: true }
+
         // Close Button
         Rectangle {
+          Layout.alignment: Qt.AlignTop | Qt.AlignRight
           width: 32
           height: 32
           radius: 16
@@ -1222,14 +1224,17 @@ Item {
                   Layout.fillWidth: true
                   spacing: 1
                   Text {
+                    Layout.fillWidth: true
                     text: "Media Inhibit"
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
                     color: Color.foreground
+                    elide: Text.ElideRight
                   }
                   Text {
-                    text: "Auto-suppressed during audio or video playback"
+                    Layout.fillWidth: true
+                    text: "Suppressed during audio or video playback"
                     font.family: Style.font.family
                     font.pixelSize: 9
                     color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.55)
@@ -1263,14 +1268,17 @@ Item {
                   Layout.fillWidth: true
                   spacing: 1
                   Text {
+                    Layout.fillWidth: true
                     text: "Universal Screensaver"
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
                     color: Color.foreground
+                    elide: Text.ElideRight
                   }
                   Text {
-                    text: "Activates smoothly across any active desktop or workspace"
+                    Layout.fillWidth: true
+                    text: "Activates across any active workspace"
                     font.family: Style.font.family
                     font.pixelSize: 9
                     color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.55)

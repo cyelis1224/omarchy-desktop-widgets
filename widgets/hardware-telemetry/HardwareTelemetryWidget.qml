@@ -39,6 +39,51 @@ WidgetCard {
   property real alertThresholdDeg: 75.0
   property int pollIntervalMs: 3000
 
+  function applySavedSettings() {
+    if (!rootRef || !rootRef.settingsReady) return
+    var f = getSetting("useFahrenheit", undefined)
+    if (f !== undefined) {
+      useFahrenheit = Boolean(f)
+      cpuArc.requestPaint()
+    }
+    var d = getSetting("disabledSensorIds", undefined)
+    if (Array.isArray(d)) {
+      disabledSensorIds = d
+    }
+    var a = getSetting("alertThresholdDeg", undefined)
+    if (a !== undefined && typeof a === "number") {
+      alertThresholdDeg = a
+    }
+    var p = getSetting("pollIntervalMs", undefined)
+    if (p !== undefined && typeof p === "number") {
+      pollIntervalMs = p
+    }
+  }
+
+  Connections {
+    target: rootRef || null
+    ignoreUnknownSignals: true
+    function onSettingsReadyChanged() {
+      if (rootRef && rootRef.settingsReady) {
+        hwWidgetRoot.applySavedSettings()
+      }
+    }
+  }
+
+  onSettingsLoaded: applySavedSettings()
+  onRootRefChanged: {
+    if (rootRef && rootRef.settingsReady) applySavedSettings()
+  }
+  Component.onCompleted: {
+    if (rootRef && rootRef.settingsReady) applySavedSettings()
+  }
+
+  function toggleUnit() {
+    useFahrenheit = !useFahrenheit
+    saveSetting("useFahrenheit", useFahrenheit)
+    cpuArc.requestPaint()
+  }
+
   property real cpuTemp: 40.0
   property int cpuCores: 20
   property real cpuAvgGhz: 3.5
@@ -167,6 +212,7 @@ WidgetCard {
               cursorShape: Qt.PointingHandCursor
               onClicked: {
                 hwWidgetRoot.useFahrenheit = modelData.isFahr
+                hwWidgetRoot.saveSetting("useFahrenheit", modelData.isFahr)
                 cpuArc.requestPaint()
               }
             }
@@ -248,6 +294,7 @@ WidgetCard {
                 arr.splice(idx, 1)
               }
               hwWidgetRoot.disabledSensorIds = arr
+              hwWidgetRoot.saveSetting("disabledSensorIds", arr)
             }
           }
         }
@@ -299,7 +346,10 @@ WidgetCard {
               anchors.fill: parent
               hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
-              onClicked: hwWidgetRoot.alertThresholdDeg = modelData.val
+              onClicked: {
+                hwWidgetRoot.alertThresholdDeg = modelData.val
+                hwWidgetRoot.saveSetting("alertThresholdDeg", modelData.val)
+              }
             }
           }
         }
@@ -653,6 +703,12 @@ WidgetCard {
                 font.weight: Font.DemiBold
                 color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
               }
+            }
+
+            MouseArea {
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: hwWidgetRoot.toggleUnit()
             }
           }
 
