@@ -140,13 +140,13 @@ cmd_check() {
   local release_url=""
   local release_published=""
 
-  # 1. Query GitHub Releases API for official release info & changelog
+  # 1. Query GitHub Releases API for official release info & changelog (bounded to 32KB)
   local gh_release_json=""
   if command -v gh >/dev/null 2>&1; then
-    gh_release_json=$(gh api repos/cyelis1224/omarchy-desktop-widgets/releases/latest 2>/dev/null || true)
+    gh_release_json=$(gh api repos/cyelis1224/omarchy-desktop-widgets/releases/latest 2>/dev/null | head -c 32768 || true)
   fi
   if [[ -z "$gh_release_json" ]]; then
-    gh_release_json=$(curl -s --max-time 8 -H "User-Agent: Omarchy-Desktop-Widgets" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/cyelis1224/omarchy-desktop-widgets/releases/latest" 2>/dev/null || true)
+    gh_release_json=$(curl -s --max-time 8 --max-filesize 32768 -H "User-Agent: Omarchy-Desktop-Widgets" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/cyelis1224/omarchy-desktop-widgets/releases/latest" 2>/dev/null | head -c 32768 || true)
   fi
 
   if [[ -n "$gh_release_json" && "$gh_release_json" != *"Not Found"* && "$gh_release_json" != *"API rate limit"* ]]; then
@@ -154,57 +154,44 @@ cmd_check() {
     release_tag=$(echo "$gh_release_json" | jq -r '.tag_name // empty' 2>/dev/null || true)
     if [[ -n "$release_tag" ]]; then
       remote_version="${release_tag#v}"
-      release_title=$(echo "$gh_release_json" | jq -r '.name // empty' 2>/dev/null || true)
-      release_notes=$(echo "$gh_release_json" | jq -r '.body // empty' 2>/dev/null || true)
-      release_url=$(echo "$gh_release_json" | jq -r '.html_url // empty' 2>/dev/null || true)
-      release_published=$(echo "$gh_release_json" | jq -r '.published_at // empty' 2>/dev/null || true)
+      release_title=$(echo "$gh_release_json" | jq -r '.name // empty' 2>/dev/null | head -c 256 || true)
+      release_notes=$(echo "$gh_release_json" | jq -r '.body // empty' 2>/dev/null | head -c 8192 || true)
+      release_url=$(echo "$gh_release_json" | jq -r '.html_url // empty' 2>/dev/null | head -c 256 || true)
+      release_published=$(echo "$gh_release_json" | jq -r '.published_at // empty' 2>/dev/null | head -c 64 || true)
       commit_msg="${release_title:-Update to $release_tag}"
     fi
   fi
 
-  # 2. Fast git check to fetch commits & count commits_behind
+  # 2. Bounded remote commit check via ls-remote (no objects fetched)
   if [[ -n "$repo_dir" ]]; then
-    timeout 8 git -C "$repo_dir" fetch --quiet origin master 2>/dev/null || timeout 8 git -C "$repo_dir" fetch --quiet 2>/dev/null || true
-    remote_commit=$(git -C "$repo_dir" rev-parse FETCH_HEAD 2>/dev/null || git -C "$repo_dir" rev-parse origin/master 2>/dev/null || true)
-    if [[ -n "$remote_commit" ]]; then
-      remote_short=$(git -C "$repo_dir" rev-parse --short "$remote_commit" 2>/dev/null || true)
-      commits_behind=$(git -C "$repo_dir" rev-list --count HEAD.."$remote_commit" 2>/dev/null || echo 0)
-      if [[ -z "$commit_msg" ]]; then
-        commit_msg=$(git -C "$repo_dir" log -1 --format="%s" "$remote_commit" 2>/dev/null || echo "")
-      fi
-
-      # Fallback version extraction from git if GitHub Release was not available
-      if [[ -z "$remote_version" ]]; then
-        local git_ver
-        git_ver=$(git -C "$repo_dir" show "$remote_commit:manifest.json" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)
-        if [[ -n "$git_ver" ]]; then
-          remote_version="$git_ver"
-        fi
-      fi
-
-      # Fallback changelog from git commit messages if no release notes
-      if [[ -z "$release_notes" && "$commits_behind" -gt 0 ]]; then
-        release_notes=$(git -C "$repo_dir" log -n 5 --pretty=format:"- %s" HEAD.."$remote_commit" 2>/dev/null || true)
+    local ls_out
+    ls_out=$(timeout 8 git ls-remote --refs "$REMOTE_REPO_URL" refs/heads/master 2>/dev/null | head -c 256 || true)
+    if [[ -n "$ls_out" ]]; then
+      remote_commit=$(echo "$ls_out" | awk 'NR==1{print $1}')
+      remote_short="${remote_commit:0:7}"
+      # Determine commits_behind from local log only (no fetched objects needed)
+      if [[ -n "$local_commit" && -n "$remote_commit" && "$local_commit" != "$remote_commit" ]]; then
+        commits_behind=1  # We know we're behind but can't count exactly without fetch
       fi
     fi
   fi
 
-  # Fallback ONLY if git and GitHub API both could not resolve remote version
+  # 3. Fallback version from bounded raw manifest if GitHub API had no release
   if [[ -z "$remote_version" ]]; then
     if [[ -z "$remote_commit" ]]; then
-      local ls_out
-      ls_out=$(timeout 8 git ls-remote "$REMOTE_REPO_URL" refs/heads/master 2>/dev/null || true)
-      if [[ -n "$ls_out" ]]; then
-        remote_commit=$(echo "$ls_out" | awk '{print $1}')
+      local ls_out2
+      ls_out2=$(timeout 8 git ls-remote --refs "$REMOTE_REPO_URL" refs/heads/master 2>/dev/null | head -c 256 || true)
+      if [[ -n "$ls_out2" ]]; then
+        remote_commit=$(echo "$ls_out2" | awk 'NR==1{print $1}')
         remote_short="${remote_commit:0:7}"
       fi
     fi
 
     local remote_manifest
-    remote_manifest=$(curl -s --max-time 4 "${RAW_MANIFEST_URL}?v=$(date +%s)" 2>/dev/null || true)
+    remote_manifest=$(curl -s --max-time 4 --max-filesize 4096 "${RAW_MANIFEST_URL}?v=$(date +%s)" 2>/dev/null || true)
     if [[ -n "$remote_manifest" ]]; then
       local parsed_ver
-      parsed_ver=$(echo "$remote_manifest" | jq -r '.version // empty' 2>/dev/null || true)
+      parsed_ver=$(echo "$remote_manifest" | head -c 4096 | jq -r '.version // empty' 2>/dev/null || true)
       if [[ -n "$parsed_ver" ]]; then
         remote_version="$parsed_ver"
       fi

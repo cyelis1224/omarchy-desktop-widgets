@@ -555,6 +555,8 @@ BarWidget {
       onRead: function(line) {
         var str = String(line).trim()
         if (!str) return
+        // Bound buffer to 16KB to prevent unbounded memory growth
+        if (checkProc.buffer.length + str.length > 16384) return
         checkProc.buffer += str
         try {
           var data = JSON.parse(checkProc.buffer)
