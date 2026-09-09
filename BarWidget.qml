@@ -17,8 +17,6 @@ BarWidget {
   property string newCommit: ""
   property int commitsBehind: 0
   property string commitMessage: ""
-  property bool isUpdating: false
-  property string updateStatusText: ""
 
   property string releaseTitle: ""
   property string releaseNotes: ""
@@ -29,7 +27,7 @@ BarWidget {
   readonly property bool opened: popupOpen
 
   function open() { popupOpen = true }
-  function close() { popupOpen = false; isUpdating = false; }
+  function close() { popupOpen = false }
   function toggleDialog() { popupOpen = !popupOpen }
 
   readonly property string checkerScriptPath: {
@@ -41,15 +39,6 @@ BarWidget {
     if (!checkProc.running) {
       checkProc.command = [root.checkerScriptPath, "check"]
       checkProc.running = true
-    }
-  }
-
-  function applyUpdate() {
-    root.isUpdating = true
-    root.updateStatusText = "Applying update & syncing files..."
-    applyProc.command = [root.checkerScriptPath, "apply"]
-    if (!applyProc.running) {
-      applyProc.running = true
     }
   }
 
@@ -75,7 +64,7 @@ BarWidget {
     useActiveColor: true
     slotSize: Style.bar.statusSlot
     fontSize: Style.font.caption
-    tooltipText: "Desktop Widgets update available: v" + root.currentVersion + " → v" + root.newVersion + "\n[Click to review and update]"
+    tooltipText: "Desktop Widgets update available: v" + root.currentVersion + " → v" + root.newVersion + "\n[Click to view release details and update command]"
 
     onPressed: function(b) {
       if (b === Qt.LeftButton) {
@@ -111,7 +100,7 @@ BarWidget {
     bar: root.bar
     owner: root
     open: root.popupOpen
-    contentWidth: popup.fittedContentWidth(Style.space(410))
+    contentWidth: popup.fittedContentWidth(Style.space(430))
     contentHeight: popup.fittedContentHeight(mainCol.implicitHeight)
 
     Column {
@@ -156,7 +145,7 @@ BarWidget {
           }
 
           Text {
-            text: "An update is ready for installation"
+            text: "An update is available on Marketplace"
             color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
             font.family: Style.font.family
             font.pixelSize: Style.font.caption
@@ -302,19 +291,20 @@ BarWidget {
         id: changelogCard
         visible: root.releaseNotes !== "" || root.commitMessage !== "" || root.commitsBehind > 0
         width: parent.width
-        implicitHeight: changelogCol.implicitHeight
+        implicitHeight: changelogCol.implicitHeight + Style.space(20)
         radius: Style.space(8)
         color: Util.alpha(Color.accent, 0.07)
         borderSpec: Border.none()
 
         Column {
           id: changelogCol
-          width: parent.width
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.top: parent.top
+          anchors.leftMargin: Style.space(12)
+          anchors.rightMargin: Style.space(12)
+          anchors.topMargin: Style.space(10)
           spacing: Style.space(8)
-          topPadding: Style.space(10)
-          bottomPadding: Style.space(10)
-          leftPadding: Style.space(12)
-          rightPadding: Style.space(12)
 
           // Changelog Header Row
           RowLayout {
@@ -423,56 +413,103 @@ BarWidget {
         }
       }
 
-      // Updating in-progress Banner
+      // 📦 Marketplace Update Flow Card
       BorderSurface {
-        visible: root.isUpdating
         width: parent.width
+        implicitHeight: mktCol.implicitHeight + Style.space(20)
         radius: Style.space(8)
-        color: Util.alpha(Color.accent, 0.12)
+        color: Util.alpha(Color.accent, 0.08)
         borderSpec: Border.none()
 
-        Row {
-          anchors.centerIn: parent
-          anchors.margins: Style.space(10)
-          spacing: Style.space(10)
+        Column {
+          id: mktCol
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.top: parent.top
+          anchors.leftMargin: Style.space(12)
+          anchors.rightMargin: Style.space(12)
+          anchors.topMargin: Style.space(10)
+          spacing: Style.space(8)
 
-          Text {
-            text: "\uf110"
-            font.family: Style.font.family
-            font.pixelSize: Style.font.body
-            color: Color.accent
-            anchors.verticalCenter: parent.verticalCenter
+          RowLayout {
+            width: parent.width
+            spacing: Style.space(8)
 
-            RotationAnimation on rotation {
-              from: 0
-              to: 360
-              duration: 1100
-              loops: Animation.Infinite
+            Text {
+              text: "\uf019"
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+              color: Color.accent
+            }
+
+            Text {
+              Layout.fillWidth: true
+              text: "Marketplace Update Flow"
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+              font.bold: true
+              color: Color.accent
             }
           }
 
           Text {
-            text: root.updateStatusText || "Updating plugin and reloading shell..."
-            color: Color.accent
+            width: parent.width
+            text: "Update via the official Omarchy package manager in your terminal:"
+            color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.3)
             font.family: Style.font.family
             font.pixelSize: Style.font.caption
-            font.bold: true
-            anchors.verticalCenter: parent.verticalCenter
+            wrapMode: Text.WordWrap
+          }
+
+          // Command code pill with interactive Copy button
+          Rectangle {
+            width: parent.width
+            height: Style.space(34)
+            radius: Style.space(6)
+            color: Util.alpha(root.bar ? root.bar.foreground : Color.foreground, 0.06)
+
+            RowLayout {
+              anchors.fill: parent
+              anchors.leftMargin: Style.space(10)
+              anchors.rightMargin: Style.space(6)
+              spacing: Style.space(8)
+
+              Text {
+                Layout.fillWidth: true
+                text: "omarchy plugin update dagyr.desktop-widgets"
+                font.family: Style.font.family
+                font.pixelSize: 10
+                font.bold: true
+                color: root.bar ? root.bar.foreground : Color.foreground
+                elide: Text.ElideMiddle
+              }
+
+              Button {
+                id: copyBtn
+                Layout.preferredHeight: Style.space(24)
+                text: copyProc.copied ? "Copied!" : "Copy"
+                iconText: copyProc.copied ? "\uf00c" : "\uf0c5"
+                bordered: true
+                fontSize: Style.font.caption
+                accent: Color.accent
+                selected: copyProc.copied
+                onClicked: copyProc.copyCommand("omarchy plugin update dagyr.desktop-widgets")
+              }
+            }
           }
         }
       }
 
       PanelSeparator { width: parent.width }
 
-      // Action Buttons (Cancel and Update)
+      // Action Buttons (Dismiss and Release Notes)
       Row {
         width: parent.width
         spacing: Style.space(10)
-        visible: !root.isUpdating
 
         Button {
           width: (parent.width - Style.space(10)) / 2
-          text: "Cancel"
+          text: "Dismiss"
           iconText: "\uf00d"
           bordered: true
           fontSize: Style.font.caption
@@ -481,13 +518,19 @@ BarWidget {
 
         Button {
           width: (parent.width - Style.space(10)) / 2
-          text: "Update Now"
-          iconText: "\uf019"
+          text: "Release Notes"
+          iconText: "\uf08e"
           bordered: true
           selected: true
           accent: Color.accent
           fontSize: Style.font.caption
-          onClicked: root.applyUpdate()
+          onClicked: {
+            if (root.releaseUrl !== "") {
+              Qt.openUrlExternally(root.releaseUrl)
+            } else {
+              Qt.openUrlExternally("https://github.com/cyelis1224/omarchy-desktop-widgets/releases")
+            }
+          }
         }
       }
     }
@@ -560,18 +603,22 @@ BarWidget {
     }
   }
 
-  // Update execution process
+  // Clipboard copy helper process
   Process {
-    id: applyProc
-    onExited: function(exitCode) {
-      if (exitCode === 0) {
-        root.updateStatusText = "Update complete! Shell is reloading..."
-        root.updateAvailable = false
-      } else {
-        root.isUpdating = false
-        root.updateStatusText = "Update encountered an error. Please try again."
-      }
+    id: copyProc
+    property bool copied: false
+    function copyCommand(cmd) {
+      copyProc.command = ["sh", "-c", "printf '%s' \"$1\" | wl-copy", "_", cmd]
+      copyProc.running = true
+      copied = true
+      resetCopyTimer.restart()
     }
+  }
+
+  Timer {
+    id: resetCopyTimer
+    interval: 2500
+    onTriggered: copyProc.copied = false
   }
 
   // Initial startup delay check timer (runs 4s after shell loads)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-update.sh - Check and apply updates for omarchy-desktop-widgets
+# check-update.sh - Check for updates for omarchy-desktop-widgets
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -270,53 +270,9 @@ cmd_check() {
     }'
 }
 
-cmd_apply() {
-  echo "Applying desktop widgets update..."
-
-  # If in mock mode, disable it and restart
-  if [[ -f "$MOCK_FLAG_FILE" ]]; then
-    rm -f "$MOCK_FLAG_FILE"
-    echo "Cleared mock update state."
-  fi
-
-  # If LIVE_DIR is a git repository, fetch and reset to ensure a clean sync
-  if [[ -d "$LIVE_DIR/.git" ]]; then
-    echo "Updating live plugin git repository at $LIVE_DIR..."
-    git -C "$LIVE_DIR" fetch --quiet origin master 2>&1 || true
-    git -C "$LIVE_DIR" reset --hard origin/master 2>&1 || true
-    git -C "$LIVE_DIR" clean -fd 2>&1 || true
-  fi
-
-  # If DEV_DIR is separate and git-managed, pull it
-  if [[ -d "$DEV_DIR/.git" && "$DEV_DIR" != "$LIVE_DIR" ]]; then
-    echo "Updating dev repository at $DEV_DIR..."
-    git -C "$DEV_DIR" fetch --quiet origin master 2>&1 || true
-    git -C "$DEV_DIR" reset --hard origin/master 2>&1 || true
-    rsync -a --exclude='.git' "$DEV_DIR/" "$LIVE_DIR/" 2>/dev/null || cp -r "$DEV_DIR/"* "$LIVE_DIR/" 2>/dev/null || true
-  fi
-
-  # Validate
-  if command -v omarchy-plugin-validate >/dev/null 2>&1; then
-    omarchy-plugin-validate "$LIVE_DIR" || true
-  fi
-
-  # Rescan and restart shell
-  echo "Reloading Omarchy shell..."
-  if command -v omarchy-restart-shell >/dev/null 2>&1; then
-    omarchy-restart-shell
-  elif command -v omarchy-shell >/dev/null 2>&1; then
-    omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
-  fi
-
-  echo '{"success": true, "message": "Updated and reloaded successfully"}'
-}
-
 case "${1:-check}" in
   check)
     cmd_check
-    ;;
-  apply)
-    cmd_apply
     ;;
   mock-on)
     cmd_mock_on
@@ -328,7 +284,7 @@ case "${1:-check}" in
     cmd_check
     ;;
   *)
-    echo "Usage: $0 [check|apply|mock-on|mock-off|status]"
+    echo "Usage: $0 [check|mock-on|mock-off|status]"
     exit 1
     ;;
 esac

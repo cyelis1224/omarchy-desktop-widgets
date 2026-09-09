@@ -82,6 +82,13 @@ If you are developing your own third-party custom widgets, clone to your project
 git clone https://github.com/cyelis1224/omarchy-desktop-widgets ~/Projects/desktop-widgets
 ```
 
+### Updating via Marketplace
+To update Desktop Widgets to the latest verified release:
+
+```bash
+omarchy plugin update dagyr.desktop-widgets
+```
+
 ### Removal / Uninstallation
 To disable and uninstall Desktop Widgets:
 
