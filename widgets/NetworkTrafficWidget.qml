@@ -36,6 +36,21 @@ WidgetCard {
   property bool showTotals: false
   property var netRxHistory: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   property var netTxHistory: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+  property int hoverIndex: -1
+
+  // Mirrors format_speed() in get-network.sh
+  function formatSpeed(bps) {
+    if (bps < 1024) return bps.toFixed(0) + " B/s"
+    if (bps < 1024 * 1024) return (bps / 1024).toFixed(1) + " KB/s"
+    if (bps < 1024 * 1024 * 1024) return (bps / (1024 * 1024)).toFixed(1) + " MB/s"
+    return (bps / (1024 * 1024 * 1024)).toFixed(2) + " GB/s"
+  }
+
+  function hoverTimeOffset() {
+    var steps = netRxHistory.length - 1 - hoverIndex
+    if (steps <= 0) return "Now"
+    return "-" + Number(steps * netPollTimer.interval / 1000).toFixed(1).replace(/\.0$/, "") + "s"
+  }
 
   // Network Device Selection State
   property var availableDevices: []
@@ -381,6 +396,7 @@ WidgetCard {
   }
 
   Timer {
+    id: netPollTimer
     interval: 1500
     running: true
     repeat: true
@@ -627,6 +643,7 @@ WidgetCard {
           target: networkWidgetRoot
           function onNetRxHistoryChanged() { netCanvas.requestPaint() }
           function onNetTxHistoryChanged() { netCanvas.requestPaint() }
+          function onHoverIndexChanged() { netCanvas.requestPaint() }
         }
 
         onPaint: {
@@ -718,6 +735,96 @@ WidgetCard {
           ctx.lineWidth = 2
           ctx.stroke()
           ctx.restore()
+
+          // 3. Hover Crosshair & Sample Dots
+          var hi = networkWidgetRoot.hoverIndex
+          if (hi >= 0 && hi < count) {
+            var hx = hi * stepX
+            ctx.save()
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)"
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(hx, 0)
+            ctx.lineTo(hx, h)
+            ctx.stroke()
+
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.6)"
+            ctx.lineWidth = 1.5
+
+            ctx.beginPath()
+            ctx.arc(hx, h - (txArr[hi] / maxVal) * (h - 6), 3, 0, Math.PI * 2)
+            ctx.fillStyle = Color.foreground
+            ctx.fill()
+            ctx.stroke()
+
+            ctx.beginPath()
+            ctx.arc(hx, h - (rxArr[hi] / maxVal) * (h - 6), 3.5, 0, Math.PI * 2)
+            ctx.fillStyle = Color.accent
+            ctx.fill()
+            ctx.stroke()
+            ctx.restore()
+          }
+        }
+      }
+
+      // Interactive Hover Tracking (no buttons, so clicks still reach the card)
+      MouseArea {
+        anchors.fill: netCanvas
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+
+        onPositionChanged: function(mouse) {
+          var count = networkWidgetRoot.netRxHistory.length
+          if (count < 2) return
+          var idx = Math.round(mouse.x / (width / (count - 1)))
+          networkWidgetRoot.hoverIndex = Math.max(0, Math.min(count - 1, idx))
+        }
+
+        onExited: networkWidgetRoot.hoverIndex = -1
+      }
+
+      // Hover Tooltip Badge
+      Rectangle {
+        visible: networkWidgetRoot.hoverIndex >= 0 && networkWidgetRoot.hoverIndex < networkWidgetRoot.netRxHistory.length
+        z: 10
+        width: netHoverLayout.implicitWidth + 12
+        height: 20
+        radius: 6
+        color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.55)
+        border.width: 1
+
+        readonly property real targetX: netCanvas.x + networkWidgetRoot.hoverIndex * (netCanvas.width / Math.max(1, networkWidgetRoot.netRxHistory.length - 1))
+        x: Math.max(4, Math.min(parent.width - width - 4, targetX - width / 2))
+        y: 4
+
+        RowLayout {
+          id: netHoverLayout
+          anchors.centerIn: parent
+          spacing: 5
+
+          Text {
+            text: networkWidgetRoot.hoverTimeOffset()
+            font.family: Style.font.family
+            font.pixelSize: 9
+            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          }
+
+          Text {
+            text: " " + networkWidgetRoot.formatSpeed(networkWidgetRoot.netRxHistory[networkWidgetRoot.hoverIndex] || 0)
+            font.family: Style.font.family
+            font.pixelSize: 10
+            font.weight: Font.Bold
+            color: Color.accent
+          }
+
+          Text {
+            text: " " + networkWidgetRoot.formatSpeed(networkWidgetRoot.netTxHistory[networkWidgetRoot.hoverIndex] || 0)
+            font.family: Style.font.family
+            font.pixelSize: 10
+            font.weight: Font.Bold
+            color: Color.foreground
+          }
         }
       }
     }
