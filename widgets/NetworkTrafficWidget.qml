@@ -351,6 +351,8 @@ WidgetCard {
     id: netInfoProc
     command: [networkWidgetRoot.netScriptPath]
     running: true
+    // Device argument is a one-shot switch request; later polls must run without it
+    onStarted: command = [networkWidgetRoot.netScriptPath]
     stdout: SplitParser {
       onRead: function(line) {
         try {
