@@ -65,9 +65,16 @@ WidgetCard {
     return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
-  function fetchWeather() {
-    if (weatherProc.running) return
+  // force (manual refresh) bypasses the script's shared 5-minute cache. A forced
+  // request that arrives mid-poll is queued for that poll's exit, not dropped.
+  property bool pendingForce: false
+  function fetchWeather(force) {
+    if (weatherProc.running) {
+      if (force) pendingForce = true
+      return
+    }
     isLoading = true
+    if (force) weatherProc.command = [weatherWidgetRoot.weatherScriptPath, "--refresh"]
     weatherProc.running = true
   }
 
@@ -75,6 +82,8 @@ WidgetCard {
     id: weatherProc
     command: [weatherWidgetRoot.weatherScriptPath]
     running: false
+    // --refresh is a one-shot request; later polls must run without it
+    onStarted: command = [weatherWidgetRoot.weatherScriptPath]
     stdout: SplitParser {
       onRead: function(line) {
         var str = String(line).trim()
@@ -103,6 +112,10 @@ WidgetCard {
     }
     onExited: {
       weatherWidgetRoot.isLoading = false
+      if (weatherWidgetRoot.pendingForce) {
+        weatherWidgetRoot.pendingForce = false
+        weatherWidgetRoot.fetchWeather(true)
+      }
     }
   }
 
@@ -210,7 +223,7 @@ WidgetCard {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             weatherWidgetRoot.contextMenuOpen = false
-            weatherWidgetRoot.fetchWeather()
+            weatherWidgetRoot.fetchWeather(true)
           }
         }
       }
@@ -319,7 +332,7 @@ WidgetCard {
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
-          onClicked: weatherWidgetRoot.fetchWeather()
+          onClicked: weatherWidgetRoot.fetchWeather(true)
         }
       }
 

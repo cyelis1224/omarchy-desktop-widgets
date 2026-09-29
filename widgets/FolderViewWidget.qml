@@ -84,6 +84,17 @@ WidgetCard {
     return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
+  // A new array resets the GridView (every delegate and icon is rebuilt and the
+  // scroll position is lost), so polls only assign listings that changed
+  property string folderItemsJson: "[]"
+  function setFolderItems(items) {
+    var list = Array.isArray(items) ? items : []
+    var json = JSON.stringify(list)
+    if (json === folderItemsJson) return
+    folderItemsJson = json
+    folderItems = list
+  }
+
   function loadFolder(path) {
     if (!path) return
     currentFolder = path
@@ -126,6 +137,7 @@ WidgetCard {
     id: folderProc
     command: [folderWidgetRoot.folderScriptPath, folderWidgetRoot.currentFolder || "~/Desktop"]
     running: false
+    onStarted: folderWidgetRoot.lastListMs = Date.now()
     stdout: SplitParser {
       onRead: function(line) {
         var str = String(line).trim()
@@ -136,7 +148,7 @@ WidgetCard {
             folderWidgetRoot.currentFolder = data.folder || folderWidgetRoot.currentFolder
             folderWidgetRoot.currentFolderName = data.folder_name || "Folder"
             folderWidgetRoot.parentFolder = data.parent || ""
-            folderWidgetRoot.folderItems = Array.isArray(data.items) ? data.items : []
+            folderWidgetRoot.setFolderItems(data.items)
           }
         } catch (e) {
           console.warn("[FolderViewWidget] Parse error:", e)
@@ -163,7 +175,7 @@ WidgetCard {
             folderWidgetRoot.currentFolder = data.folder || folderWidgetRoot.currentFolder
             folderWidgetRoot.currentFolderName = data.folder_name || "Folder"
             folderWidgetRoot.parentFolder = data.parent || ""
-            folderWidgetRoot.folderItems = Array.isArray(data.items) ? data.items : []
+            folderWidgetRoot.setFolderItems(data.items)
             folderWidgetRoot.saveSetting("folder_path", folderWidgetRoot.currentFolder)
           } else if (data.status === "cancelled") {
             // Pick dialog was cancelled
@@ -179,17 +191,28 @@ WidgetCard {
     }
   }
 
-  // Auto-refresh folder every 10 seconds
-  Timer {
-    interval: 10000
-    running: !folderWidgetRoot.isLoading && !folderWidgetRoot.contextMenuOpen && !pickProc.running && folderWidgetRoot.currentFolder !== ""
-    repeat: true
-    onTriggered: {
-      if (!folderProc.running && folderWidgetRoot.currentFolder !== "") {
-        folderProc.command = [folderWidgetRoot.folderScriptPath, folderWidgetRoot.currentFolder]
-        folderProc.running = true
-      }
+  function refreshFolder() {
+    if (!folderProc.running && folderWidgetRoot.currentFolder !== "") {
+      folderProc.command = [folderWidgetRoot.folderScriptPath, folderWidgetRoot.currentFolder]
+      folderProc.running = true
     }
+  }
+
+  // Auto-refresh folder every 10 seconds while on screen; when it comes back,
+  // refresh right away only if the listing is already older than the interval
+  property real lastListMs: 0
+  onVisibleChanged: {
+    if (visible && Date.now() - lastListMs >= folderRefreshTimer.interval && !folderWidgetRoot.isLoading && !pickProc.running) {
+      refreshFolder()
+    }
+  }
+
+  Timer {
+    id: folderRefreshTimer
+    interval: 10000
+    running: folderWidgetRoot.visible && !folderWidgetRoot.isLoading && !folderWidgetRoot.contextMenuOpen && !pickProc.running && folderWidgetRoot.currentFolder !== ""
+    repeat: true
+    onTriggered: folderWidgetRoot.refreshFolder()
   }
 
   function getFileGlyph(item) {

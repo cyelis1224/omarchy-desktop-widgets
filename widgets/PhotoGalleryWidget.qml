@@ -166,7 +166,10 @@ Item {
 
   onSettingsLoaded: applySavedSettings()
   onRootRefChanged: applySavedSettings()
-  Component.onCompleted: applySavedSettings()
+  Component.onCompleted: {
+    applySavedSettings()
+    syncDecodeSize()
+  }
 
   function shufflePhotos() {
     if (!photoList || photoList.length <= 1) return
@@ -187,10 +190,30 @@ Item {
     Quickshell.execDetached(["bash", "-c", "xdg-open \"${1/#~/$HOME}\"", "_", target])
   }
 
-  // Auto-cycle photo timer
+  // Decode photos at display size rather than full resolution (a 24 MP photo is
+  // ~96 MB decoded, and the deck shows four). Every deck image shares the front
+  // card's size, so a photo moving up the deck reuses its decoded pixmap. The
+  // size is held during resize drags; each change reloads (and blanks) photos.
+  readonly property size liveDecodeSize: {
+    var step = 128
+    var dpr = Screen.devicePixelRatio || 1
+    return Qt.size(Math.max(1, Math.ceil(photoCardMain.width * dpr / step)) * step,
+                   Math.max(1, Math.ceil(photoCardMain.height * dpr / step)) * step)
+  }
+  // Initial binding so Images that complete before the root decode at display
+  // size right away; syncDecodeSize() replaces it with held values from then on
+  property size photoDecodeSize: liveDecodeSize
+  function syncDecodeSize() {
+    if (!isResizing) photoDecodeSize = liveDecodeSize
+  }
+  onLiveDecodeSizeChanged: syncDecodeSize()
+  onIsResizingChanged: syncDecodeSize()
+
+  // Auto-cycle photo timer (paused while the widget is off screen, since each
+  // step swaps and decodes all four deck photos)
   Timer {
     interval: galleryWidgetRoot.cycleIntervalMs
-    running: galleryWidgetRoot.autoCycleEnabled && !galleryWidgetRoot.folderMenuOpen && galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 1
+    running: galleryWidgetRoot.visible && galleryWidgetRoot.autoCycleEnabled && !galleryWidgetRoot.folderMenuOpen && galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 1
     repeat: true
     onTriggered: galleryWidgetRoot.nextPhoto()
   }
@@ -242,6 +265,7 @@ Item {
       Image {
         anchors.fill: parent
         source: galleryWidgetRoot.layer1PhotoPath
+        sourceSize: galleryWidgetRoot.photoDecodeSize
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         smooth: true
@@ -332,6 +356,7 @@ Item {
       Image {
         anchors.fill: parent
         source: galleryWidgetRoot.layer2PhotoPath
+        sourceSize: galleryWidgetRoot.photoDecodeSize
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         smooth: true
@@ -422,6 +447,7 @@ Item {
       Image {
         anchors.fill: parent
         source: galleryWidgetRoot.layer3PhotoPath
+        sourceSize: galleryWidgetRoot.photoDecodeSize
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         smooth: true
@@ -514,6 +540,7 @@ Item {
       visible: !galleryWidgetRoot.isGif
       anchors.fill: parent
       source: !galleryWidgetRoot.isGif ? galleryWidgetRoot.currentPhotoPath : ""
+      sourceSize: galleryWidgetRoot.photoDecodeSize
       fillMode: Image.PreserveAspectCrop
       asynchronous: true
       smooth: true
@@ -556,7 +583,9 @@ Item {
       asynchronous: false
       smooth: true
       playing: galleryWidgetRoot.isGif
-      paused: false
+      // Frames keep decoding while hidden otherwise; the handlers below only
+      // touch playing, so this binding stays intact
+      paused: !galleryWidgetRoot.visible
       cache: false
       opacity: status === AnimatedImage.Ready ? 1.0 : 0.0
 
@@ -567,13 +596,11 @@ Item {
 
       onSourceChanged: {
         playing = true
-        paused = false
       }
 
       onStatusChanged: {
         if (status === AnimatedImage.Ready) {
           playing = true
-          paused = false
         }
       }
 

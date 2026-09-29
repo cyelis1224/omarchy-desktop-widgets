@@ -178,10 +178,12 @@ WidgetCard {
   property bool isAddingTracker: false
   property string addInputText: ""
 
-  function nextCoin() {
+  // Auto-cycle passes persist = false: saving spawns a settings write and makes
+  // every widget re-apply its settings, too much for a timer tick
+  function nextCoin(persist) {
     if (!trackedCoins || trackedCoins.length <= 1) return
     currentCoinIndex = (currentCoinIndex + 1) % trackedCoins.length
-    saveSetting("currentCoinIndex", currentCoinIndex)
+    if (persist !== false) saveSetting("currentCoinIndex", currentCoinIndex)
     fetchCrypto()
   }
 
@@ -331,8 +333,10 @@ WidgetCard {
     return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
+  property real lastFetchMs: 0
   function fetchCrypto() {
     if (cryptoProc.running) return
+    lastFetchMs = Date.now()
     isLoading = true
     cryptoProc.command = [btcWidgetRoot.cryptoScriptPath, btcWidgetRoot.currentCoinParam, btcWidgetRoot.currency]
     cryptoProc.running = true
@@ -390,12 +394,18 @@ WidgetCard {
     }
   }
 
-  // Periodic Auto-refresh Timer for active coin
+  // Periodic Auto-refresh Timer for active coin. Refresh and auto-cycle pause
+  // while the card is off screen (the sparkline comes from the API, so nothing
+  // is lost); coming back fetches right away only if the price is already stale.
   Timer {
     interval: btcWidgetRoot.refreshInterval
-    running: true
+    running: btcWidgetRoot.visible
     repeat: true
     onTriggered: btcWidgetRoot.fetchCrypto()
+  }
+
+  onVisibleChanged: {
+    if (visible && Date.now() - lastFetchMs >= refreshInterval) fetchCrypto()
   }
 
   // Auto-Cycle Timer: switches coin every (refreshInterval / trackedCoins.length)
@@ -405,10 +415,10 @@ WidgetCard {
       var count = btcWidgetRoot.trackedCoins ? Math.max(1, btcWidgetRoot.trackedCoins.length) : 1
       return Math.max(4000, Math.round(btcWidgetRoot.refreshInterval / count))
     }
-    running: btcWidgetRoot.autoCycle && btcWidgetRoot.trackedCoins && btcWidgetRoot.trackedCoins.length > 1
+    running: btcWidgetRoot.visible && btcWidgetRoot.autoCycle && btcWidgetRoot.trackedCoins && btcWidgetRoot.trackedCoins.length > 1
     repeat: true
     onTriggered: {
-      btcWidgetRoot.nextCoin()
+      btcWidgetRoot.nextCoin(false)
     }
   }
 
@@ -1459,8 +1469,10 @@ WidgetCard {
         radius: 3
         color: btcWidgetRoot.isStale ? "#F59E0B" : btcWidgetRoot.trendColor
 
+        // An infinite animation drives a repaint every frame, even behind
+        // windows; only pulse while the card is actually on screen.
         SequentialAnimation on opacity {
-          running: true
+          running: btcWidgetRoot.visible
           loops: Animation.Infinite
           NumberAnimation { from: 1.0; to: 0.3; duration: 1000; easing.type: Easing.InOutQuad }
           NumberAnimation { from: 0.3; to: 1.0; duration: 1000; easing.type: Easing.InOutQuad }

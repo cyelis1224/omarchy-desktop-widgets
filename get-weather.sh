@@ -5,6 +5,49 @@ import json
 import datetime
 import os
 import subprocess
+import sys
+import time
+import fcntl
+
+runtime_dir = os.environ.get('XDG_RUNTIME_DIR') or '/tmp'
+CACHE_FILE = os.path.join(runtime_dir, f'omarchy_weather_{os.getuid()}.json')
+LOCK_FILE = CACHE_FILE + '.lock'
+# Shorter than the widgets' own refresh intervals (10-15 min), so each poll
+# still gets current data while overlapping polls share one wttr.in request
+CACHE_TTL = 300
+
+def lock_cache():
+    """Serializes callers so concurrent widgets (clock + weather, one set per
+    monitor) wait for the first fetch and reuse it. Held until the process exits."""
+    global _lock_fd
+    try:
+        _lock_fd = open(LOCK_FILE, 'w')
+        fcntl.flock(_lock_fd, fcntl.LOCK_EX)
+    except Exception:
+        pass
+
+def read_cache(query, max_age=CACHE_TTL):
+    """Cached result for query if younger than max_age (None = any age)."""
+    try:
+        with open(CACHE_FILE, 'r') as f:
+            cache = json.load(f)
+        if cache.get('query') == query and (max_age is None or time.time() - cache.get('time', 0) < max_age):
+            return cache.get('result')
+    except Exception:
+        pass
+    return None
+
+def write_cache(query, result):
+    tmp = f"{CACHE_FILE}.{os.getpid()}"
+    try:
+        with open(tmp, 'w') as f:
+            json.dump({'query': query, 'time': time.time(), 'result': result}, f)
+        os.replace(tmp, CACHE_FILE)
+    except Exception:
+        try:
+            os.remove(tmp)
+        except Exception:
+            pass
 
 def get_weather_icon(code, is_night):
     # Universal FontAwesome core unicode glyphs (F000-F2FF)
@@ -69,6 +112,14 @@ def get_weather():
     url = f"https://wttr.in/{query}?format=j1" if query else "https://wttr.in/?format=j1"
     req = urllib.request.Request(url, headers={"User-Agent": "curl/8.0.0"})
 
+    # --refresh (manual refresh) skips the cache but still updates it
+    lock_cache()
+    if "--refresh" not in sys.argv[1:]:
+        cached = read_cache(query)
+        if cached is not None:
+            print(json.dumps(cached))
+            return
+
     try:
         with urllib.request.urlopen(req, timeout=6) as resp:
             data = json.loads(resp.read().decode("utf-8"))
@@ -122,7 +173,7 @@ def get_weather():
                     "icon": get_weather_icon(mid_code, False)
                 })
 
-            print(json.dumps({
+            result = {
                 "status": "ok",
                 "location": name or "Local",
                 "temp": f"{temp_f}°F" if temp_f else "",
@@ -139,10 +190,21 @@ def get_weather():
                 "icon": icon,
                 "isNight": is_night,
                 "forecast": forecast
-            }))
+            }
+            write_cache(query, result)
+            print(json.dumps(result))
             return
     except Exception as e:
         pass
+
+    # Fetch failed (offline, timeout): the last real reading, however old, beats
+    # the made-up placeholder below. Marked stale so widgets could show it.
+    stale = read_cache(query, max_age=None)
+    if stale is not None:
+        stale = dict(stale)
+        stale["stale"] = True
+        print(json.dumps(stale))
+        return
 
     hour = datetime.datetime.now().hour
     is_night = hour < 6 or hour >= 20

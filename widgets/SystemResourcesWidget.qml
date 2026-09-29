@@ -32,7 +32,6 @@ WidgetCard {
   FileView {
     id: memInfoFile
     path: "/proc/meminfo"
-    watchChanges: true
     onLoaded: {
       var lines = text().split("\n")
       var total = 0
@@ -54,10 +53,12 @@ WidgetCard {
     }
   }
 
+  // /proc emits no change events, so memory is polled, and only while on screen
   Timer {
     interval: 3000
-    running: true
+    running: systemWidgetRoot.visible
     repeat: true
+    triggeredOnStart: true
     onTriggered: memInfoFile.reload()
   }
 
@@ -331,6 +332,7 @@ WidgetCard {
     id: disksProc
     command: [systemWidgetRoot.disksScriptPath]
     running: true
+    onStarted: systemWidgetRoot.lastDisksMs = Date.now()
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -343,9 +345,17 @@ WidgetCard {
     }
   }
 
+  // Disk polling pauses while the card is off screen; coming back refreshes
+  // right away only if the last check is already older than the interval
+  property real lastDisksMs: 0
+  onVisibleChanged: {
+    if (visible && Date.now() - lastDisksMs >= disksTimer.interval && !disksProc.running) disksProc.running = true
+  }
+
   Timer {
+    id: disksTimer
     interval: 10000
-    running: true
+    running: systemWidgetRoot.visible
     repeat: true
     onTriggered: {
       if (!disksProc.running) disksProc.running = true

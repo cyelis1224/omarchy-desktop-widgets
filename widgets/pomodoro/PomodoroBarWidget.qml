@@ -55,12 +55,17 @@ Item {
     }
   }
 
+  // Flips each tick to blink the icon in the same frame as the countdown text,
+  // instead of a looping animation redrawing the bar every frame
+  property bool tickPhase: false
+
   Timer {
     id: tickTimer
     interval: 1000
     repeat: true
     running: root.isTimerRunning
     onTriggered: {
+      root.tickPhase = !root.tickPhase
       if (root.secondsLeft > 0) {
         root.secondsLeft--
       } else {
@@ -91,19 +96,13 @@ Item {
       anchors.centerIn: parent
       spacing: 6
 
-      // Animated / Pulsing Icon
+      // Blinking Icon (while running)
       Text {
         text: "\uf252"
         font.family: Style.font.family
         font.pixelSize: 11
         color: root.modeColor
-
-        SequentialAnimation on opacity {
-          running: root.isTimerRunning
-          loops: Animation.Infinite
-          NumberAnimation { to: 0.4; duration: 800; easing.type: Easing.InOutQuad }
-          NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
-        }
+        opacity: root.isTimerRunning && root.tickPhase ? 0.4 : 1.0
       }
 
       // Countdown Text

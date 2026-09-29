@@ -326,6 +326,7 @@ Item {
   }
 
   function saveCurrentLayout() {
+    root.flushPendingAppearance()
     root.layoutSavedFeedback = true
     savedFeedbackTimer.restart()
     saveBackupProc.command = [root.manageScriptPath, "save_layout_backup"]
@@ -343,16 +344,19 @@ Item {
   }
 
   function saveCurrentProfile(name) {
+    root.flushPendingAppearance()
     saveProfileProc.command = [root.manageScriptPath, "save_profile", name || root.activeProfile]
     if (!saveProfileProc.running) saveProfileProc.running = true
   }
 
   function saveNewProfileDialog() {
+    root.flushPendingAppearance()
     saveProfileDialogProc.command = [root.manageScriptPath, "save_profile_dialog"]
     if (!saveProfileDialogProc.running) saveProfileDialogProc.running = true
   }
 
   function exportCurrentProfile(name) {
+    root.flushPendingAppearance()
     exportProfileProc.command = [root.manageScriptPath, "export_profile", name || root.activeProfile]
     if (!exportProfileProc.running) exportProfileProc.running = true
   }
@@ -362,20 +366,45 @@ Item {
     if (!importProfileProc.running) importProfileProc.running = true
   }
 
+  // Debounce appearance persistence so a slider drag spawns one save process
+  // with the final value instead of racing dozens of out-of-order writes.
+  Timer {
+    id: appearanceSaveTimer
+    interval: 250
+    repeat: false
+    onTriggered: root.flushAppearance()
+  }
+
+  function flushAppearance() {
+    appearanceSaveTimer.stop()
+    Quickshell.execDetached([root.manageScriptPath, "save_appearance", JSON.stringify(root.appearance)])
+  }
+
+  // Writes a debounced change that has not reached disk yet. Used before the
+  // shell tears down and before profile save/export snapshots the state file.
+  function flushPendingAppearance() {
+    if (appearanceSaveTimer.running) root.flushAppearance()
+  }
+
+  Component.onDestruction: root.flushPendingAppearance()
+
   function updateAppearance(key, val) {
     var app = Object.assign({}, root.appearance)
     app[key] = val
     root.appearance = app
-    Quickshell.execDetached([root.manageScriptPath, "save_appearance", JSON.stringify(app)])
     if (key === "blur_enabled") {
+      // Blur rule file must be written before the surface remap picks it up.
+      root.flushAppearance()
       remapDelayTimer.restart()
+    } else {
+      appearanceSaveTimer.restart()
     }
   }
 
   function setAppearanceAll(app) {
     var blurChanged = (root.appearance && root.appearance.blur_enabled !== app.blur_enabled)
     root.appearance = app
-    Quickshell.execDetached([root.manageScriptPath, "save_appearance", JSON.stringify(app)])
+    root.flushAppearance()
     if (blurChanged) {
       remapDelayTimer.restart()
     }
@@ -806,15 +835,19 @@ Item {
         property real wsSlideOffset: 0
         property real wsAnimOpacity: 1.0
 
-        Connections {
-          target: typeof Hyprland !== "undefined" ? Hyprland : null
-          ignoreUnknownSignals: true
-          function onFocusedWorkspaceChanged() {
-            if (root.appearance && root.appearance.animations_enabled === false) return
-            wsAnimOpacity = 0.35
-            wsSlideOffset = 18
-            wsResetAnim.restart()
-          }
+        // Animate only when this monitor's own workspace switches. Focus moving
+        // between monitors (follow_mouse) changes Hyprland.focusedWorkspace
+        // but not this monitor's active workspace.
+        property int lastWorkspaceId: -1
+        onMonitorWorkspaceChanged: {
+          var id = monitorWorkspace ? monitorWorkspace.id : -1
+          var prev = lastWorkspaceId
+          lastWorkspaceId = id
+          if (prev === -1 || id === -1 || id === prev) return
+          if (root.appearance && root.appearance.animations_enabled === false) return
+          wsAnimOpacity = 0.35
+          wsSlideOffset = 18
+          wsResetAnim.restart()
         }
 
         ParallelAnimation {

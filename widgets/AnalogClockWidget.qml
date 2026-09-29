@@ -68,19 +68,25 @@ WidgetCard {
 
   onSmoothSweepChanged: updateCurrentTime()
 
-  // Smooth sweep frame timer (60 FPS when smoothSweep is active)
+  // Smooth sweep frame timer (10 FPS when smoothSweep is active). Every tick
+  // repaints the whole desktop-widgets layer, so 60 FPS cost real GPU time for
+  // sub-pixel hand movement. Both timers pause while the card is off screen
+  // (auto-hidden behind windows, manually hidden) -- visible is effective
+  // visibility, so it follows the widget container.
   Timer {
-    interval: 16
-    running: analogClockRoot.smoothSweep && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
+    interval: 100
+    running: analogClockRoot.smoothSweep && analogClockRoot.visible && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
     repeat: true
+    triggeredOnStart: true
     onTriggered: analogClockRoot.updateCurrentTime()
   }
 
   // 1-second interval timer when stepping mode is active
   Timer {
     interval: 1000
-    running: !analogClockRoot.smoothSweep && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
+    running: !analogClockRoot.smoothSweep && analogClockRoot.visible && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
     repeat: true
+    triggeredOnStart: true
     onTriggered: analogClockRoot.updateCurrentTime()
   }
 

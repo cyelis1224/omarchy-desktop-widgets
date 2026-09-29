@@ -116,15 +116,53 @@ WidgetCard {
     }
   }
 
+  // Manual refresh bypasses git_pulse.py's NETWORK_TTL caches. If a poll is
+  // already running the request is queued for its exit instead of dropped.
+  property bool pendingForceRefresh: false
+  function forceRefreshGitPulse() {
+    if (gitPulseProc.running || gitActionProc.running) {
+      pendingForceRefresh = true
+      return
+    }
+    gitPulseProc.command = [gitWidgetRoot.scriptPath, "--refresh"]
+    gitPulseProc.running = true
+  }
+
+  // settingsLoaded fires whenever any widget saves a setting; only re-poll when
+  // this widget's own settings changed (e.g. a layout profile switched repos)
+  property string lastSettingsJson: ""
   onSettingsLoaded: {
+    var s = (rootRef && rootRef.widgetSettings) ? rootRef.widgetSettings[widgetId] : null
+    var json = JSON.stringify(s || {})
+    if (json === lastSettingsJson) return
+    lastSettingsJson = json
     refreshGitPulse()
   }
 
-  // 1. Regular background polling process (never mutated, runs with no arguments)
+  // Polling pauses while the card is off screen; when it comes back, poll right
+  // away only if the last poll is already older than the interval
+  property real lastPollMs: 0
+  onVisibleChanged: {
+    if (visible && Date.now() - lastPollMs >= gitPollTimer.interval && !gitActionProc.running) {
+      refreshGitPulse()
+    }
+  }
+
+  // 1. Regular background polling process (runs with no arguments; --refresh is a one-shot)
   Process {
     id: gitPulseProc
     command: [gitWidgetRoot.scriptPath]
     running: true
+    onStarted: {
+      gitWidgetRoot.lastPollMs = Date.now()
+      command = [gitWidgetRoot.scriptPath]
+    }
+    onExited: {
+      if (gitWidgetRoot.pendingForceRefresh) {
+        gitWidgetRoot.pendingForceRefresh = false
+        gitWidgetRoot.forceRefreshGitPulse()
+      }
+    }
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -149,13 +187,21 @@ WidgetCard {
       // Clear command immediately so it can never linger or re-run
       gitActionProc.command = []
       // Trigger background poll to sync up data
-      if (!gitPulseProc.running) gitPulseProc.running = true
+      if (gitWidgetRoot.pendingForceRefresh) {
+        gitWidgetRoot.pendingForceRefresh = false
+        gitWidgetRoot.forceRefreshGitPulse()
+      } else if (!gitPulseProc.running) {
+        gitPulseProc.running = true
+      }
     }
   }
 
+  // Local git data every 15s; git_pulse.py throttles its own GitHub and remote
+  // fetch calls to every NETWORK_TTL seconds
   Timer {
-    interval: 15000 // Poll git pulse every 15s
-    running: true
+    id: gitPollTimer
+    interval: 15000
+    running: gitWidgetRoot.visible
     repeat: true
     onTriggered: {
       // Never poll while an interactive user action (like Zenity picker) is active
@@ -642,7 +688,7 @@ WidgetCard {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             gitWidgetRoot.contextMenuOpen = false
-            if (!gitPulseProc.running && !gitActionProc.running) gitPulseProc.running = true
+            gitWidgetRoot.forceRefreshGitPulse()
           }
         }
       }

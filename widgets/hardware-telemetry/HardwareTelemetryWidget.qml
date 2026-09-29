@@ -116,6 +116,7 @@ WidgetCard {
     id: telemetryProc
     command: [hwWidgetRoot.telemetryScriptPath]
     running: true
+    onStarted: hwWidgetRoot.lastPollMs = Date.now()
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -139,9 +140,16 @@ WidgetCard {
     }
   }
 
+  // Python + `sensors` per poll, so polling pauses while the card is off screen;
+  // coming back refreshes right away only if the readings are already stale
+  property real lastPollMs: 0
+  onVisibleChanged: {
+    if (visible && Date.now() - lastPollMs >= pollIntervalMs && !telemetryProc.running) telemetryProc.running = true
+  }
+
   Timer {
     interval: hwWidgetRoot.pollIntervalMs
-    running: true
+    running: hwWidgetRoot.visible
     repeat: true
     onTriggered: {
       if (!telemetryProc.running) telemetryProc.running = true

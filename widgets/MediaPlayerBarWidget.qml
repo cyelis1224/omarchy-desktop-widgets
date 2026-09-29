@@ -45,18 +45,13 @@ Item {
       anchors.centerIn: parent
       spacing: 6
 
+      // Static on purpose: a looping pulse redraws the bar every frame for as
+      // long as music plays; the accent color already marks playback
       Text {
         text: "\uf001"
         font.family: Style.font.family
         font.pixelSize: 11
         color: root.isPlaying ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
-
-        SequentialAnimation on opacity {
-          running: root.isPlaying
-          loops: Animation.Infinite
-          NumberAnimation { to: 0.5; duration: 1000; easing.type: Easing.InOutQuad }
-          NumberAnimation { to: 1.0; duration: 1000; easing.type: Easing.InOutQuad }
-        }
       }
 
       Text {

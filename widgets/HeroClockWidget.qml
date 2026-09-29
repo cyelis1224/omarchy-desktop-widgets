@@ -39,10 +39,12 @@ Item {
   // ⏰ Real-time Clock, Date, Greeting, and Weather State
   // ---------------------------------------------------------------------------
   property var currentDate: new Date()
+  // Pauses while the clock is off screen and catches up the moment it returns
   Timer {
     interval: 1000
-    running: true
+    running: clockWidgetRoot.visible
     repeat: true
+    triggeredOnStart: true
     onTriggered: clockWidgetRoot.currentDate = new Date()
   }
 
@@ -119,10 +121,30 @@ Item {
     return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
+  // Manual refresh bypasses the script's shared cache; if a poll is already
+  // running the request is queued for its exit instead of dropped
+  property bool pendingWeatherForce: false
+  function forceRefreshWeather() {
+    if (weatherProc.running) {
+      pendingWeatherForce = true
+      return
+    }
+    weatherProc.command = [clockWidgetRoot.weatherScriptPath, "--refresh"]
+    weatherProc.running = true
+  }
+
   Process {
     id: weatherProc
     command: [clockWidgetRoot.weatherScriptPath]
     running: true
+    // --refresh (manual refresh) is a one-shot request; later polls use the shared cache
+    onStarted: command = [clockWidgetRoot.weatherScriptPath]
+    onExited: {
+      if (clockWidgetRoot.pendingWeatherForce) {
+        clockWidgetRoot.pendingWeatherForce = false
+        clockWidgetRoot.forceRefreshWeather()
+      }
+    }
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -910,7 +932,7 @@ Item {
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: {
-            if (!weatherProc.running) weatherProc.running = true
+            clockWidgetRoot.forceRefreshWeather()
             clockWidgetRoot.contextMenuOpen = false
           }
         }

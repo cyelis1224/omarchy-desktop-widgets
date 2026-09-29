@@ -219,10 +219,14 @@ WidgetCard {
     8, 12, 18, 26, 32, 28, 22, 35, 42, 48, 38, 30, 24, 36, 44, 40, 32, 26, 18, 24, 20, 14, 10, 6
   ]
   property real animPhase: 0
+  property bool visualizerFlat: false
 
+  // Each tick replaces the Repeater model (rebuilding all 24 bars), so only
+  // tick while bars can be seen and are moving: keep going while playing, and
+  // once more after playback stops to flatten them, then idle.
   Timer {
     interval: 65
-    running: true
+    running: mediaWidgetRoot.visible && mediaWidgetRoot.showVisualizer && (mediaWidgetRoot.isPlaying || !mediaWidgetRoot.visualizerFlat)
     repeat: true
     onTriggered: {
       mediaWidgetRoot.animPhase += 0.25
@@ -243,6 +247,7 @@ WidgetCard {
         }
       }
       mediaWidgetRoot.visualizerHeights = heights
+      mediaWidgetRoot.visualizerFlat = !playing
     }
   }
 
