@@ -18,9 +18,22 @@ WidgetCard {
   defaultY: Style.space(64)
 
   width: 360
-  height: netCardLayout.implicitHeight + Style.space(36)
+  height: netCardLayout.implicitHeight + netCardLayout.anchors.topMargin + netCardLayout.anchors.bottomMargin
   minWidth: 280
-  minHeight: 180
+  // Content height with the graph squeezed to its minimum, so no row is ever clipped
+  minHeight: Math.ceil(netCardLayout.implicitHeight - graphCard.implicitHeight + graphCard.Layout.minimumHeight
+                       + netCardLayout.anchors.topMargin + netCardLayout.anchors.bottomMargin)
+
+  // Resize handles clamp to minHeight, but restored sizes and toggling Session
+  // Totals on a short card bypass them. The check is deferred until bindings
+  // settle (and skipped during construction): mid-update, height can briefly lag
+  // minHeight, and assigning it would break the default content-height binding.
+  property bool minHeightClampReady: false
+  function ensureMinHeight() {
+    if (minHeightClampReady && !isResizing && height < minHeight) height = minHeight
+  }
+  onMinHeightChanged: Qt.callLater(ensureMinHeight)
+  onHeightChanged: Qt.callLater(ensureMinHeight)
 
   // ---------------------------------------------------------------------------
   // 🌐 Network Traffic State & Poller Process
@@ -34,9 +47,32 @@ WidgetCard {
   property string netIface: "Network"
   property bool fillGraph: true
   property bool showTotals: false
-  property var netRxHistory: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  property var netTxHistory: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+  property bool logTimeScale: false
+  property int timeScaleSeconds: 30
+  property bool timeScaleMenuOpen: false
+  readonly property var timeScaleOptions: [
+    { seconds: 30, label: "30 sec" },
+    { seconds: 60, label: "1 min" },
+    { seconds: 120, label: "2 min" },
+    { seconds: 300, label: "5 min" },
+    { seconds: 900, label: "15 min" },
+    { seconds: 1800, label: "30 min" },
+    { seconds: 3600, label: "1 hr" }
+  ]
+  // Buffer sized for the longest time scale, so switching scales shows data immediately.
+  // The +1 makes the oldest visible sample (left edge) exactly the time scale old.
+  readonly property int historyLength: Math.round(timeScaleOptions[timeScaleOptions.length - 1].seconds * 1000 / netPollTimer.interval) + 1
+  readonly property int visibleSamples: Math.max(2, Math.min(historyLength, Math.round(timeScaleSeconds * 1000 / netPollTimer.interval) + 1))
+  readonly property real logTimeKnee: 4 // Samples; larger flattens the log curve
+  property var netRxHistory: emptyHistory()
+  property var netTxHistory: emptyHistory()
   property int hoverIndex: -1
+
+  function emptyHistory() {
+    var arr = []
+    for (var i = 0; i < historyLength; i++) arr.push(0)
+    return arr
+  }
 
   // Mirrors format_speed() in get-network.sh
   function formatSpeed(bps) {
@@ -49,7 +85,81 @@ WidgetCard {
   function hoverTimeOffset() {
     var steps = netRxHistory.length - 1 - hoverIndex
     if (steps <= 0) return "Now"
-    return "-" + Number(steps * netPollTimer.interval / 1000).toFixed(1).replace(/\.0$/, "") + "s"
+    var secs = steps * netPollTimer.interval / 1000
+    if (secs < 60) return "-" + Number(secs).toFixed(1).replace(/\.0$/, "") + "s"
+    var total = Math.round(secs)
+    var rem = total % 60
+    return "-" + Math.floor(total / 60) + "m" + (rem > 0 ? " " + rem + "s" : "")
+  }
+
+  function timeScaleLabel() {
+    for (var i = 0; i < timeScaleOptions.length; i++) {
+      if (timeScaleOptions[i].seconds === timeScaleSeconds) return timeScaleOptions[i].label
+    }
+    return timeScaleSeconds + "s"
+  }
+
+  // ---------------------------------------------------------------------------
+  // Graph X-Axis Mapping (shared by canvas, hover tracking and tooltip)
+  // Both modes show the newest `visibleSamples` (the selected time scale): linear
+  // mode spaces them evenly, log mode compresses older samples toward the left.
+  // ---------------------------------------------------------------------------
+  function firstVisibleIndex() {
+    return Math.max(0, netRxHistory.length - visibleSamples)
+  }
+
+  // Horizontal position (0 = left edge, 1 = now) of a sample `age` polls old
+  function ageFraction(age) {
+    var maxAge = visibleSamples - 1
+    if (logTimeScale) {
+      var span = Math.log((maxAge + logTimeKnee) / logTimeKnee)
+      return 1 - Math.log((age + logTimeKnee) / logTimeKnee) / span
+    }
+    return 1 - age / maxAge
+  }
+
+  function xFraction(i) {
+    return ageFraction(netRxHistory.length - 1 - i)
+  }
+
+  // Inverse of xFraction(): history index nearest to a horizontal position
+  function indexAtFraction(f) {
+    var age
+    var maxAge = visibleSamples - 1
+    if (logTimeScale) {
+      var span = Math.log((maxAge + logTimeKnee) / logTimeKnee)
+      age = logTimeKnee * Math.exp((1 - f) * span) - logTimeKnee
+    } else {
+      age = (1 - f) * maxAge
+    }
+    var idx = netRxHistory.length - 1 - Math.round(age)
+    return Math.max(firstVisibleIndex(), Math.min(netRxHistory.length - 1, idx))
+  }
+
+  function shortDuration(secs) {
+    if (secs < 60) return secs + "s"
+    if (secs < 3600) return (secs / 60) + "m"
+    return (secs / 3600) + "h"
+  }
+
+  // Time reference marks as [{ x, label }] in canvas pixels. The left edge always
+  // labels the full time scale; inner marks are thinned so label chips never
+  // crowd each other or either edge at narrow widths.
+  function timeMarkers(canvasWidth) {
+    var minGap = 30
+    var marks = [10, 30, 60, 300, 900, 1800]
+    var result = []
+    var lastX = canvasWidth
+    for (var m = 0; m < marks.length; m++) {
+      var age = marks[m] * 1000 / netPollTimer.interval
+      if (age >= visibleSamples - 1) break
+      var x = ageFraction(age) * canvasWidth
+      if (lastX - x < minGap || x < minGap) continue
+      result.push({ x: x, label: shortDuration(marks[m]) })
+      lastX = x
+    }
+    result.push({ x: 0, label: shortDuration(timeScaleSeconds) })
+    return result
   }
 
   // Network Device Selection State
@@ -65,15 +175,26 @@ WidgetCard {
     if (!s) return
     if (s.fillGraph !== undefined) fillGraph = s.fillGraph
     if (s.showTotals !== undefined) showTotals = s.showTotals
+    if (s.logTimeScale !== undefined) logTimeScale = s.logTimeScale
+    if (s.timeScaleSeconds !== undefined) {
+      for (var i = 0; i < timeScaleOptions.length; i++) {
+        if (timeScaleOptions[i].seconds === s.timeScaleSeconds) timeScaleSeconds = s.timeScaleSeconds
+      }
+    }
   }
 
   onSettingsLoaded: applySavedSettings()
   onRootRefChanged: applySavedSettings()
-  Component.onCompleted: applySavedSettings()
+  Component.onCompleted: {
+    applySavedSettings()
+    minHeightClampReady = true
+    Qt.callLater(ensureMinHeight)
+  }
 
   onContextMenuOpenChanged: {
     if (!contextMenuOpen) {
       devicePopoutOpen = false
+      timeScaleMenuOpen = false
     }
   }
 
@@ -84,8 +205,8 @@ WidgetCard {
 
   function selectNetworkDevice(devId) {
     selectedDeviceId = devId
-    netRxHistory = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    netTxHistory = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    netRxHistory = emptyHistory()
+    netTxHistory = emptyHistory()
     netCanvas.requestPaint()
     netInfoProc.command = [networkWidgetRoot.netScriptPath, devId]
     if (!netInfoProc.running) netInfoProc.running = true
@@ -319,6 +440,202 @@ WidgetCard {
         }
       }
 
+      // Time Scale Dropdown Trigger (options expand inline so the menu grows to fit)
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        color: scaleMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(6)
+          spacing: Style.space(8)
+
+          Text {
+            text: "\uf017"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.accent
+          }
+
+          Text {
+            Layout.fillWidth: true
+            text: "Time Scale"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+          }
+
+          Rectangle {
+            implicitWidth: scalePillRow.implicitWidth + 16
+            implicitHeight: 20
+            radius: 10
+            color: networkWidgetRoot.timeScaleMenuOpen
+              ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+              : Qt.rgba(1, 1, 1, 0.06)
+            border.color: networkWidgetRoot.timeScaleMenuOpen ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+            border.width: 1
+
+            RowLayout {
+              id: scalePillRow
+              anchors.centerIn: parent
+              spacing: 6
+
+              Text {
+                text: networkWidgetRoot.timeScaleLabel()
+                font.family: Style.font.family
+                font.pixelSize: 10
+                font.weight: Font.DemiBold
+                color: Color.foreground
+              }
+
+              Text {
+                text: networkWidgetRoot.timeScaleMenuOpen ? "\uf077" : "\uf078"
+                font.family: Style.font.family
+                font.pixelSize: 8
+                color: Color.accent
+              }
+            }
+          }
+        }
+
+        MouseArea {
+          id: scaleMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: networkWidgetRoot.timeScaleMenuOpen = !networkWidgetRoot.timeScaleMenuOpen
+        }
+      }
+
+      // Time Scale Options List
+      Rectangle {
+        visible: networkWidgetRoot.timeScaleMenuOpen
+        Layout.fillWidth: true
+        Layout.leftMargin: Style.space(8)
+        Layout.rightMargin: Style.space(6)
+        implicitHeight: scaleOptionsCol.implicitHeight + 8
+        radius: 6
+        color: Qt.rgba(1, 1, 1, 0.04)
+        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
+        border.width: 1
+
+        ColumnLayout {
+          id: scaleOptionsCol
+          anchors.top: parent.top
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.margins: 4
+          spacing: 1
+
+          Repeater {
+            model: networkWidgetRoot.timeScaleOptions
+
+            Rectangle {
+              required property var modelData
+              readonly property bool isSelected: modelData.seconds === networkWidgetRoot.timeScaleSeconds
+              Layout.fillWidth: true
+              implicitHeight: 24
+              radius: 5
+              color: isSelected
+                ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                : (scaleOptionMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+
+              RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                spacing: 8
+
+                Text {
+                  text: isSelected ? "\uf00c" : ""
+                  font.family: Style.font.family
+                  font.pixelSize: 10
+                  color: Color.accent
+                  Layout.preferredWidth: 12
+                  horizontalAlignment: Text.AlignHCenter
+                }
+
+                Text {
+                  Layout.fillWidth: true
+                  text: modelData.label
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  font.weight: isSelected ? Font.Bold : Font.Normal
+                  color: isSelected ? Color.accent : Color.foreground
+                }
+              }
+
+              MouseArea {
+                id: scaleOptionMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                  networkWidgetRoot.timeScaleSeconds = modelData.seconds
+                  networkWidgetRoot.saveSetting("timeScaleSeconds", modelData.seconds)
+                  netCanvas.requestPaint()
+                  networkWidgetRoot.timeScaleMenuOpen = false
+                  networkWidgetRoot.contextMenuOpen = false
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Logarithmic Timeline Toggle
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 28
+        radius: 6
+        color: logMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8)
+          spacing: Style.space(8)
+
+          Text {
+            text: "\uf1da"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: networkWidgetRoot.logTimeScale ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+          }
+
+          Text {
+            Layout.fillWidth: true
+            text: "Logarithmic Timeline"
+            font.family: Style.font.family
+            font.pixelSize: 11
+            color: Color.foreground
+          }
+
+          Text {
+            text: networkWidgetRoot.logTimeScale ? "\uf14a" : "\uf0c8"
+            font.family: Style.font.family
+            font.pixelSize: 12
+            color: networkWidgetRoot.logTimeScale ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+          }
+        }
+
+        MouseArea {
+          id: logMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            networkWidgetRoot.logTimeScale = !networkWidgetRoot.logTimeScale
+            networkWidgetRoot.saveSetting("logTimeScale", networkWidgetRoot.logTimeScale)
+            netCanvas.requestPaint()
+            networkWidgetRoot.contextMenuOpen = false
+          }
+        }
+      }
+
       // Refresh Network Button
       Rectangle {
         Layout.fillWidth: true
@@ -408,11 +725,11 @@ WidgetCard {
   ColumnLayout {
     id: netCardLayout
     anchors.fill: parent
-    anchors.topMargin: Style.space(18)
-    anchors.bottomMargin: Style.space(18)
+    anchors.topMargin: Style.space(14)
+    anchors.bottomMargin: Style.space(14)
     anchors.leftMargin: Style.space(20)
     anchors.rightMargin: Style.space(20)
-    spacing: Style.space(12)
+    spacing: Style.space(8)
 
     // Header Row
     RowLayout {
@@ -449,7 +766,13 @@ WidgetCard {
         font.pixelSize: 11
         color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
         elide: Text.ElideRight
-        Layout.maximumWidth: 100
+        // Full name when there's room; only this label shrinks (eliding) on narrow
+        // cards, since the title isn't fillWidth and so keeps its natural width.
+        // Ceil: layouts hand out whole pixels, and a fractional implicitWidth
+        // rounded down by even 0.1px would elide a name that actually fits.
+        Layout.fillWidth: true
+        Layout.preferredWidth: Math.ceil(implicitWidth)
+        Layout.maximumWidth: Math.ceil(implicitWidth)
       }
 
       // Remove / Close Button (when in edit mode)
@@ -624,9 +947,12 @@ WidgetCard {
       }
     }
 
-    // 📈 Real-Time Dual Sparkline Area Graph
+    // 📈 Real-Time Dual Sparkline Area Graph (absorbs spare card height, shrinks first)
     Rectangle {
+      id: graphCard
       Layout.fillWidth: true
+      Layout.fillHeight: true
+      Layout.minimumHeight: 40
       implicitHeight: 72
       radius: 10
       color: Qt.rgba(0, 0, 0, 0.35)
@@ -644,6 +970,8 @@ WidgetCard {
           function onNetRxHistoryChanged() { netCanvas.requestPaint() }
           function onNetTxHistoryChanged() { netCanvas.requestPaint() }
           function onHoverIndexChanged() { netCanvas.requestPaint() }
+          function onLogTimeScaleChanged() { netCanvas.requestPaint() }
+          function onTimeScaleSecondsChanged() { netCanvas.requestPaint() }
         }
 
         onPaint: {
@@ -657,89 +985,96 @@ WidgetCard {
           var txArr = networkWidgetRoot.netTxHistory
           var count = rxArr.length
           if (count < 2) return
+          var start = networkWidgetRoot.firstVisibleIndex()
 
+          // Scale to the visible window only, so old spikes don't flatten the linear view
           var maxVal = 1024 * 10 // Minimum 10KB/s ceiling for smooth normalization
-          for (var i = 0; i < count; i++) {
+          for (var i = start; i < count; i++) {
             if (rxArr[i] > maxVal) maxVal = rxArr[i]
             if (txArr[i] > maxVal) maxVal = txArr[i]
           }
 
-          // Horizontal subtle guideline
+          function yFor(v) {
+            return h - (v / maxVal) * (h - 6)
+          }
+
+          // X positions computed once per paint and shared by both series
+          // (long time scales have up to thousands of visible samples)
+          var xs = []
+          for (var xi = start; xi < count; xi++) xs.push(networkWidgetRoot.xFraction(xi) * w)
+
+          // Visible samples as canvas points, keeping the peak when several share a
+          // pixel column (long or log time scales) instead of drawing a zigzag
+          function points(arr) {
+            var pts = []
+            for (var p = start; p < count; p++) {
+              var x = xs[p - start]
+              var last = pts.length > 0 ? pts[pts.length - 1] : null
+              if (last && Math.floor(last.x) === Math.floor(x)) {
+                if (arr[p] > last.v) last.v = arr[p]
+              } else {
+                pts.push({ x: x, v: arr[p] })
+              }
+            }
+            return pts
+          }
+
+          function drawSeries(pts, strokeStyle, lineWidth, gradTop, gradBottom) {
+            ctx.save()
+            if (networkWidgetRoot.fillGraph) {
+              ctx.beginPath()
+              ctx.moveTo(0, h)
+              for (var f = 0; f < pts.length; f++) ctx.lineTo(pts[f].x, yFor(pts[f].v))
+              ctx.lineTo(w, h)
+              ctx.closePath()
+
+              var grad = ctx.createLinearGradient(0, 0, 0, h)
+              grad.addColorStop(0.0, gradTop)
+              grad.addColorStop(1.0, gradBottom)
+              ctx.fillStyle = grad
+              ctx.fill()
+            }
+
+            ctx.beginPath()
+            for (var s = 0; s < pts.length; s++) {
+              if (s === 0) ctx.moveTo(pts[s].x, yFor(pts[s].v))
+              else ctx.lineTo(pts[s].x, yFor(pts[s].v))
+            }
+            ctx.strokeStyle = strokeStyle
+            ctx.lineWidth = lineWidth
+            ctx.stroke()
+            ctx.restore()
+          }
+
+          // Horizontal subtle guideline, plus log timeline time markers
+          // (their labels are Text items overlaid on the canvas)
           ctx.strokeStyle = "rgba(255, 255, 255, 0.06)"
           ctx.lineWidth = 1
           ctx.beginPath()
           ctx.moveTo(0, h * 0.5)
           ctx.lineTo(w, h * 0.5)
+          var marks = networkWidgetRoot.timeMarkers(w)
+          for (var m = 0; m < marks.length; m++) {
+            if (marks[m].x <= 0) continue // Left-edge scale label needs no line
+            ctx.moveTo(marks[m].x, 0)
+            ctx.lineTo(marks[m].x, h)
+          }
           ctx.stroke()
-
-          var stepX = w / (count - 1)
 
           // 1. Draw TX (Upload) Area & Line
-          ctx.save()
-          ctx.beginPath()
-          ctx.moveTo(0, h)
-          for (var t = 0; t < count; t++) {
-            var tY = h - (txArr[t] / maxVal) * (h - 6)
-            ctx.lineTo(t * stepX, tY)
-          }
-          ctx.lineTo(w, h)
-          ctx.closePath()
-
-          if (networkWidgetRoot.fillGraph) {
-            var txGrad = ctx.createLinearGradient(0, 0, 0, h)
-            txGrad.addColorStop(0.0, "rgba(255, 255, 255, 0.18)")
-            txGrad.addColorStop(1.0, "rgba(255, 255, 255, 0.01)")
-            ctx.fillStyle = txGrad
-            ctx.fill()
-          }
-
-          // Stroke TX Line
-          ctx.beginPath()
-          for (var t2 = 0; t2 < count; t2++) {
-            var t2Y = h - (txArr[t2] / maxVal) * (h - 6)
-            if (t2 === 0) ctx.moveTo(0, t2Y)
-            else ctx.lineTo(t2 * stepX, t2Y)
-          }
-          ctx.strokeStyle = Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75)
-          ctx.lineWidth = 1.5
-          ctx.stroke()
-          ctx.restore()
+          drawSeries(points(txArr),
+                     Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75), 1.5,
+                     "rgba(255, 255, 255, 0.18)", "rgba(255, 255, 255, 0.01)")
 
           // 2. Draw RX (Download) Area & Line
-          ctx.save()
-          ctx.beginPath()
-          ctx.moveTo(0, h)
-          for (var r = 0; r < count; r++) {
-            var rxY = h - (rxArr[r] / maxVal) * (h - 6)
-            ctx.lineTo(r * stepX, rxY)
-          }
-          ctx.lineTo(w, h)
-          ctx.closePath()
-
-          if (networkWidgetRoot.fillGraph) {
-            var rxGrad = ctx.createLinearGradient(0, 0, 0, h)
-            rxGrad.addColorStop(0.0, Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45))
-            rxGrad.addColorStop(1.0, Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.02))
-            ctx.fillStyle = rxGrad
-            ctx.fill()
-          }
-
-          // Stroke RX Line
-          ctx.beginPath()
-          for (var r2 = 0; r2 < count; r2++) {
-            var rY = h - (rxArr[r2] / maxVal) * (h - 6)
-            if (r2 === 0) ctx.moveTo(0, rY)
-            else ctx.lineTo(r2 * stepX, rY)
-          }
-          ctx.strokeStyle = Color.accent
-          ctx.lineWidth = 2
-          ctx.stroke()
-          ctx.restore()
+          drawSeries(points(rxArr), Color.accent, 2,
+                     Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45),
+                     Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.02))
 
           // 3. Hover Crosshair & Sample Dots
           var hi = networkWidgetRoot.hoverIndex
-          if (hi >= 0 && hi < count) {
-            var hx = hi * stepX
+          if (hi >= start && hi < count) {
+            var hx = networkWidgetRoot.xFraction(hi) * w
             ctx.save()
             ctx.strokeStyle = "rgba(255, 255, 255, 0.25)"
             ctx.lineWidth = 1
@@ -752,13 +1087,13 @@ WidgetCard {
             ctx.lineWidth = 1.5
 
             ctx.beginPath()
-            ctx.arc(hx, h - (txArr[hi] / maxVal) * (h - 6), 3, 0, Math.PI * 2)
+            ctx.arc(hx, yFor(txArr[hi]), 3, 0, Math.PI * 2)
             ctx.fillStyle = Color.foreground
             ctx.fill()
             ctx.stroke()
 
             ctx.beginPath()
-            ctx.arc(hx, h - (rxArr[hi] / maxVal) * (h - 6), 3.5, 0, Math.PI * 2)
+            ctx.arc(hx, yFor(rxArr[hi]), 3.5, 0, Math.PI * 2)
             ctx.fillStyle = Color.accent
             ctx.fill()
             ctx.stroke()
@@ -774,18 +1109,42 @@ WidgetCard {
         acceptedButtons: Qt.NoButton
 
         onPositionChanged: function(mouse) {
-          var count = networkWidgetRoot.netRxHistory.length
-          if (count < 2) return
-          var idx = Math.round(mouse.x / (width / (count - 1)))
-          networkWidgetRoot.hoverIndex = Math.max(0, Math.min(count - 1, idx))
+          if (networkWidgetRoot.netRxHistory.length < 2 || width <= 0) return
+          networkWidgetRoot.hoverIndex = networkWidgetRoot.indexAtFraction(mouse.x / width)
         }
 
         onExited: networkWidgetRoot.hoverIndex = -1
       }
 
+      // Time Marker Labels (theme background/foreground chip keeps them readable on
+      // any theme and over the traffic lines)
+      Repeater {
+        model: networkWidgetRoot.timeMarkers(netCanvas.width)
+
+        Rectangle {
+          required property var modelData
+          x: netCanvas.x + modelData.x + 2
+          y: netCanvas.y + 1
+          width: markerText.implicitWidth + 6
+          height: markerText.implicitHeight + 2
+          radius: 3
+          color: Qt.rgba(Color.background.r, Color.background.g, Color.background.b, 0.85)
+
+          Text {
+            id: markerText
+            anchors.centerIn: parent
+            text: modelData.label
+            font.family: Style.font.family
+            font.pixelSize: 9
+            font.weight: Font.DemiBold
+            color: Color.foreground
+          }
+        }
+      }
+
       // Hover Tooltip Badge
       Rectangle {
-        visible: networkWidgetRoot.hoverIndex >= 0 && networkWidgetRoot.hoverIndex < networkWidgetRoot.netRxHistory.length
+        visible: networkWidgetRoot.hoverIndex >= networkWidgetRoot.firstVisibleIndex() && networkWidgetRoot.hoverIndex < networkWidgetRoot.netRxHistory.length
         z: 10
         width: netHoverLayout.implicitWidth + 12
         height: 20
@@ -794,7 +1153,7 @@ WidgetCard {
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.55)
         border.width: 1
 
-        readonly property real targetX: netCanvas.x + networkWidgetRoot.hoverIndex * (netCanvas.width / Math.max(1, networkWidgetRoot.netRxHistory.length - 1))
+        readonly property real targetX: netCanvas.x + networkWidgetRoot.xFraction(networkWidgetRoot.hoverIndex) * netCanvas.width
         x: Math.max(4, Math.min(parent.width - width - 4, targetX - width / 2))
         y: 4
 
