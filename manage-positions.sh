@@ -24,7 +24,8 @@ BUILTIN_MIGRATION = {
     "CoinTrackerWidget.qml": "coin_tracker",
     "AnalogClockWidget.qml": "analog_clock",
     "CalendarWidget.qml": "calendar",
-    "RssFeedWidget.qml": "rss_feed"
+    "RssFeedWidget.qml": "rss_feed",
+    "SysmonWidget.qml": "sysmon"
 }
 
 BUILTIN_PROFILES = {
@@ -81,7 +82,7 @@ BUILTIN_PROFILES = {
     "Full Dashboard": {
         "name": "Full Dashboard",
         "description": "Comprehensive command center featuring all desktop widgets arranged across the screen.",
-        "enabled_widgets": ["clock", "gallery", "weather", "coin_tracker", "quick_notes", "pomodoro", "git_activity", "folder_view", "app_launcher", "network", "media", "hardware_telemetry", "system", "analog_clock", "calendar", "rss_feed"],
+        "enabled_widgets": ["clock", "gallery", "weather", "coin_tracker", "quick_notes", "pomodoro", "git_activity", "folder_view", "app_launcher", "network", "media", "hardware_telemetry", "system", "analog_clock", "calendar", "rss_feed", "sysmon"],
         "positions": {
             "clock": {"x": 700, "y": 20},
             "gallery": {"x": 20, "y": 40, "w": 360, "h": 220},
@@ -94,6 +95,7 @@ BUILTIN_PROFILES = {
             "calendar": {"x": 760, "y": 420, "w": 340, "h": 440},
             "folder_view": {"x": 760, "y": 880, "w": 340, "h": 380},
             "analog_clock": {"x": 1140, "y": 40, "w": 280, "h": 280},
+            "sysmon": {"x": 1140, "y": 340, "w": 360, "h": 280},
             "app_launcher": {"x": 1140, "y": 640, "w": 360, "h": 420},
             "network": {"x": 1520, "y": 40, "w": 360, "h": 180},
             "media": {"x": 1520, "y": 240, "w": 360, "h": 120},
@@ -109,8 +111,9 @@ BUILTIN_PROFILES = {
     "Gaming": {
         "name": "Gaming",
         "description": "Performance telemetry layout tracking CPU/GPU stats, RAM, multi-drive storage, and network bandwidth.",
-        "enabled_widgets": ["hardware_telemetry", "system", "network", "media"],
+        "enabled_widgets": ["hardware_telemetry", "system", "network", "media", "sysmon"],
         "positions": {
+            "sysmon": {"x": 1140, "y": 40, "w": 360, "h": 280},
             "network": {"x": 1520, "y": 40, "w": 360, "h": 180},
             "media": {"x": 1520, "y": 240, "w": 360, "h": 120},
             "hardware_telemetry": {"x": 1520, "y": 380, "w": 360, "h": 460},

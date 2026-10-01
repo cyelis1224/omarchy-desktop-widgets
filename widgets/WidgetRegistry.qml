@@ -50,6 +50,15 @@ QtObject {
       componentUrl: Qt.resolvedUrl("SystemResourcesWidget.qml")
     },
     {
+      id: "sysmon",
+      name: "System Monitor",
+      category: "System",
+      icon: "\uf0e4",
+      badge: "1h History",
+      description: "CPU, RAM, and GPU utilization history with selectable time scale, linear or logarithmic timeline, theme-aware colors, and top process lines.",
+      componentUrl: Qt.resolvedUrl("SysmonWidget.qml")
+    },
+    {
       id: "git_activity",
       name: "Git Activity Radar",
       category: "Dev",
