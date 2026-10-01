@@ -559,6 +559,44 @@ def main():
             "monitor_enabled_widgets": settings['monitor_enabled_widgets'],
             "monitor_positions": settings['monitor_positions']
         }))
+    elif action == 'set_widget_monitors' and len(sys.argv) >= 4:
+        widget_id = sys.argv[2]
+        try:
+            monitor_lists = json.loads(sys.argv[3])
+        except Exception:
+            monitor_lists = None
+        try:
+            seeded_positions = json.loads(sys.argv[4]) if len(sys.argv) >= 5 else {}
+        except Exception:
+            seeded_positions = {}
+
+        if isinstance(monitor_lists, dict):
+            if 'monitor_enabled_widgets' not in settings or not isinstance(settings['monitor_enabled_widgets'], dict):
+                settings['monitor_enabled_widgets'] = {}
+            if 'monitor_positions' not in settings or not isinstance(settings['monitor_positions'], dict):
+                settings['monitor_positions'] = {}
+
+            for monitor, widget_list in monitor_lists.items():
+                if isinstance(widget_list, list):
+                    settings['monitor_enabled_widgets'][monitor] = widget_list
+
+            if isinstance(seeded_positions, dict):
+                for monitor, geom in seeded_positions.items():
+                    if not isinstance(geom, dict):
+                        continue
+                    if not isinstance(settings['monitor_positions'].get(monitor), dict):
+                        settings['monitor_positions'][monitor] = {}
+                    if widget_id not in settings['monitor_positions'][monitor]:
+                        settings['monitor_positions'][monitor][widget_id] = geom
+
+            save_settings(settings)
+
+        print(json.dumps({
+            "status": "widget_monitors_set",
+            "widget_id": widget_id,
+            "monitor_enabled_widgets": settings.get('monitor_enabled_widgets', {}),
+            "monitor_positions": settings.get('monitor_positions', {})
+        }))
     elif action == 'save_setting' and len(sys.argv) >= 5:
         widget_id = sys.argv[2]
         key = sys.argv[3]

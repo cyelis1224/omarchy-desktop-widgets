@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Widgets
 import qs.Commons
 import qs.Ui
+import "../shared"
 
 Item {
   id: widgetCardRoot
@@ -746,7 +747,7 @@ Item {
         }
       }
 
-      // Multi-Monitor Transfer Section (Visible when 2+ displays connected)
+      // Multi-Monitor Display Picker (Visible when 2+ displays connected)
       ColumnLayout {
         Layout.fillWidth: true
         spacing: 2
@@ -760,63 +761,11 @@ Item {
           Layout.bottomMargin: 2
         }
 
-        Repeater {
-          model: {
-            if (!Quickshell.screens || Quickshell.screens.length <= 1) return []
-            var list = []
-            for (var i = 0; i < Quickshell.screens.length; i++) {
-              var s = Quickshell.screens[i]
-              if (s && s.name && s.name !== widgetCardRoot.monitorName) {
-                list.push({ name: s.name })
-              }
-            }
-            return list
-          }
-
-          Rectangle {
-            required property var modelData
-            Layout.fillWidth: true
-            implicitHeight: 28
-            radius: 6
-            color: moveMonMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
-
-            RowLayout {
-              anchors.fill: parent
-              anchors.leftMargin: Style.space(10)
-              anchors.rightMargin: Style.space(10)
-              spacing: Style.space(8)
-
-              Text {
-                text: "\uf108"
-                font.family: Style.font.family
-                font.pixelSize: 11
-                color: Color.accent
-              }
-
-              Text {
-                Layout.fillWidth: true
-                text: "Move to " + modelData.name
-                font.family: Style.font.family
-                font.pixelSize: 11
-                font.weight: Font.Bold
-                color: Color.foreground
-                elide: Text.ElideRight
-              }
-            }
-
-            MouseArea {
-              id: moveMonMouse
-              anchors.fill: parent
-              hoverEnabled: true
-              cursorShape: Qt.PointingHandCursor
-              onClicked: {
-                widgetCardRoot.contextMenuOpen = false
-                if (rootRef && rootRef.moveToMonitor) {
-                  rootRef.moveToMonitor(widgetCardRoot.widgetId, widgetCardRoot.monitorName, modelData.name)
-                }
-              }
-            }
-          }
+        MonitorLayoutPicker {
+          Layout.fillWidth: true
+          rootRef: widgetCardRoot.rootRef
+          widgetId: widgetCardRoot.widgetId
+          currentMonitor: widgetCardRoot.monitorName
         }
       }
     }

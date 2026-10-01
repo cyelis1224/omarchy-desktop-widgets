@@ -325,6 +325,86 @@ Item {
     Quickshell.execDetached([root.manageScriptPath, "move_to_monitor", targetId, fromMon, toMon])
   }
 
+  // Shows the widget on exactly the given connected monitors. Newly added monitors
+  // inherit the widget's relative position from sourceMonitor.
+  function setWidgetMonitors(id, monitorNames, sourceMonitor) {
+    var targetId = (id === "btc_tracker") ? "coin_tracker" : id
+    var screens = Quickshell.screens
+    if (!screens || screens.length <= 1 || !Array.isArray(monitorNames)) return
+
+    var sizes = {}
+    var wantsAny = false
+    for (var i = 0; i < screens.length; i++) {
+      if (!screens[i] || !screens[i].name) continue
+      sizes[screens[i].name] = { w: screens[i].width, h: screens[i].height }
+      if (monitorNames.indexOf(screens[i].name) !== -1) wantsAny = true
+    }
+    if (!wantsAny) return
+
+    // Snapshot every monitor's effective list before writing anything: monitors
+    // without an explicit list resolve through position fallbacks that the
+    // seeded positions below would otherwise shift.
+    var all = widgetRegistry.allWidgets
+    var lists = {}
+    for (var name in sizes) {
+      var list = []
+      if (root.monitorEnabledWidgets && root.monitorEnabledWidgets[name] !== undefined) {
+        list = root.monitorEnabledWidgets[name].slice()
+      } else {
+        for (var j = 0; j < all.length; j++) {
+          if (root.isWidgetActiveOnMonitor(all[j].id, name)) list.push(all[j].id)
+        }
+      }
+      lists[name] = list
+    }
+
+    var mp = Object.assign({}, root.monitorPositions)
+    var srcPos = null
+    if (sourceMonitor && mp[sourceMonitor]) {
+      srcPos = mp[sourceMonitor][targetId] || (targetId === "coin_tracker" ? mp[sourceMonitor]["btc_tracker"] : null)
+    }
+    if (!srcPos && root.widgetPositions) {
+      srcPos = root.widgetPositions[targetId] || (targetId === "coin_tracker" ? root.widgetPositions["btc_tracker"] : null)
+    }
+    var srcSize = sizes[sourceMonitor]
+
+    var seeded = {}
+    for (var m in lists) {
+      var want = monitorNames.indexOf(m) !== -1
+      var wasOn = root.isWidgetEnabledInList(targetId, lists[m])
+      if (want && !wasOn) {
+        lists[m].push(targetId)
+        if (srcPos && srcPos.x !== undefined && srcPos.y !== undefined && !root.hasMonitorPositionForWidget(targetId, m)) {
+          var entry = { x: srcPos.x, y: srcPos.y }
+          if (srcPos.w) entry.w = srcPos.w
+          if (srcPos.h) entry.h = srcPos.h
+          if (srcSize && srcSize.w > 0 && srcSize.h > 0) {
+            // Scale the free space rather than the raw coordinate so edge-aligned
+            // widgets stay edge-aligned on a differently sized monitor.
+            var w = srcPos.w || 0
+            var h = srcPos.h || 0
+            var rx = (srcSize.w > w && sizes[m].w > w) ? (sizes[m].w - w) / (srcSize.w - w) : sizes[m].w / srcSize.w
+            var ry = (srcSize.h > h && sizes[m].h > h) ? (sizes[m].h - h) / (srcSize.h - h) : sizes[m].h / srcSize.h
+            entry.x = Math.round(srcPos.x * rx)
+            entry.y = Math.round(srcPos.y * ry)
+          }
+          var monitorMap = Object.assign({}, mp[m] || {})
+          monitorMap[targetId] = entry
+          mp[m] = monitorMap
+          seeded[m] = entry
+        }
+      } else if (!want && wasOn) {
+        lists[m] = lists[m].filter(function(w) {
+          return w !== targetId && !(targetId === "coin_tracker" && w === "btc_tracker")
+        })
+      }
+    }
+
+    root.monitorPositions = mp
+    root.monitorEnabledWidgets = Object.assign({}, root.monitorEnabledWidgets, lists)
+    Quickshell.execDetached([root.manageScriptPath, "set_widget_monitors", targetId, JSON.stringify(lists), JSON.stringify(seeded)])
+  }
+
   function saveCurrentLayout() {
     root.flushPendingAppearance()
     root.layoutSavedFeedback = true
@@ -528,6 +608,10 @@ Item {
           if (Array.isArray(res.enabled_widgets)) root.enabledWidgets = res.enabled_widgets
           if (res.widget_settings) root.widgetSettings = res.widget_settings
           if (res.has_saved_layout !== undefined) root.hasSavedLayout = res.has_saved_layout
+          if (res.status === "reset") {
+            root.monitorPositions = (res.monitor_positions && typeof res.monitor_positions === "object") ? res.monitor_positions : ({})
+            root.monitorEnabledWidgets = (res.monitor_enabled_widgets && typeof res.monitor_enabled_widgets === "object") ? res.monitor_enabled_widgets : ({})
+          }
         } catch (e) {}
       }
     }

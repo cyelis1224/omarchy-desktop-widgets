@@ -178,8 +178,8 @@ The desktop widgets feature an interactive shaded backdrop overlay that elevates
   - Dismissing the overlay restores your previous desktop layout state without unwanted popups across workspaces.
 - **Widget-Level Right-Click Context Menu**:
   - Right-click anywhere on any widget body to open its specific options menu.
-  - When multiple monitors are connected, widgets display a **"Move to <Monitor>"** option allowing immediate migration to secondary screens.
-  - Selecting any setting option automatically saves your preference and dismisses the context menu.
+  - When multiple monitors are connected, the menu shows a **Displays** map of your monitor layout. Click a display to show or hide the widget on it (it can be on several at once), or use **All** to put it on every display.
+  - Selecting any setting option automatically saves your preference and dismisses the context menu; the Displays map keeps the menu open so several displays can be picked.
 - **Move Mode (Layout Lock/Unlock)**:
   - Select **Unlock Layout** from the desktop menu, any widget menu, or top banner.
   - Drag widgets freely across your desktop with smooth physics, drag scale feedback (`1.025×`), and configurable grid snapping. Custom-header widgets feature dedicated move grip handles (`\uf0b2`) and close buttons (`\uf00d`).
@@ -302,7 +302,7 @@ All desktop widgets inherit from the base card component (`shared/WidgetCard.qml
 | **Optional Header** | Set `showHeader: true`, `title: "..."`, and `icon: "\uf005"` to automatically render a standardized header with icon, title, and close buttons during Move Mode. Custom-header widgets include integrated move grips (`\uf0b2`) and close buttons (`\uf00d`). |
 | **Move & Drag Physics** | Integrated grid snapping (configurable 1px, 10px, 20px, 40px), smooth scale-up animation during drag, screen edge collision clamping, and automatic coordinate persistence. |
 | **3-Axis Resizing** | Built-in corner and edge resize handles with min/max boundary constraints (`minWidth`, `minHeight`, `maxWidth`, `maxHeight`) and live dimension tooltip badge. |
-| **Right-Click Context Menu** | Standard menu with "Unlock Widgets Layout", "Reset Positions", and widget toggle, expandable via `customMenuContent: Component { ... }`. When multi-monitor displays are connected, dynamically presents **"Move to <Monitor>"** transfer options. |
+| **Right-Click Context Menu** | Standard menu with "Unlock Widgets Layout", "Reset Positions", and widget toggle, expandable via `customMenuContent: Component { ... }`. When multi-monitor displays are connected, dynamically presents a clickable **Displays** layout map (plus an **All** toggle) to choose which monitors show the widget. |
 | **Multi-Monitor Geometry** | Native per-monitor dimension awareness via `monitorName`, `monitorWidth`, and `monitorHeight`, resolution-bound clamping (`maxX`, `maxY`), and display output tracking (`eDP-1`, `HDMI-A-1`, `DP-1`). |
 | **State Persistence API** | Built-in methods (`saveSetting`, `getSetting`, `saveSettings`, `settingsLoaded`) connected directly to Omarchy's persistent JSON state storage. |
 | **Screen Geometry Access** | `screenWidth`, `screenHeight`, `monitorWidth`, `monitorHeight`, and `rootRef` access for responsive calculations. |
