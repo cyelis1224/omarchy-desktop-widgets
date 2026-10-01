@@ -319,7 +319,7 @@ WidgetCard {
           color: weatherWidgetRoot.isLoading ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
 
           RotationAnimation on rotation {
-            running: weatherWidgetRoot.isLoading
+            running: weatherWidgetRoot.isLoading && weatherWidgetRoot.visible
             from: 0
             to: 360
             loops: Animation.Infinite

@@ -803,12 +803,12 @@ WidgetCard {
 
   Process {
     id: statProc
-    // The two ps scans only run while the Top line is shown
+    // The process scans only run while the Top line is enabled and the widget is shown
     command: ["sh", "-c",
       "head -1 /proc/stat; " +
       "grep -E '^(MemTotal|MemAvailable):' /proc/meminfo; " +
       "echo \"GPU $(nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null | head -1)\"; " +
-      (sysmonRoot.showTop
+      (sysmonRoot.showTop && sysmonRoot.visible
         // One "P <pid_starttime> <utime+stime ticks> <comm>" line per process that
         // has used any CPU; parse() diffs them against the previous poll. comm is
         // everything between the first "(" and the last ")" of /proc/<pid>/stat.

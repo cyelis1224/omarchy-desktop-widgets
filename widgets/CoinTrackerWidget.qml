@@ -1526,7 +1526,7 @@ WidgetCard {
           color: btcWidgetRoot.isLoading ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75)
 
           RotationAnimation on rotation {
-            running: btcWidgetRoot.isLoading
+            running: btcWidgetRoot.isLoading && btcWidgetRoot.visible
             from: 0
             to: 360
             loops: Animation.Infinite

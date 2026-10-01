@@ -768,7 +768,7 @@ Item {
         id: desktopWindow
         required property var modelData
         screen: modelData
-        visible: root.surfaceRemapActive
+        visible: root.surfaceRemapActive && desktopWindow.needsSurface
 
         anchors {
           top: true
@@ -830,6 +830,17 @@ Item {
           if (autoHideMode === "manual") return false
           return desktopWindow.hasOpenWindows
         }
+
+        // Unmap the full-screen surface once windows cover the desktop and the fade-out
+        // has finished, so neither Qt nor Hyprland redraws an invisible layer. The
+        // empty desktop keeps it for double-click / right-click. Uses opacity rather
+        // than widgetContainer.visible, which could follow the unmapped window and
+        // never re-map.
+        readonly property bool needsSurface: !desktopWindow.isAutoHidden
+          || widgetContainer.shouldShow || widgetContainer.opacity > 0
+          || root.overlayActive || root.preferencesOpen || root.keyboardFocusRequested
+          || desktopContextMenu.isOpen || root.menuOpenRequested
+          || root.profileNoticeVisible
 
         // Workspace Transitions
         property real wsSlideOffset: 0

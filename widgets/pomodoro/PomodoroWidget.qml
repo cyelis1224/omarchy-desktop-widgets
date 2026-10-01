@@ -431,14 +431,17 @@ WidgetCard {
     onTriggered: {
       if (pomodoroWidgetRoot.secondsLeft > 1) {
         pomodoroWidgetRoot.secondsLeft--
-        progressArc.requestPaint()
+        if (pomodoroWidgetRoot.visible) progressArc.requestPaint()
       } else {
         pomodoroWidgetRoot.secondsLeft = 0
-        progressArc.requestPaint()
+        if (pomodoroWidgetRoot.visible) progressArc.requestPaint()
         pomodoroWidgetRoot.onSessionFinished()
       }
     }
   }
+
+  // The ticker skips repaints while hidden; catch the arc up when shown again
+  onVisibleChanged: if (visible) progressArc.requestPaint()
 
   // ---------------------------------------------------------------------------
   // 🎨 Widget Body & Controls
