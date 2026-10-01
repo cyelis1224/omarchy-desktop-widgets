@@ -1727,9 +1727,14 @@ Item {
           width: 240
           implicitHeight: desktopMenuCol.implicitHeight + Style.space(16)
           radius: 14
-          color: Qt.rgba(18/255, 18/255, 24/255, 0.96)
+          color: Qt.rgba(Color.menu.background.r, Color.menu.background.g, Color.menu.background.b, 0.96)
           border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
           border.width: 1.5
+
+          // Each section sits in its own tinted panel. Tinted with the foreground so
+          // panels lift off the menu in both dark and light themes.
+          readonly property color sectionFill: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.10)
+          readonly property color sectionBorder: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.18)
 
           layer.enabled: true
           layer.effect: MultiEffect {
@@ -1743,14 +1748,13 @@ Item {
             id: desktopMenuCol
             anchors.fill: parent
             anchors.margins: Style.space(8)
-            spacing: Style.space(4)
+            spacing: Style.space(8)
 
             // Header
             RowLayout {
               Layout.fillWidth: true
               Layout.leftMargin: 8
               Layout.topMargin: 4
-              Layout.bottomMargin: 4
               spacing: 8
               Item {
                 Layout.preferredWidth: 18
@@ -1775,685 +1779,707 @@ Item {
               }
             }
 
+            // Widget & layout controls
             Rectangle {
               Layout.fillWidth: true
-              height: 1
-              color: Qt.rgba(1, 1, 1, 0.08)
-            }
+              implicitHeight: desktopLayoutSection.implicitHeight + Style.space(8)
+              radius: 10
+              color: desktopContextMenu.sectionFill
+              border.color: desktopContextMenu.sectionBorder
+              border.width: 1
 
-            // 1. Show / Hide Widgets
-            Rectangle {
-              Layout.fillWidth: true
-              height: 32
-              radius: 8
-              color: toggleWidgetsMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
-
-              RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                spacing: 10
-
-                Item {
-                  Layout.preferredWidth: 18
-                  Layout.preferredHeight: 18
-                  Layout.alignment: Qt.AlignVCenter
-
-                  Text {
-                    anchors.centerIn: parent
-                    text: widgetContainer.shouldShow ? "\uf070" : "\uf06e"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    color: Color.accent
-                  }
-                }
-
-                Text {
-                  Layout.fillWidth: true
-                  Layout.alignment: Qt.AlignVCenter
-                  text: widgetContainer.shouldShow ? "Hide Widgets" : "Show Widgets"
-                  font.family: Style.font.family
-                  font.pixelSize: 12
-                  font.weight: Font.DemiBold
-                  color: Color.foreground
-                  elide: Text.ElideRight
-                }
-              }
-
-              MouseArea {
-                id: toggleWidgetsMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                  desktopContextMenu.isOpen = false
-                  if (widgetContainer.shouldShow) {
-                    root.manualHide = true
-                    if (root.overlayActive) {
-                      root.closeOverlay()
-                    }
-                  } else {
-                    root.manualHide = false
-                    if (desktopWindow.hasOpenWindows) {
-                      root.overlayActive = true
-                    }
-                  }
-                }
-              }
-            }
-
-            // 2. Unlock / Lock Layout (Moved to top)
-            Rectangle {
-              Layout.fillWidth: true
-              height: 32
-              radius: 8
-              color: toggleLayoutMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
-
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
-
-                  Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: root.layoutEditMode ? "\uf023" : "\uf0b2"
-                      font.family: Style.font.family
-                      font.pixelSize: 12
-                      color: Color.accent
-                    }
-                  }
-
-                  Text {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: root.layoutEditMode ? "Lock Layout" : "Unlock Layout"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: Color.foreground
-                    elide: Text.ElideRight
-                  }
-                }
-
-                MouseArea {
-                  id: toggleLayoutMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    desktopContextMenu.isOpen = false
-                    root.layoutEditMode = !root.layoutEditMode
-                  }
-                }
-              }
-
-              // 2. Add / Browse Widgets
-              Rectangle {
-                Layout.fillWidth: true
-                height: 32
-                radius: 8
-                color: addWidgetsMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
-
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
-
-                  Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: "\uf067"
-                      font.family: Style.font.family
-                      font.pixelSize: 12
-                      color: Color.accent
-                    }
-                  }
-
-                  Text {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "Add / Browse Widgets"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: Color.foreground
-                    elide: Text.ElideRight
-                  }
-                }
-
-                MouseArea {
-                  id: addWidgetsMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    desktopContextMenu.isOpen = false
-                    root.selectorOpen = true
-                  }
-                }
-              }
-
-              // 3. Layout Presets (Expandable Submenu)
-              Rectangle {
-                Layout.fillWidth: true
-                height: 32
-                radius: 8
-                color: presetsItemMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (root.presetsSubmenuOpen ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : "transparent")
-
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
-
-                  Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: "\uf0c9"
-                      font.family: Style.font.family
-                      font.pixelSize: 12
-                      color: Color.accent
-                    }
-                  }
-
-                  Text {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "Layout Presets"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: Color.foreground
-                    elide: Text.ElideRight
-                  }
-
-                  Text {
-                    Layout.alignment: Qt.AlignVCenter
-                    text: root.presetsSubmenuOpen ? "\uf107" : "\uf105"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
-                  }
-                }
-
-                MouseArea {
-                  id: presetsItemMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.presetsSubmenuOpen = !root.presetsSubmenuOpen
-                }
-              }
-
-              // Presets Expanded List
               ColumnLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: 14
-                Layout.rightMargin: 4
-                visible: root.presetsSubmenuOpen
-                spacing: 2
+                id: desktopLayoutSection
+                anchors.fill: parent
+                anchors.margins: Style.space(4)
+                spacing: Style.space(4)
 
-                Repeater {
-                  model: root.layoutProfiles.length > 0 ? root.layoutProfiles : [
-                    { name: "Default" }, { name: "Minimal" }, { name: "Productivity" }, { name: "Full Dashboard" }, { name: "Gaming" }
-                  ]
+                // 1. Show / Hide Widgets
+                Rectangle {
+                  Layout.fillWidth: true
+                  height: 32
+                  radius: 8
+                  color: toggleWidgetsMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
 
-                  Rectangle {
-                    id: presetRow
-                    required property var modelData
-                    property bool confirmingDelete: false
-                    readonly property bool canDelete: modelData.is_builtin === false
-                    Layout.fillWidth: true
-                    height: 28
-                    radius: 6
-                    color: (modelData.name === root.activeProfile)
-                      ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-                      : (rowMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
-                    onVisibleChanged: if (!visible) confirmingDelete = false
+                  RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 10
 
-                    // Declared before the row so the delete pill's MouseArea stacks above it
+                    Item {
+                      Layout.preferredWidth: 18
+                      Layout.preferredHeight: 18
+                      Layout.alignment: Qt.AlignVCenter
+
+                      Text {
+                        anchors.centerIn: parent
+                        text: widgetContainer.shouldShow ? "\uf070" : "\uf06e"
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        color: Color.accent
+                      }
+                    }
+
+                    Text {
+                      Layout.fillWidth: true
+                      Layout.alignment: Qt.AlignVCenter
+                      text: widgetContainer.shouldShow ? "Hide Widgets" : "Show Widgets"
+                      font.family: Style.font.family
+                      font.pixelSize: 12
+                      font.weight: Font.DemiBold
+                      color: Color.foreground
+                      elide: Text.ElideRight
+                    }
+                  }
+
+                  MouseArea {
+                    id: toggleWidgetsMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      desktopContextMenu.isOpen = false
+                      if (widgetContainer.shouldShow) {
+                        root.manualHide = true
+                        if (root.overlayActive) {
+                          root.closeOverlay()
+                        }
+                      } else {
+                        root.manualHide = false
+                        if (desktopWindow.hasOpenWindows) {
+                          root.overlayActive = true
+                        }
+                      }
+                    }
+                  }
+                }
+
+                // 2. Unlock / Lock Layout (Moved to top)
+                Rectangle {
+                  Layout.fillWidth: true
+                  height: 32
+                  radius: 8
+                  color: toggleLayoutMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 10
+                      anchors.rightMargin: 10
+                      spacing: 10
+
+                      Item {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Text {
+                          anchors.centerIn: parent
+                          text: root.layoutEditMode ? "\uf023" : "\uf0b2"
+                          font.family: Style.font.family
+                          font.pixelSize: 12
+                          color: Color.accent
+                        }
+                      }
+
+                      Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        text: root.layoutEditMode ? "Lock Layout" : "Unlock Layout"
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
+
                     MouseArea {
-                      id: rowMouse
+                      id: toggleLayoutMouse
                       anchors.fill: parent
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
                       onClicked: {
                         desktopContextMenu.isOpen = false
-                        root.switchProfile(modelData.name)
+                        root.layoutEditMode = !root.layoutEditMode
                       }
                     }
+                  }
+
+                  // 2. Add / Browse Widgets
+                  Rectangle {
+                    Layout.fillWidth: true
+                    height: 32
+                    radius: 8
+                    color: addWidgetsMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
 
                     RowLayout {
                       anchors.fill: parent
-                      anchors.leftMargin: 8
-                      anchors.rightMargin: 8
-                      spacing: 8
+                      anchors.leftMargin: 10
+                      anchors.rightMargin: 10
+                      spacing: 10
 
-                      Text {
-                        text: (modelData.name === root.activeProfile) ? "\uf00c" : "\uf111"
-                        font.family: Style.font.family
-                        font.pixelSize: (modelData.name === root.activeProfile) ? 10 : 6
-                        color: (modelData.name === root.activeProfile) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
-                        Layout.preferredWidth: 12
-                        horizontalAlignment: Text.AlignHCenter
+                      Item {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Text {
+                          anchors.centerIn: parent
+                          text: "\uf067"
+                          font.family: Style.font.family
+                          font.pixelSize: 12
+                          color: Color.accent
+                        }
                       }
 
                       Text {
                         Layout.fillWidth: true
-                        text: modelData.name
+                        Layout.alignment: Qt.AlignVCenter
+                        text: "Add / Browse Widgets"
                         font.family: Style.font.family
-                        font.pixelSize: 11
-                        font.weight: (modelData.name === root.activeProfile) ? Font.Bold : Font.Normal
-                        color: (modelData.name === root.activeProfile) ? Color.accent : Color.foreground
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
+
+                    MouseArea {
+                      id: addWidgetsMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        root.selectorOpen = true
+                      }
+                    }
+                  }
+
+                  // 3. Layout Presets (Expandable Submenu)
+                  Rectangle {
+                    Layout.fillWidth: true
+                    height: 32
+                    radius: 8
+                    color: presetsItemMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (root.presetsSubmenuOpen ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : "transparent")
+
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 10
+                      anchors.rightMargin: 10
+                      spacing: 10
+
+                      Item {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Text {
+                          anchors.centerIn: parent
+                          text: "\uf0c9"
+                          font.family: Style.font.family
+                          font.pixelSize: 12
+                          color: Color.accent
+                        }
+                      }
+
+                      Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        text: "Layout Presets"
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: Color.foreground
                         elide: Text.ElideRight
                       }
 
+                      Text {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: root.presetsSubmenuOpen ? "\uf107" : "\uf105"
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+                      }
+                    }
+
+                    MouseArea {
+                      id: presetsItemMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: root.presetsSubmenuOpen = !root.presetsSubmenuOpen
+                    }
+                  }
+
+                  // Presets Expanded List
+                  ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 14
+                    Layout.rightMargin: 4
+                    visible: root.presetsSubmenuOpen
+                    spacing: 2
+
+                    Repeater {
+                      model: root.layoutProfiles.length > 0 ? root.layoutProfiles : [
+                        { name: "Default" }, { name: "Minimal" }, { name: "Productivity" }, { name: "Full Dashboard" }, { name: "Gaming" }
+                      ]
+
                       Rectangle {
-                        readonly property bool armed: presetRow.confirmingDelete || rowDeleteMouse.containsMouse
-                        visible: presetRow.canDelete
-                        implicitWidth: rowDeleteRow.implicitWidth + 14
-                        implicitHeight: 20
-                        radius: 10
-                        color: Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, armed ? 0.35 : 0.18)
-                        border.color: armed ? root.deleteRed : Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, 0.3)
-                        border.width: 1
+                        id: presetRow
+                        required property var modelData
+                        property bool confirmingDelete: false
+                        readonly property bool canDelete: modelData.is_builtin === false
+                        Layout.fillWidth: true
+                        height: 28
+                        radius: 6
+                        color: (modelData.name === root.activeProfile)
+                          ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                          : (rowMouse.containsMouse ? Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.08) : "transparent")
+                        onVisibleChanged: if (!visible) confirmingDelete = false
 
-                        RowLayout {
-                          id: rowDeleteRow
-                          anchors.centerIn: parent
-                          spacing: 5
-                          Text {
-                            text: ""
-                            font.family: Style.font.family
-                            font.pixelSize: 9
-                            color: root.deleteRed
-                          }
-                          Text {
-                            text: presetRow.confirmingDelete ? "Confirm?" : "Delete"
-                            font.family: Style.font.family
-                            font.pixelSize: 10
-                            font.weight: Font.DemiBold
-                            color: root.deleteRed
-                          }
-                        }
-
+                        // Declared before the row so the delete pill's MouseArea stacks above it
                         MouseArea {
-                          id: rowDeleteMouse
+                          id: rowMouse
                           anchors.fill: parent
                           hoverEnabled: true
                           cursorShape: Qt.PointingHandCursor
                           onClicked: {
-                            if (presetRow.confirmingDelete) root.deleteProfile(modelData.name)
-                            else presetRow.confirmingDelete = true
+                            desktopContextMenu.isOpen = false
+                            root.switchProfile(modelData.name)
+                          }
+                        }
+
+                        RowLayout {
+                          anchors.fill: parent
+                          anchors.leftMargin: 8
+                          anchors.rightMargin: 8
+                          spacing: 8
+
+                          Text {
+                            text: (modelData.name === root.activeProfile) ? "\uf00c" : "\uf111"
+                            font.family: Style.font.family
+                            font.pixelSize: (modelData.name === root.activeProfile) ? 10 : 6
+                            color: (modelData.name === root.activeProfile) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+                            Layout.preferredWidth: 12
+                            horizontalAlignment: Text.AlignHCenter
+                          }
+
+                          Text {
+                            Layout.fillWidth: true
+                            text: modelData.name
+                            font.family: Style.font.family
+                            font.pixelSize: 11
+                            font.weight: (modelData.name === root.activeProfile) ? Font.Bold : Font.Normal
+                            color: (modelData.name === root.activeProfile) ? Color.accent : Color.foreground
+                            elide: Text.ElideRight
+                          }
+
+                          Rectangle {
+                            readonly property bool armed: presetRow.confirmingDelete || rowDeleteMouse.containsMouse
+                            visible: presetRow.canDelete
+                            implicitWidth: rowDeleteRow.implicitWidth + 14
+                            implicitHeight: 20
+                            radius: 10
+                            color: Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, armed ? 0.35 : 0.18)
+                            border.color: armed ? root.deleteRed : Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, 0.3)
+                            border.width: 1
+
+                            RowLayout {
+                              id: rowDeleteRow
+                              anchors.centerIn: parent
+                              spacing: 5
+                              Text {
+                                text: ""
+                                font.family: Style.font.family
+                                font.pixelSize: 9
+                                color: root.deleteRed
+                              }
+                              Text {
+                                text: presetRow.confirmingDelete ? "Confirm?" : "Delete"
+                                font.family: Style.font.family
+                                font.pixelSize: 10
+                                font.weight: Font.DemiBold
+                                color: root.deleteRed
+                              }
+                            }
+
+                            MouseArea {
+                              id: rowDeleteMouse
+                              anchors.fill: parent
+                              hoverEnabled: true
+                              cursorShape: Qt.PointingHandCursor
+                              onClicked: {
+                                if (presetRow.confirmingDelete) root.deleteProfile(modelData.name)
+                                else presetRow.confirmingDelete = true
+                              }
+                            }
                           }
                         }
                       }
                     }
-                  }
-                }
 
-                Rectangle {
-                  Layout.fillWidth: true
-                  height: 1
-                  color: Qt.rgba(1, 1, 1, 0.06)
-                  Layout.topMargin: 2
-                  Layout.bottomMargin: 2
-                }
-
-                // Save As New Preset
-                Rectangle {
-                  Layout.fillWidth: true
-                  height: 26
-                  radius: 6
-                  color: saveNewMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
-
-                  RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    spacing: 8
-                    Text { text: "\uf067"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
-                    Text { text: "Save As New Preset..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
-                  }
-                  MouseArea {
-                    id: saveNewMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                      desktopContextMenu.isOpen = false
-                      root.saveNewProfileDialog()
+                    Rectangle {
+                      Layout.fillWidth: true
+                      height: 1
+                      color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.06)
+                      Layout.topMargin: 2
+                      Layout.bottomMargin: 2
                     }
-                  }
-                }
 
-                // Import Preset
-                Rectangle {
-                  Layout.fillWidth: true
-                  height: 26
-                  radius: 6
-                  color: importMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+                    // Save As New Preset
+                    Rectangle {
+                      Layout.fillWidth: true
+                      height: 26
+                      radius: 6
+                      color: saveNewMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
 
-                  RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    spacing: 8
-                    Text { text: "\uf093"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
-                    Text { text: "Import Preset JSON..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
-                  }
-                  MouseArea {
-                    id: importMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                      desktopContextMenu.isOpen = false
-                      root.importProfile()
+                      RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        spacing: 8
+                        Text { text: "\uf067"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                        Text { text: "Save As New Preset..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
+                      }
+                      MouseArea {
+                        id: saveNewMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                          desktopContextMenu.isOpen = false
+                          root.saveNewProfileDialog()
+                        }
+                      }
                     }
-                  }
-                }
 
-                // Export Preset
-                Rectangle {
-                  Layout.fillWidth: true
-                  height: 26
-                  radius: 6
-                  color: exportMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+                    // Import Preset
+                    Rectangle {
+                      Layout.fillWidth: true
+                      height: 26
+                      radius: 6
+                      color: importMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
 
-                  RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    spacing: 8
-                    Text { text: "\uf019"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
-                    Text { text: "Export Current Preset..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
-                  }
-                  MouseArea {
-                    id: exportMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                      desktopContextMenu.isOpen = false
-                      root.exportCurrentProfile()
+                      RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        spacing: 8
+                        Text { text: "\uf093"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                        Text { text: "Import Preset JSON..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
+                      }
+                      MouseArea {
+                        id: importMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                          desktopContextMenu.isOpen = false
+                          root.importProfile()
+                        }
+                      }
                     }
-                  }
-                }
-              }
 
-              // 4. Widget Preferences Dialog
-              Rectangle {
-                Layout.fillWidth: true
-                height: 32
-                radius: 8
-                color: prefsMenuMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+                    // Export Preset
+                    Rectangle {
+                      Layout.fillWidth: true
+                      height: 26
+                      radius: 6
+                      color: exportMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
 
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
-
-                  Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: "\uf013"
-                      font.family: Style.font.family
-                      font.pixelSize: 12
-                      color: Color.accent
+                      RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        spacing: 8
+                        Text { text: "\uf019"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                        Text { text: "Export Current Preset..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
+                      }
+                      MouseArea {
+                        id: exportMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                          desktopContextMenu.isOpen = false
+                          root.exportCurrentProfile()
+                        }
+                      }
                     }
                   }
 
-                  Text {
+                  // 4. Widget Preferences Dialog
+                  Rectangle {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "Widget Preferences..."
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: Color.foreground
-                    elide: Text.ElideRight
-                  }
-                }
+                    height: 32
+                    radius: 8
+                    color: prefsMenuMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
 
-                MouseArea {
-                  id: prefsMenuMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    desktopContextMenu.isOpen = false
-                    root.preferencesOpen = true
-                  }
-                }
-              }
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 10
+                      anchors.rightMargin: 10
+                      spacing: 10
 
-              // 5. Save Layout
-              Rectangle {
-                Layout.fillWidth: true
-                height: 32
-                radius: 8
-                color: saveDesktopLayoutMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+                      Item {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
 
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
+                        Text {
+                          anchors.centerIn: parent
+                          text: "\uf013"
+                          font.family: Style.font.family
+                          font.pixelSize: 12
+                          color: Color.accent
+                        }
+                      }
 
-                  Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
-                    Layout.alignment: Qt.AlignVCenter
+                      Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        text: "Widget Preferences..."
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
 
-                    Text {
-                      anchors.centerIn: parent
-                      text: "\uf0c7"
-                      font.family: Style.font.family
-                      font.pixelSize: 12
-                      color: saveDesktopLayoutMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                    MouseArea {
+                      id: prefsMenuMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        root.preferencesOpen = true
+                      }
                     }
                   }
 
-                  Text {
+                  // 5. Save Layout
+                  Rectangle {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "Save Current Layout"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: saveDesktopLayoutMouse.containsMouse ? Color.accent : Color.foreground
-                    elide: Text.ElideRight
-                  }
-                }
+                    height: 32
+                    radius: 8
+                    color: saveDesktopLayoutMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
 
-                MouseArea {
-                  id: saveDesktopLayoutMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    desktopContextMenu.isOpen = false
-                    root.saveCurrentLayout()
-                  }
-                }
-              }
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 10
+                      anchors.rightMargin: 10
+                      spacing: 10
 
-              // 6. Revert / Reset Layout
-              Rectangle {
-                Layout.fillWidth: true
-                height: 32
-                radius: 8
-                color: resetLayoutMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.22) : "transparent"
+                      Item {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
 
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
+                        Text {
+                          anchors.centerIn: parent
+                          text: "\uf0c7"
+                          font.family: Style.font.family
+                          font.pixelSize: 12
+                          color: saveDesktopLayoutMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                        }
+                      }
 
-                  Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
-                    Layout.alignment: Qt.AlignVCenter
+                      Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        text: "Save Current Layout"
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: saveDesktopLayoutMouse.containsMouse ? Color.accent : Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
 
-                    Text {
-                      anchors.centerIn: parent
-                      text: "\uf0e2"
-                      font.family: Style.font.family
-                      font.pixelSize: 12
-                      color: resetLayoutMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                    MouseArea {
+                      id: saveDesktopLayoutMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        root.saveCurrentLayout()
+                      }
                     }
                   }
 
-                  Text {
+                  // 6. Revert / Reset Layout
+                  Rectangle {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: root.hasSavedLayout ? "Revert to Saved Layout" : "Reset Widget Layout"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: resetLayoutMouse.containsMouse ? Color.urgent : Color.foreground
-                    elide: Text.ElideRight
+                    height: 32
+                    radius: 8
+                    color: resetLayoutMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.22) : "transparent"
+
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 10
+                      anchors.rightMargin: 10
+                      spacing: 10
+
+                      Item {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Text {
+                          anchors.centerIn: parent
+                          text: "\uf0e2"
+                          font.family: Style.font.family
+                          font.pixelSize: 12
+                          color: resetLayoutMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                        }
+                      }
+
+                      Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        text: root.hasSavedLayout ? "Revert to Saved Layout" : "Reset Widget Layout"
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: resetLayoutMouse.containsMouse ? Color.urgent : Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
+
+                    MouseArea {
+                      id: resetLayoutMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        root.resetWidgetPositions()
+                      }
+                    }
                   }
-                }
-
-                MouseArea {
-                  id: resetLayoutMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    desktopContextMenu.isOpen = false
-                    root.resetWidgetPositions()
-                  }
-                }
               }
+            }
 
-              Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.08)
-              }
+            // Desktop appearance
+            Rectangle {
+              Layout.fillWidth: true
+              implicitHeight: desktopAppearanceSection.implicitHeight + Style.space(8)
+              radius: 10
+              color: desktopContextMenu.sectionFill
+              border.color: desktopContextMenu.sectionBorder
+              border.width: 1
 
-              // 4. Change Wallpaper
-              Rectangle {
-                Layout.fillWidth: true
-                height: 32
-                radius: 8
-                color: bgSwitchMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+              ColumnLayout {
+                id: desktopAppearanceSection
+                anchors.fill: parent
+                anchors.margins: Style.space(4)
+                spacing: Style.space(4)
 
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
+                  // 4. Change Wallpaper
+                  Rectangle {
+                    Layout.fillWidth: true
+                    height: 32
+                    radius: 8
+                    color: bgSwitchMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
 
-                  Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
-                    Layout.alignment: Qt.AlignVCenter
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 10
+                      anchors.rightMargin: 10
+                      spacing: 10
 
-                    Text {
-                      anchors.centerIn: parent
-                      text: "\uf03e"
-                      font.family: Style.font.family
-                      font.pixelSize: 12
-                      color: Color.accent
+                      Item {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Text {
+                          anchors.centerIn: parent
+                          text: "\uf03e"
+                          font.family: Style.font.family
+                          font.pixelSize: 12
+                          color: Color.accent
+                        }
+                      }
+
+                      Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        text: "Change Wallpaper"
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
+
+                    MouseArea {
+                      id: bgSwitchMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        Quickshell.execDetached(["bash", "-c", "background=$(omarchy-theme-bg-switcher); [[ -n $background ]] && omarchy-theme-bg-set \"$background\""])
+                      }
                     }
                   }
 
-                  Text {
+                  // 5. Theme Switcher
+                  Rectangle {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "Change Wallpaper"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: Color.foreground
-                    elide: Text.ElideRight
-                  }
-                }
+                    height: 32
+                    radius: 8
+                    color: themeSwitchMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
 
-                MouseArea {
-                  id: bgSwitchMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    desktopContextMenu.isOpen = false
-                    Quickshell.execDetached(["bash", "-c", "background=$(omarchy-theme-bg-switcher); [[ -n $background ]] && omarchy-theme-bg-set \"$background\""])
-                  }
-                }
-              }
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 10
+                      anchors.rightMargin: 10
+                      spacing: 10
 
-              // 5. Theme Switcher
-              Rectangle {
-                Layout.fillWidth: true
-                height: 32
-                radius: 8
-                color: themeSwitchMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+                      Item {
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
 
-                RowLayout {
-                  anchors.fill: parent
-                  anchors.leftMargin: 10
-                  anchors.rightMargin: 10
-                  spacing: 10
+                        Text {
+                          anchors.centerIn: parent
+                          text: "\uf53f"
+                          font.family: Style.font.family
+                          font.pixelSize: 12
+                          color: Color.accent
+                        }
+                      }
 
-                  Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
-                    Layout.alignment: Qt.AlignVCenter
+                      Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        text: "Switch Theme"
+                        font.family: Style.font.family
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
 
-                    Text {
-                      anchors.centerIn: parent
-                      text: "\uf53f"
-                      font.family: Style.font.family
-                      font.pixelSize: 12
-                      color: Color.accent
+                    MouseArea {
+                      id: themeSwitchMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        Quickshell.execDetached(["bash", "-c", "theme=$(omarchy-theme-switcher); [[ -n $theme ]] && omarchy-theme-set \"$theme\""])
+                      }
                     }
                   }
-
-                  Text {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "Switch Theme"
-                    font.family: Style.font.family
-                    font.pixelSize: 12
-                    font.weight: Font.DemiBold
-                    color: Color.foreground
-                    elide: Text.ElideRight
-                  }
-                }
-
-                MouseArea {
-                  id: themeSwitchMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    desktopContextMenu.isOpen = false
-                    Quickshell.execDetached(["bash", "-c", "theme=$(omarchy-theme-switcher); [[ -n $theme ]] && omarchy-theme-set \"$theme\""])
-                  }
-                }
               }
+            }
             }
           }
 

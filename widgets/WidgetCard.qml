@@ -503,6 +503,12 @@ Item {
     readonly property real menuWidth: widgetCardRoot.menuWidth
     readonly property real menuHeight: wcMenuLayout.implicitHeight + 20
 
+    // Each menu section sits in its own tinted panel so the sections read as
+    // separate groups, distinct from the hairlines used inside widget content.
+    // Tinted with the foreground so panels lift off the menu in dark and light themes.
+    readonly property color sectionFill: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.10)
+    readonly property color sectionBorder: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.18)
+
     x: Math.max(10, Math.min(widgetTarget.x, widgetCardRoot.screenWidth - menuWidth - 10))
     y: {
       var desiredY = widgetTarget.y + 36
@@ -515,7 +521,7 @@ Item {
     height: menuHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
+    color: Qt.rgba(Color.menu.background.r, Color.menu.background.g, Color.menu.background.b, 0.96)
     border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
     border.width: 1.5
 
@@ -543,12 +549,11 @@ Item {
       id: wcMenuLayout
       anchors.fill: parent
       anchors.margins: Style.space(10)
-      spacing: Style.space(3)
+      spacing: Style.space(8)
 
       // Menu Header
       RowLayout {
         Layout.fillWidth: true
-        Layout.bottomMargin: Style.space(4)
 
         Text {
           text: "\uf085"
@@ -571,7 +576,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: wcCloseMenuMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, wcCloseMenuMouse.containsMouse ? 0.22 : 0.08)
 
           Text {
             anchors.centerIn: parent
@@ -591,96 +596,112 @@ Item {
         }
       }
 
-      // Divider
-      Rectangle {
-        Layout.fillWidth: true
-        height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
-        Layout.bottomMargin: 3
-      }
-
       // 🧩 Custom Widget Settings (Injected by derived widget)
-      Loader {
-        Layout.fillWidth: true
-        active: widgetCardRoot.customMenuContent !== null
-        sourceComponent: widgetCardRoot.customMenuContent
-      }
-
       Rectangle {
         Layout.fillWidth: true
-        height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
-        Layout.topMargin: 3
-        Layout.bottomMargin: 3
         visible: widgetCardRoot.customMenuContent !== null
+        implicitHeight: wcCustomSection.implicitHeight + Style.space(8)
+        radius: 10
+        color: wcContextMenu.sectionFill
+        border.color: wcContextMenu.sectionBorder
+        border.width: 1
+
+        ColumnLayout {
+          id: wcCustomSection
+          anchors.fill: parent
+          anchors.margins: Style.space(4)
+          spacing: 0
+
+          Loader {
+            Layout.fillWidth: true
+            active: widgetCardRoot.customMenuContent !== null
+            sourceComponent: widgetCardRoot.customMenuContent
+          }
+        }
       }
 
       // Options List
-      Repeater {
-        model: [
-          { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
-          { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
-          { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
-          { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
-          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
-        ]
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: wcOptionsSection.implicitHeight + Style.space(8)
+        radius: 10
+        color: wcContextMenu.sectionFill
+        border.color: wcContextMenu.sectionBorder
+        border.width: 1
 
-        Rectangle {
-          required property var modelData
-          Layout.fillWidth: true
-          implicitHeight: 28
-          radius: 6
-          color: wcOptMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)) : "transparent"
+        ColumnLayout {
+          id: wcOptionsSection
+          anchors.fill: parent
+          anchors.margins: Style.space(4)
+          spacing: Style.space(3)
 
-          RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: Style.space(10)
-            anchors.rightMargin: Style.space(10)
-            spacing: Style.space(8)
+          Repeater {
+            model: [
+              { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
+              { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
+              { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
+              { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
+              { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
+            ]
 
-            Item {
-              Layout.preferredWidth: 16
-              Layout.preferredHeight: 16
-              Layout.alignment: Qt.AlignVCenter
-
-              Text {
-                anchors.centerIn: parent
-                text: modelData.icon
-                font.family: Style.font.family
-                font.pixelSize: 11
-                color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : Color.accent
-              }
-            }
-
-            Text {
+            Rectangle {
+              required property var modelData
               Layout.fillWidth: true
-              Layout.alignment: Qt.AlignVCenter
-              text: modelData.label
-              font.family: Style.font.family
-              font.pixelSize: 11
-              font.weight: Font.Bold
-              color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Color.urgent : Color.foreground) : Color.accent
-              elide: Text.ElideRight
-            }
-          }
+              implicitHeight: 28
+              radius: 6
+              color: wcOptMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)) : "transparent"
 
-          MouseArea {
-            id: wcOptMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-              widgetCardRoot.contextMenuOpen = false
-              if (modelData.value === "TOGGLE_EDIT_MODE") {
-                if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode
-              } else if (modelData.value === "OPEN_SELECTOR") {
-                if (rootRef) rootRef.selectorOpen = true
-              } else if (modelData.value === "OPEN_PREFERENCES") {
-                if (rootRef) rootRef.preferencesOpen = true
-              } else if (modelData.value === "SAVE_LAYOUT") {
-                if (rootRef && rootRef.saveCurrentLayout) rootRef.saveCurrentLayout()
-              } else if (modelData.value === "RESET_LAYOUT") {
-                if (rootRef) rootRef.resetWidgetPositions()
+              RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Style.space(10)
+                anchors.rightMargin: Style.space(10)
+                spacing: Style.space(8)
+
+                Item {
+                  Layout.preferredWidth: 16
+                  Layout.preferredHeight: 16
+                  Layout.alignment: Qt.AlignVCenter
+
+                  Text {
+                    anchors.centerIn: parent
+                    text: modelData.icon
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : Color.accent
+                  }
+                }
+
+                Text {
+                  Layout.fillWidth: true
+                  Layout.alignment: Qt.AlignVCenter
+                  text: modelData.label
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  font.weight: Font.Bold
+                  color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Color.urgent : Color.foreground) : Color.accent
+                  elide: Text.ElideRight
+                }
+              }
+
+              MouseArea {
+                id: wcOptMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                  widgetCardRoot.contextMenuOpen = false
+                  if (modelData.value === "TOGGLE_EDIT_MODE") {
+                    if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode
+                  } else if (modelData.value === "OPEN_SELECTOR") {
+                    if (rootRef) rootRef.selectorOpen = true
+                  } else if (modelData.value === "OPEN_PREFERENCES") {
+                    if (rootRef) rootRef.preferencesOpen = true
+                  } else if (modelData.value === "SAVE_LAYOUT") {
+                    if (rootRef && rootRef.saveCurrentLayout) rootRef.saveCurrentLayout()
+                  } else if (modelData.value === "RESET_LAYOUT") {
+                    if (rootRef) rootRef.resetWidgetPositions()
+                  }
+                }
               }
             }
           }
@@ -688,24 +709,27 @@ Item {
       }
 
       // Multi-Monitor Display Picker (Visible when 2+ displays connected)
-      ColumnLayout {
+      Rectangle {
         Layout.fillWidth: true
-        spacing: 2
         visible: Quickshell.screens && Quickshell.screens.length > 1
+        implicitHeight: wcDisplaysSection.implicitHeight + Style.space(8)
+        radius: 10
+        color: wcContextMenu.sectionFill
+        border.color: wcContextMenu.sectionBorder
+        border.width: 1
 
-        Rectangle {
-          Layout.fillWidth: true
-          height: 1
-          color: Qt.rgba(1, 1, 1, 0.08)
-          Layout.topMargin: 2
-          Layout.bottomMargin: 2
-        }
+        ColumnLayout {
+          id: wcDisplaysSection
+          anchors.fill: parent
+          anchors.margins: Style.space(4)
+          spacing: 0
 
-        MonitorLayoutPicker {
-          Layout.fillWidth: true
-          rootRef: widgetCardRoot.rootRef
-          widgetId: widgetCardRoot.widgetId
-          currentMonitor: widgetCardRoot.monitorName
+          MonitorLayoutPicker {
+            Layout.fillWidth: true
+            rootRef: widgetCardRoot.rootRef
+            widgetId: widgetCardRoot.widgetId
+            currentMonitor: widgetCardRoot.monitorName
+          }
         }
       }
     }
