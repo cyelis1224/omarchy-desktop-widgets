@@ -40,6 +40,8 @@ Item {
   // Multi-Profile Layouts & Appearance State
   property string activeProfile: "Default"
   property var layoutProfiles: []
+  // Fixed rather than Color.urgent: some themes map "red" to a grey
+  readonly property color deleteRed: "#ef4444"
   property var appearance: ({
     bg_opacity: 0.85,
     corner_radius: 18,
@@ -446,6 +448,11 @@ Item {
     if (!importProfileProc.running) importProfileProc.running = true
   }
 
+  function deleteProfile(name) {
+    deleteProfileProc.command = [root.manageScriptPath, "delete_profile", name]
+    if (!deleteProfileProc.running) deleteProfileProc.running = true
+  }
+
   // Debounce appearance persistence so a slider drag spawns one save process
   // with the final value instead of racing dozens of out-of-order writes.
   Timer {
@@ -575,6 +582,27 @@ Item {
             if (res.widget_settings) root.widgetSettings = res.widget_settings
             root.showProfileNotice("Imported preset '" + res.name + "'")
             if (!posProc.running) posProc.running = true
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  Process {
+    id: deleteProfileProc
+    running: false
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var res = JSON.parse(String(line).trim())
+          if (res.status === "profile_deleted") {
+            root.layoutProfiles = root.layoutProfiles.filter(p => p.name !== res.deleted)
+            root.showProfileNotice("Deleted preset '" + res.deleted + "'")
+            // Backend only renames the active profile; apply Default's layout so
+            // the label matches what's on screen and Save can't clobber Default.
+            if (res.deleted === root.activeProfile) root.switchProfile("Default")
+          } else if (res.status === "error") {
+            root.showProfileNotice(res.error)
           }
         } catch (e) {}
       }
@@ -1389,7 +1417,7 @@ Item {
             visible: editBanner.visible && editBanner.presetMenuOpen
             x: editBanner.x + editBannerRow.x + presetsRow.x + presetTrigger.x
             y: editBanner.y + editBanner.height + 6
-            width: Math.max(presetTrigger.width, 180)
+            width: Math.max(presetTrigger.width, 220)
             height: presetMenuFlick.height + Style.space(12)
             radius: 12
             color: Qt.rgba(18/255, 18/255, 24/255, 0.96)
@@ -1426,13 +1454,29 @@ Item {
                   ]
 
                   Rectangle {
+                    id: presetOption
                     required property var modelData
+                    property bool confirmingDelete: false
+                    readonly property bool canDelete: modelData.is_builtin === false
                     Layout.fillWidth: true
                     height: 28
                     radius: 6
                     color: (modelData.name === root.activeProfile)
                       ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
                       : (presetOptionMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+                    onVisibleChanged: if (!visible) confirmingDelete = false
+
+                    // Declared before the row so the delete pill's MouseArea stacks above it
+                    MouseArea {
+                      id: presetOptionMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        editBanner.presetMenuOpen = false
+                        root.switchProfile(modelData.name)
+                      }
+                    }
 
                     RowLayout {
                       anchors.fill: parent
@@ -1458,16 +1502,46 @@ Item {
                         color: (modelData.name === root.activeProfile) ? Color.accent : Color.foreground
                         elide: Text.ElideRight
                       }
-                    }
 
-                    MouseArea {
-                      id: presetOptionMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: {
-                        editBanner.presetMenuOpen = false
-                        root.switchProfile(modelData.name)
+                      Rectangle {
+                        readonly property bool armed: presetOption.confirmingDelete || presetDeleteMouse.containsMouse
+                        visible: presetOption.canDelete
+                        implicitWidth: presetDeleteRow.implicitWidth + 14
+                        implicitHeight: 20
+                        radius: 10
+                        color: Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, armed ? 0.35 : 0.18)
+                        border.color: armed ? root.deleteRed : Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, 0.3)
+                        border.width: 1
+
+                        RowLayout {
+                          id: presetDeleteRow
+                          anchors.centerIn: parent
+                          spacing: 5
+                          Text {
+                            text: ""
+                            font.family: Style.font.family
+                            font.pixelSize: 9
+                            color: root.deleteRed
+                          }
+                          Text {
+                            text: presetOption.confirmingDelete ? "Confirm?" : "Delete"
+                            font.family: Style.font.family
+                            font.pixelSize: 10
+                            font.weight: Font.DemiBold
+                            color: root.deleteRed
+                          }
+                        }
+
+                        MouseArea {
+                          id: presetDeleteMouse
+                          anchors.fill: parent
+                          hoverEnabled: true
+                          cursorShape: Qt.PointingHandCursor
+                          onClicked: {
+                            if (presetOption.confirmingDelete) root.deleteProfile(modelData.name)
+                            else presetOption.confirmingDelete = true
+                          }
+                        }
                       }
                     }
                   }
@@ -1940,13 +2014,29 @@ Item {
                   ]
 
                   Rectangle {
+                    id: presetRow
                     required property var modelData
+                    property bool confirmingDelete: false
+                    readonly property bool canDelete: modelData.is_builtin === false
                     Layout.fillWidth: true
                     height: 28
                     radius: 6
                     color: (modelData.name === root.activeProfile)
                       ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
                       : (rowMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+                    onVisibleChanged: if (!visible) confirmingDelete = false
+
+                    // Declared before the row so the delete pill's MouseArea stacks above it
+                    MouseArea {
+                      id: rowMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        root.switchProfile(modelData.name)
+                      }
+                    }
 
                     RowLayout {
                       anchors.fill: parent
@@ -1972,16 +2062,46 @@ Item {
                         color: (modelData.name === root.activeProfile) ? Color.accent : Color.foreground
                         elide: Text.ElideRight
                       }
-                    }
 
-                    MouseArea {
-                      id: rowMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: {
-                        desktopContextMenu.isOpen = false
-                        root.switchProfile(modelData.name)
+                      Rectangle {
+                        readonly property bool armed: presetRow.confirmingDelete || rowDeleteMouse.containsMouse
+                        visible: presetRow.canDelete
+                        implicitWidth: rowDeleteRow.implicitWidth + 14
+                        implicitHeight: 20
+                        radius: 10
+                        color: Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, armed ? 0.35 : 0.18)
+                        border.color: armed ? root.deleteRed : Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, 0.3)
+                        border.width: 1
+
+                        RowLayout {
+                          id: rowDeleteRow
+                          anchors.centerIn: parent
+                          spacing: 5
+                          Text {
+                            text: ""
+                            font.family: Style.font.family
+                            font.pixelSize: 9
+                            color: root.deleteRed
+                          }
+                          Text {
+                            text: presetRow.confirmingDelete ? "Confirm?" : "Delete"
+                            font.family: Style.font.family
+                            font.pixelSize: 10
+                            font.weight: Font.DemiBold
+                            color: root.deleteRed
+                          }
+                        }
+
+                        MouseArea {
+                          id: rowDeleteMouse
+                          anchors.fill: parent
+                          hoverEnabled: true
+                          cursorShape: Qt.PointingHandCursor
+                          onClicked: {
+                            if (presetRow.confirmingDelete) root.deleteProfile(modelData.name)
+                            else presetRow.confirmingDelete = true
+                          }
+                        }
                       }
                     }
                   }
