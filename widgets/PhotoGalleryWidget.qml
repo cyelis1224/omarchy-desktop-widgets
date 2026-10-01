@@ -6,6 +6,7 @@ import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
 import qs.Ui
+import "../shared"
 
 Item {
   id: galleryWidgetRoot
@@ -27,7 +28,7 @@ Item {
   property real maxWidth: Math.min(1200, screenWidth - 40)
   property real maxHeight: Math.min(900, screenHeight - 80)
   property bool resizable: true
-  readonly property bool isResizing: (resizeCornerArea && resizeCornerArea.isResizingNow) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
+  readonly property bool isResizing: (cornerGrips && cornerGrips.resizing) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
 
   width: 360
   height: 228
@@ -907,13 +908,14 @@ Item {
     }
 
     // Interactive Click Area (Left-click to cycle, right-click for folder menu)
+    // Edit mode keeps only the right button so the menu still opens while
+    // left-drags fall through to the drag areas.
     MouseArea {
       id: photoHoverArea
       anchors.fill: parent
       z: 20
-      acceptedButtons: Qt.LeftButton | Qt.RightButton
-      cursorShape: galleryWidgetRoot.folderMenuOpen ? Qt.ArrowCursor : Qt.PointingHandCursor
-      visible: !(rootRef && rootRef.layoutEditMode)
+      acceptedButtons: (rootRef && rootRef.layoutEditMode) ? Qt.RightButton : (Qt.LeftButton | Qt.RightButton)
+      cursorShape: (galleryWidgetRoot.folderMenuOpen || (rootRef && rootRef.layoutEditMode)) ? Qt.ArrowCursor : Qt.PointingHandCursor
 
       onClicked: function(mouse) {
         if (mouse.button === Qt.RightButton) {
@@ -977,79 +979,20 @@ Item {
   // 📐 Interactive Resizing Handles & Live Dimensions Pill
   // ---------------------------------------------------------------------------
 
-  // Visual Grip Icon in Bottom-Right Corner
-  Rectangle {
-    id: cornerResizeVisual
-    visible: rootRef && rootRef.layoutEditMode && galleryWidgetRoot.resizable
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
-    anchors.margins: 6
-    width: 18
-    height: 18
-    radius: 4
-    z: 115
-    color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
-    border.color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
-    border.width: 1
-
-    Text {
-      anchors.centerIn: parent
-      text: "\uf424"
-      font.family: Style.font.family
-      font.pixelSize: 10
-      color: Color.accent
-    }
-  }
-
-  // Interactive Bottom-Right Corner Resize Area (Width & Height)
-  MouseArea {
-    id: resizeCornerArea
-    width: 24
-    height: 24
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
+  // Corner resize grips on all four corners, traced on the inset photo card
+  CornerResizeGrips {
+    id: cornerGrips
     z: 125
     visible: rootRef && rootRef.layoutEditMode && galleryWidgetRoot.resizable
-    cursorShape: Qt.SizeFDiagCursor
-    hoverEnabled: true
+    card: galleryWidgetRoot
+    target: galleryWidgetRoot.targetItem
+    radius: photoCardMain.radius
+    insetX: (galleryWidgetRoot.width - photoCardMain.width) / 2
+    insetY: (galleryWidgetRoot.height - photoCardMain.height) / 2
 
-    property real startScreenX: 0
-    property real startScreenY: 0
-    property real startWidth: 0
-    property real startHeight: 0
-    property bool isResizingNow: false
-
-    onPressed: function(mouse) {
-      var p = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
-      startScreenX = p.x
-      startScreenY = p.y
-      startWidth = galleryWidgetRoot.width
-      startHeight = galleryWidgetRoot.height
-      isResizingNow = true
-    }
-
-    onPositionChanged: function(mouse) {
-      if (isResizingNow) {
-        var cur = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
-        var newW = Math.max(galleryWidgetRoot.minWidth, Math.min(galleryWidgetRoot.maxWidth, startWidth + (cur.x - startScreenX)))
-        var newH = Math.max(galleryWidgetRoot.minHeight, Math.min(galleryWidgetRoot.maxHeight, startHeight + (cur.y - startScreenY)))
-        galleryWidgetRoot.width = newW
-        galleryWidgetRoot.height = newH
-      }
-    }
-
-    onReleased: function() {
-      if (isResizingNow) {
-        isResizingNow = false
-        var snappedW = Math.round(galleryWidgetRoot.width / 20) * 20
-        var snappedH = Math.round(galleryWidgetRoot.height / 20) * 20
-        snappedW = Math.max(galleryWidgetRoot.minWidth, Math.min(galleryWidgetRoot.maxWidth, snappedW))
-        snappedH = Math.max(galleryWidgetRoot.minHeight, Math.min(galleryWidgetRoot.maxHeight, snappedH))
-        galleryWidgetRoot.width = snappedW
-        galleryWidgetRoot.height = snappedH
-        if (rootRef && rootRef.saveWidgetPos) {
-          rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, galleryWidgetRoot.targetItem.x, galleryWidgetRoot.targetItem.y, snappedW, snappedH, galleryWidgetRoot.monitorName)
-        }
+    onResized: {
+      if (rootRef && rootRef.saveWidgetPos) {
+        rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, galleryWidgetRoot.targetItem.x, galleryWidgetRoot.targetItem.y, galleryWidgetRoot.width, galleryWidgetRoot.height, galleryWidgetRoot.monitorName)
       }
     }
   }

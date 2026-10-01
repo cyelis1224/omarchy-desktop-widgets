@@ -51,6 +51,20 @@ WidgetCard {
   onSettingsLoaded: applySavedSettings()
   Component.onCompleted: applySavedSettings()
 
+  function snapAndSavePosition() {
+    var maxX = Math.max(10, screenWidth - width - 10)
+    var maxY = Math.max(10, screenHeight - height - 10)
+    var snappedX = snapVal(targetItem.x)
+    var snappedY = snapVal(targetItem.y)
+    snappedX = Math.max(10, Math.min(maxX, snappedX))
+    snappedY = Math.max(10, Math.min(maxY, snappedY))
+    targetItem.x = snappedX
+    targetItem.y = snappedY
+    if (rootRef && rootRef.saveWidgetPos) {
+      rootRef.saveWidgetPos(widgetId, snappedX, snappedY, snapVal(width), snapVal(height), monitorName)
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // ⏰ Precise Time Engine
   property var now: new Date()
@@ -502,6 +516,111 @@ WidgetCard {
       radius: 2
       color: (clockStyle === "cyber") ? "#38bdf8" : Color.urgent
       z: 25
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // ✋ Move Mode Controls
+  // ---------------------------------------------------------------------------
+  // WidgetCard's full-body drag area starts 56px down to leave room for its
+  // header buttons; with no header here, this covers that top strip so the
+  // whole face drags. WidgetCard's own area and resize edges still sit above it.
+  MouseArea {
+    id: clockDragArea
+    anchors.fill: parent
+    z: 30
+    visible: rootRef && rootRef.layoutEditMode
+    cursorShape: Qt.SizeAllCursor
+    drag.target: analogClockRoot.targetItem
+    drag.axis: Drag.XAndYAxis
+    drag.minimumX: 10
+    drag.maximumX: Math.max(10, analogClockRoot.screenWidth - analogClockRoot.width - 10)
+    drag.minimumY: 10
+    drag.maximumY: Math.max(10, analogClockRoot.screenHeight - analogClockRoot.height - 10)
+
+    onPressed: analogClockRoot.customGripDragging = true
+    onReleased: function() {
+      analogClockRoot.customGripDragging = false
+      analogClockRoot.snapAndSavePosition()
+    }
+    onCanceled: analogClockRoot.customGripDragging = false
+  }
+
+  Row {
+    anchors.top: parent.top
+    anchors.right: parent.right
+    anchors.topMargin: 10
+    anchors.rightMargin: 10
+    spacing: Style.space(8)
+    z: 40
+    visible: rootRef && rootRef.layoutEditMode
+
+    // Close / Hide Button
+    Rectangle {
+      width: 22
+      height: 22
+      radius: 11
+      color: closeClockMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+      border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+      border.width: 1
+
+      Text {
+        anchors.centerIn: parent
+        text: ""
+        font.family: Style.font.family
+        font.pixelSize: 10
+        color: Color.urgent
+      }
+
+      MouseArea {
+        id: closeClockMouse
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: {
+          if (rootRef && rootRef.toggleWidgetEnabled) {
+            rootRef.toggleWidgetEnabled(analogClockRoot.widgetId, false, analogClockRoot.monitorName)
+          }
+        }
+      }
+    }
+
+    // Move Grip Button
+    Rectangle {
+      width: 22
+      height: 22
+      radius: 11
+      color: clockGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+      border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+      border.width: 1
+
+      Text {
+        anchors.centerIn: parent
+        text: ""
+        font.family: Style.font.family
+        font.pixelSize: 10
+        color: Color.accent
+      }
+
+      MouseArea {
+        id: clockGripArea
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.SizeAllCursor
+        drag.target: analogClockRoot.targetItem
+        drag.axis: Drag.XAndYAxis
+        drag.minimumX: 10
+        drag.maximumX: Math.max(10, analogClockRoot.screenWidth - analogClockRoot.width - 10)
+        drag.minimumY: 10
+        drag.maximumY: Math.max(10, analogClockRoot.screenHeight - analogClockRoot.height - 10)
+
+        onPressed: analogClockRoot.customGripDragging = true
+        onReleased: function() {
+          analogClockRoot.customGripDragging = false
+          analogClockRoot.snapAndSavePosition()
+        }
+        onCanceled: analogClockRoot.customGripDragging = false
+      }
     }
   }
 

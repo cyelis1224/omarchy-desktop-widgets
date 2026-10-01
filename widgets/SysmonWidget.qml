@@ -141,6 +141,9 @@ WidgetCard {
   readonly property color cpuColor: seriesColor("blue", 0.61)
   readonly property color memColor: seriesColor("green", 0.25)
   readonly property color gpuColor: seriesColor("yellow", 0.1)
+  // Readouts at/above the threshold. Not Color.urgent: that's the theme's red,
+  // which monochrome themes make a dark grey that's unreadable on the card.
+  readonly property color hotColor: seriesColor("red", 0.0)
 
   FileView {
     id: themeColorsFile
@@ -904,7 +907,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.DemiBold
-              color: modelData.hot ? Color.urgent : Color.foreground
+              color: modelData.hot ? sysmonRoot.hotColor : Color.foreground
             }
           }
         }
@@ -1420,12 +1423,35 @@ WidgetCard {
     }
 
     // Optional top processes line (single row, like the Network widget's totals):
-    // the busiest process per resource in three columns, each labelled in its
-    // series color. Only the process names elide when the row runs out of width.
+    // a "TOP" tag, then the busiest process per resource split by hairline
+    // dividers, each labelled in its series color. The group is centered; only
+    // the process names elide when the row runs out of width.
     RowLayout {
       Layout.fillWidth: true
       visible: sysmonRoot.showTop && (sysmonRoot.topCpuName !== "" || sysmonRoot.topMemName !== "")
-      spacing: Style.space(8)
+      spacing: Style.space(10)
+
+      Item { Layout.fillWidth: true }
+
+      Rectangle {
+        implicitWidth: topTagText.implicitWidth + 10
+        implicitHeight: 15
+        radius: 7.5
+        color: Qt.rgba(1, 1, 1, 0.06)
+        border.color: Qt.rgba(1, 1, 1, 0.10)
+        border.width: 1
+
+        Text {
+          id: topTagText
+          anchors.centerIn: parent
+          text: "TOP"
+          font.family: Style.font.family
+          font.pixelSize: 8
+          font.weight: Font.Bold
+          font.letterSpacing: 1
+          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75)
+        }
+      }
 
       Repeater {
         model: [
@@ -1436,9 +1462,23 @@ WidgetCard {
         ]
         delegate: RowLayout {
           required property var modelData
+          required property int index
           visible: modelData.on
-          Layout.fillWidth: true // columns start at their content width and share the slack
+          // Fill so the name can shrink, but never grow past the content width:
+          // the outer spacers take the slack and keep the group centered
+          Layout.fillWidth: true
+          Layout.maximumWidth: Math.ceil(implicitWidth)
           spacing: Style.space(4)
+
+          // Divider before every column but the first; the right margin plus
+          // spacing matches the row spacing on its left, so it sits centered
+          Rectangle {
+            visible: index > 0
+            Layout.preferredWidth: 1
+            Layout.preferredHeight: 10
+            Layout.rightMargin: Style.space(6)
+            color: Qt.rgba(1, 1, 1, 0.12)
+          }
 
           Text {
             text: modelData.label
@@ -1452,7 +1492,7 @@ WidgetCard {
             text: modelData.name
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
             elide: Text.ElideRight
             Layout.fillWidth: true
             Layout.preferredWidth: Math.ceil(implicitWidth)
@@ -1464,12 +1504,13 @@ WidgetCard {
             text: modelData.value
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+            font.weight: Font.DemiBold
+            color: Color.foreground
           }
-
-          Item { Layout.fillWidth: true }
         }
       }
+
+      Item { Layout.fillWidth: true }
     }
   }
 }

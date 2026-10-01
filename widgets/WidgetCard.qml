@@ -30,7 +30,7 @@ Item {
   property real minHeight: 120
   property real maxWidth: Math.min(1400, screenWidth - 40)
   property real maxHeight: Math.min(1000, screenHeight - 80)
-  readonly property bool isResizing: (resizeCornerArea && resizeCornerArea.isResizingNow) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
+  readonly property bool isResizing: (cornerGrips && cornerGrips.resizing) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
 
   property bool customGripDragging: false
   readonly property bool isDragging: gripArea.drag.active || (fullDragArea && fullDragArea.drag.active) || customGripDragging
@@ -265,79 +265,19 @@ Item {
   // 📐 Interactive Resizing Handles & Live Dimensions Pill
   // ---------------------------------------------------------------------------
 
-  // Visual Grip Icon in Bottom-Right Corner
-  Rectangle {
-    id: cornerResizeVisual
-    visible: rootRef && rootRef.layoutEditMode && widgetCardRoot.resizable
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
-    anchors.margins: 6
-    width: 18
-    height: 18
-    radius: 4
-    z: 115
-    color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
-    border.color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
-    border.width: 1
-
-    Text {
-      anchors.centerIn: parent
-      text: "\uf424"
-      font.family: Style.font.family
-      font.pixelSize: 10
-      color: Color.accent
-    }
-  }
-
-  // Interactive Bottom-Right Corner Resize Area (Width & Height)
-  MouseArea {
-    id: resizeCornerArea
-    width: 24
-    height: 24
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
+  // Corner resize grips on all four corners (shared/CornerResizeGrips.qml)
+  CornerResizeGrips {
+    id: cornerGrips
     z: 125
     visible: rootRef && rootRef.layoutEditMode && widgetCardRoot.resizable
-    cursorShape: Qt.SizeFDiagCursor
-    hoverEnabled: true
+    card: widgetCardRoot
+    target: widgetCardRoot.targetItem
+    radius: cardSurface.radius
+    gridSnap: widgetCardRoot.gridSnap
 
-    property real startScreenX: 0
-    property real startScreenY: 0
-    property real startWidth: 0
-    property real startHeight: 0
-    property bool isResizingNow: false
-
-    onPressed: function(mouse) {
-      var p = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
-      startScreenX = p.x
-      startScreenY = p.y
-      startWidth = widgetCardRoot.width
-      startHeight = widgetCardRoot.height
-      isResizingNow = true
-    }
-
-    onPositionChanged: function(mouse) {
-      if (isResizingNow) {
-        var cur = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
-        var newW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, startWidth + (cur.x - startScreenX)))
-        var newH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, startHeight + (cur.y - startScreenY)))
-        widgetCardRoot.width = newW
-        widgetCardRoot.height = newH
-      }
-    }
-
-    onReleased: function() {
-      if (isResizingNow) {
-        isResizingNow = false
-        var snappedW = widgetCardRoot.snapVal(widgetCardRoot.width)
-        var snappedH = widgetCardRoot.snapVal(widgetCardRoot.height)
-        snappedW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, snappedW))
-        snappedH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, snappedH))
-        widgetCardRoot.width = snappedW
-        widgetCardRoot.height = snappedH
-        if (rootRef && rootRef.saveWidgetPos) {
-          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, snappedW, snappedH, widgetCardRoot.monitorName)
-        }
+    onResized: {
+      if (rootRef && rootRef.saveWidgetPos) {
+        rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, widgetCardRoot.width, widgetCardRoot.height, widgetCardRoot.monitorName)
       }
     }
   }
@@ -464,11 +404,11 @@ Item {
   // ---------------------------------------------------------------------------
   property bool contextMenuOpen: false
 
-  // Right-click handler on the widget body (only when NOT in edit mode)
+  // Right-click handler on the widget body. Also live in edit mode: the drag
+  // areas only take the left button, so right-clicks fall through to here.
   MouseArea {
     anchors.fill: parent
     z: 50
-    visible: !(rootRef && rootRef.layoutEditMode)
     acceptedButtons: Qt.RightButton
     onClicked: function(mouse) {
       if (mouse.button === Qt.RightButton) {

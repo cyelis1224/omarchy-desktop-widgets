@@ -456,11 +456,11 @@ Item {
   // ---------------------------------------------------------------------------
   property bool contextMenuOpen: false
 
-  // Right-click handler on the clock body (only when NOT in edit mode)
+  // Right-click handler on the clock body. Also live in edit mode: the drag
+  // areas only take the left button, so right-clicks fall through to here.
   MouseArea {
     anchors.fill: parent
     z: 50
-    visible: !(rootRef && rootRef.layoutEditMode)
     acceptedButtons: Qt.RightButton
     onClicked: function(mouse) {
       if (mouse.button === Qt.RightButton) {
