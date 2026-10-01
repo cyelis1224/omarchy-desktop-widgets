@@ -61,6 +61,8 @@ Item {
   readonly property string currentPhotoRawPath: currentPhotoObj ? currentPhotoObj.raw_path : ""
   readonly property string currentPhotoTitle: currentPhotoObj ? currentPhotoObj.title : "Photo Gallery"
   property bool folderMenuOpen: false
+  property bool layoutSubmenuOpen: false
+  onFolderMenuOpenChanged: if (!folderMenuOpen) layoutSubmenuOpen = false
 
   // Multi-layer photo stack sources
   property var layer3PhotoObj: (photoList && photoList.length > 3) ? photoList[(photoIndex + 1) % photoList.length] : null
@@ -1487,22 +1489,24 @@ Item {
           { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
           { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
           { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
-          { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
-          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
+          { label: "Layout", icon: "\uf0c9", value: "TOGGLE_LAYOUT_MENU" },
+          { label: "Save to '" + ((rootRef && rootRef.activeProfile) ? rootRef.activeProfile : "Default") + "'", icon: "\uf0c7", value: "SAVE_LAYOUT", sub: true },
+          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT", sub: true }
         ]
 
         Rectangle {
           required property var modelData
+          visible: !modelData.sub || galleryWidgetRoot.layoutSubmenuOpen
           Layout.fillWidth: true
           implicitHeight: 26
           radius: 6
-          readonly property bool isActionBtn: modelData.value === "RESET_LAYOUT" || modelData.value === "SAVE_LAYOUT" || modelData.value === "TOGGLE_EDIT_MODE" || modelData.value === "OPEN_SELECTOR" || modelData.value === "OPEN_PREFERENCES"
+          readonly property bool isActionBtn: modelData.value === "TOGGLE_LAYOUT_MENU" || modelData.value === "RESET_LAYOUT" || modelData.value === "SAVE_LAYOUT" || modelData.value === "TOGGLE_EDIT_MODE" || modelData.value === "OPEN_SELECTOR" || modelData.value === "OPEN_PREFERENCES"
           readonly property bool isSelected: !isActionBtn && (galleryWidgetRoot.photoFolder === modelData.value || (modelData.value === "pick_dialog" && galleryWidgetRoot.photoFolder !== "ALL" && !galleryWidgetRoot.photoFolder.startsWith("~/.config") && !galleryWidgetRoot.photoFolder.startsWith("~/Wallpapers") && !galleryWidgetRoot.photoFolder.startsWith("~/Pictures")))
           color: optMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : "transparent")
 
           RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: Style.space(10)
+            anchors.leftMargin: Style.space(modelData.sub ? 22 : 10)
             anchors.rightMargin: Style.space(10)
             spacing: Style.space(8)
 
@@ -1532,6 +1536,26 @@ Item {
             }
 
             Text {
+              visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+              Layout.alignment: Qt.AlignVCenter
+              Layout.maximumWidth: 110
+              text: (rootRef && rootRef.activeProfile) ? rootRef.activeProfile : ""
+              font.family: Style.font.family
+              font.pixelSize: 10
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              elide: Text.ElideRight
+            }
+
+            Text {
+              visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+              Layout.alignment: Qt.AlignVCenter
+              text: galleryWidgetRoot.layoutSubmenuOpen ? "\uf107" : "\uf105"
+              font.family: Style.font.family
+              font.pixelSize: 11
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            }
+
+            Text {
               visible: isSelected
               text: "\uf00c"
               font.family: Style.font.family
@@ -1546,6 +1570,10 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
+              if (modelData.value === "TOGGLE_LAYOUT_MENU") {
+                galleryWidgetRoot.layoutSubmenuOpen = !galleryWidgetRoot.layoutSubmenuOpen
+                return
+              }
               galleryWidgetRoot.folderMenuOpen = false
               if (modelData.value === "TOGGLE_EDIT_MODE") {
                 if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode

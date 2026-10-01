@@ -461,6 +461,8 @@ Item {
   // 📂 Standard Right-Click Context Menu
   // ---------------------------------------------------------------------------
   property bool contextMenuOpen: false
+  property bool layoutSubmenuOpen: false
+  onContextMenuOpenChanged: if (!contextMenuOpen) layoutSubmenuOpen = false
 
   // Right-click handler on the clock body. Also live in edit mode: the drag
   // areas only take the left button, so right-clicks fall through to here.
@@ -959,12 +961,14 @@ Item {
           { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
           { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
           { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
-          { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
-          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
+          { label: "Layout", icon: "\uf0c9", value: "TOGGLE_LAYOUT_MENU" },
+          { label: "Save to '" + ((rootRef && rootRef.activeProfile) ? rootRef.activeProfile : "Default") + "'", icon: "\uf0c7", value: "SAVE_LAYOUT", sub: true },
+          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT", sub: true }
         ]
 
         Rectangle {
           required property var modelData
+          visible: !modelData.sub || clockWidgetRoot.layoutSubmenuOpen
           Layout.fillWidth: true
           implicitHeight: 28
           radius: 6
@@ -972,7 +976,7 @@ Item {
 
           RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: Style.space(10)
+            anchors.leftMargin: Style.space(modelData.sub ? 22 : 10)
             anchors.rightMargin: Style.space(10)
             spacing: Style.space(8)
 
@@ -1000,6 +1004,26 @@ Item {
               color: modelData.value === "RESET_LAYOUT" ? (clockOptMouse.containsMouse ? Color.urgent : Color.foreground) : Color.accent
               elide: Text.ElideRight
             }
+
+            Text {
+              visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+              Layout.alignment: Qt.AlignVCenter
+              Layout.maximumWidth: 110
+              text: (rootRef && rootRef.activeProfile) ? rootRef.activeProfile : ""
+              font.family: Style.font.family
+              font.pixelSize: 10
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              elide: Text.ElideRight
+            }
+
+            Text {
+              visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+              Layout.alignment: Qt.AlignVCenter
+              text: clockWidgetRoot.layoutSubmenuOpen ? "\uf107" : "\uf105"
+              font.family: Style.font.family
+              font.pixelSize: 11
+              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            }
           }
 
           MouseArea {
@@ -1008,6 +1032,10 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
+              if (modelData.value === "TOGGLE_LAYOUT_MENU") {
+                clockWidgetRoot.layoutSubmenuOpen = !clockWidgetRoot.layoutSubmenuOpen
+                return
+              }
               clockWidgetRoot.contextMenuOpen = false
               if (modelData.value === "TOGGLE_EDIT_MODE") {
                 if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode

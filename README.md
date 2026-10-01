@@ -209,7 +209,7 @@ Five curated profiles are built-in and ready out of the box:
 
 ### ⚡ Quick-Switching & IPC Commands
 - **Top Move Mode Banner**: When Move Mode is unlocked, click any preset pill (`Default`, `Minimal`, `Productivity`, `Full Dashboard`, `Gaming`) to switch immediately.
-- **Desktop Right-Click Menu**: Right-click blank desktop wallpaper ➜ **Layout Presets ▸** to view the active checkmark and switch profiles.
+- **Desktop Right-Click Menu**: Right-click blank desktop wallpaper ➜ **Layout Presets ▸** to view the active checkmark and switch profiles, save the current layout to the active preset, save it as a new preset, or revert to the last saved layout.
 - **CLI / Scripting IPC**:
   ```bash
   # Switch to any layout preset via CLI or hotkey
@@ -218,8 +218,8 @@ Five curated profiles are built-in and ready out of the box:
   ```
 
 ### 💾 Import & Export Profiles
-- **Exporting**: Right-click wallpaper ➜ **Layout Presets ▸** ➜ **Export Current Preset...** opens a native file dialog to save a portable `.json` layout profile.
-- **Importing**: Select **Import Preset JSON...** to load community profiles or restore previous layouts.
+- **Exporting**: Right-click wallpaper ➜ **Layout Presets ▸** ➜ **Export...** opens a native file dialog to save a portable `.json` layout profile.
+- **Importing**: Select **Import...** to load community profiles or restore previous layouts.
 - **File Format**: Standard portable JSON schema:
   ```json
   {

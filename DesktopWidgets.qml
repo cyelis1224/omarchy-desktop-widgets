@@ -1723,6 +1723,7 @@ Item {
           x: 100
           y: 100
           visible: isOpen || root.menuOpenRequested
+          onVisibleChanged: if (!visible) root.presetsSubmenuOpen = false
           z: 500
           width: 240
           implicitHeight: desktopMenuCol.implicitHeight + Style.space(16)
@@ -1781,6 +1782,7 @@ Item {
 
             // Widget & layout controls
             Rectangle {
+              id: desktopLayoutPanel
               Layout.fillWidth: true
               implicitHeight: desktopLayoutSection.implicitHeight + Style.space(8)
               radius: 10
@@ -1957,8 +1959,9 @@ Item {
                     }
                   }
 
-                  // 3. Layout Presets (Expandable Submenu)
+                  // 3. Layout Presets (opens the flyout panel beside the menu)
                   Rectangle {
+                    id: presetsItemRow
                     Layout.fillWidth: true
                     height: 32
                     radius: 8
@@ -2007,7 +2010,7 @@ Item {
 
                       Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: root.presetsSubmenuOpen ? "\uf107" : "\uf105"
+                        text: "\uf105"
                         font.family: Style.font.family
                         font.pixelSize: 12
                         color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
@@ -2020,200 +2023,6 @@ Item {
                       hoverEnabled: true
                       cursorShape: Qt.PointingHandCursor
                       onClicked: root.presetsSubmenuOpen = !root.presetsSubmenuOpen
-                    }
-                  }
-
-                  // Presets Expanded List
-                  ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 14
-                    Layout.rightMargin: 4
-                    visible: root.presetsSubmenuOpen
-                    spacing: 2
-
-                    Repeater {
-                      model: root.layoutProfiles.length > 0 ? root.layoutProfiles : [
-                        { name: "Default" }, { name: "Minimal" }, { name: "Productivity" }, { name: "Full Dashboard" }, { name: "Gaming" }
-                      ]
-
-                      Rectangle {
-                        id: presetRow
-                        required property var modelData
-                        property bool confirmingDelete: false
-                        readonly property bool canDelete: modelData.is_builtin === false
-                        Layout.fillWidth: true
-                        height: 28
-                        radius: 6
-                        color: (modelData.name === root.activeProfile)
-                          ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-                          : (rowMouse.containsMouse ? Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.08) : "transparent")
-                        onVisibleChanged: if (!visible) confirmingDelete = false
-
-                        // Declared before the row so the delete pill's MouseArea stacks above it
-                        MouseArea {
-                          id: rowMouse
-                          anchors.fill: parent
-                          hoverEnabled: true
-                          cursorShape: Qt.PointingHandCursor
-                          onClicked: {
-                            desktopContextMenu.isOpen = false
-                            root.switchProfile(modelData.name)
-                          }
-                        }
-
-                        RowLayout {
-                          anchors.fill: parent
-                          anchors.leftMargin: 8
-                          anchors.rightMargin: 8
-                          spacing: 8
-
-                          Text {
-                            text: (modelData.name === root.activeProfile) ? "\uf00c" : "\uf111"
-                            font.family: Style.font.family
-                            font.pixelSize: (modelData.name === root.activeProfile) ? 10 : 6
-                            color: (modelData.name === root.activeProfile) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
-                            Layout.preferredWidth: 12
-                            horizontalAlignment: Text.AlignHCenter
-                          }
-
-                          Text {
-                            Layout.fillWidth: true
-                            text: modelData.name
-                            font.family: Style.font.family
-                            font.pixelSize: 11
-                            font.weight: (modelData.name === root.activeProfile) ? Font.Bold : Font.Normal
-                            color: (modelData.name === root.activeProfile) ? Color.accent : Color.foreground
-                            elide: Text.ElideRight
-                          }
-
-                          Rectangle {
-                            readonly property bool armed: presetRow.confirmingDelete || rowDeleteMouse.containsMouse
-                            visible: presetRow.canDelete
-                            implicitWidth: rowDeleteRow.implicitWidth + 14
-                            implicitHeight: 20
-                            radius: 10
-                            color: Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, armed ? 0.35 : 0.18)
-                            border.color: armed ? root.deleteRed : Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, 0.3)
-                            border.width: 1
-
-                            RowLayout {
-                              id: rowDeleteRow
-                              anchors.centerIn: parent
-                              spacing: 5
-                              Text {
-                                text: ""
-                                font.family: Style.font.family
-                                font.pixelSize: 9
-                                color: root.deleteRed
-                              }
-                              Text {
-                                text: presetRow.confirmingDelete ? "Confirm?" : "Delete"
-                                font.family: Style.font.family
-                                font.pixelSize: 10
-                                font.weight: Font.DemiBold
-                                color: root.deleteRed
-                              }
-                            }
-
-                            MouseArea {
-                              id: rowDeleteMouse
-                              anchors.fill: parent
-                              hoverEnabled: true
-                              cursorShape: Qt.PointingHandCursor
-                              onClicked: {
-                                if (presetRow.confirmingDelete) root.deleteProfile(modelData.name)
-                                else presetRow.confirmingDelete = true
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-
-                    Rectangle {
-                      Layout.fillWidth: true
-                      height: 1
-                      color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.06)
-                      Layout.topMargin: 2
-                      Layout.bottomMargin: 2
-                    }
-
-                    // Save As New Preset
-                    Rectangle {
-                      Layout.fillWidth: true
-                      height: 26
-                      radius: 6
-                      color: saveNewMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
-
-                      RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        spacing: 8
-                        Text { text: "\uf067"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
-                        Text { text: "Save As New Preset..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
-                      }
-                      MouseArea {
-                        id: saveNewMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                          desktopContextMenu.isOpen = false
-                          root.saveNewProfileDialog()
-                        }
-                      }
-                    }
-
-                    // Import Preset
-                    Rectangle {
-                      Layout.fillWidth: true
-                      height: 26
-                      radius: 6
-                      color: importMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
-
-                      RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        spacing: 8
-                        Text { text: "\uf093"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
-                        Text { text: "Import Preset JSON..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
-                      }
-                      MouseArea {
-                        id: importMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                          desktopContextMenu.isOpen = false
-                          root.importProfile()
-                        }
-                      }
-                    }
-
-                    // Export Preset
-                    Rectangle {
-                      Layout.fillWidth: true
-                      height: 26
-                      radius: 6
-                      color: exportMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
-
-                      RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        spacing: 8
-                        Text { text: "\uf019"; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
-                        Text { text: "Export Current Preset..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground }
-                      }
-                      MouseArea {
-                        id: exportMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                          desktopContextMenu.isOpen = false
-                          root.exportCurrentProfile()
-                        }
-                      }
                     }
                   }
 
@@ -2264,108 +2073,6 @@ Item {
                       onClicked: {
                         desktopContextMenu.isOpen = false
                         root.preferencesOpen = true
-                      }
-                    }
-                  }
-
-                  // 5. Save Layout
-                  Rectangle {
-                    Layout.fillWidth: true
-                    height: 32
-                    radius: 8
-                    color: saveDesktopLayoutMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
-
-                    RowLayout {
-                      anchors.fill: parent
-                      anchors.leftMargin: 10
-                      anchors.rightMargin: 10
-                      spacing: 10
-
-                      Item {
-                        Layout.preferredWidth: 18
-                        Layout.preferredHeight: 18
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Text {
-                          anchors.centerIn: parent
-                          text: "\uf0c7"
-                          font.family: Style.font.family
-                          font.pixelSize: 12
-                          color: saveDesktopLayoutMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
-                        }
-                      }
-
-                      Text {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        text: "Save Current Layout"
-                        font.family: Style.font.family
-                        font.pixelSize: 12
-                        font.weight: Font.DemiBold
-                        color: saveDesktopLayoutMouse.containsMouse ? Color.accent : Color.foreground
-                        elide: Text.ElideRight
-                      }
-                    }
-
-                    MouseArea {
-                      id: saveDesktopLayoutMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: {
-                        desktopContextMenu.isOpen = false
-                        root.saveCurrentLayout()
-                      }
-                    }
-                  }
-
-                  // 6. Revert / Reset Layout
-                  Rectangle {
-                    Layout.fillWidth: true
-                    height: 32
-                    radius: 8
-                    color: resetLayoutMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.22) : "transparent"
-
-                    RowLayout {
-                      anchors.fill: parent
-                      anchors.leftMargin: 10
-                      anchors.rightMargin: 10
-                      spacing: 10
-
-                      Item {
-                        Layout.preferredWidth: 18
-                        Layout.preferredHeight: 18
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Text {
-                          anchors.centerIn: parent
-                          text: "\uf0e2"
-                          font.family: Style.font.family
-                          font.pixelSize: 12
-                          color: resetLayoutMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
-                        }
-                      }
-
-                      Text {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        text: root.hasSavedLayout ? "Revert to Saved Layout" : "Reset Widget Layout"
-                        font.family: Style.font.family
-                        font.pixelSize: 12
-                        font.weight: Font.DemiBold
-                        color: resetLayoutMouse.containsMouse ? Color.urgent : Color.foreground
-                        elide: Text.ElideRight
-                      }
-                    }
-
-                    MouseArea {
-                      id: resetLayoutMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: {
-                        desktopContextMenu.isOpen = false
-                        root.resetWidgetPositions()
                       }
                     }
                   }
@@ -2492,6 +2199,315 @@ Item {
             }
             }
           }
+
+        // Layout Presets flyout (sibling of the menu so its shadow layer doesn't clip it)
+        Rectangle {
+          id: desktopPresetsFlyout
+          z: 501
+          visible: desktopContextMenu.visible && root.presetsSubmenuOpen
+          width: 230
+          height: desktopPresetsFlick.height + Style.space(12)
+          // Opens to the right of the menu, or to the left when the screen edge is too close
+          x: (desktopContextMenu.x + desktopContextMenu.width + 6 + width <= desktopWindow.width - 16)
+            ? desktopContextMenu.x + desktopContextMenu.width + 6
+            : desktopContextMenu.x - width - 6
+          // Top lines up with the Layout Presets row, pulled up if it would run off screen
+          y: Math.max(16, Math.min(
+            desktopContextMenu.y + desktopMenuCol.y + desktopLayoutPanel.y + desktopLayoutSection.y + presetsItemRow.y - Style.space(6),
+            desktopWindow.height - height - 16))
+          radius: 12
+          color: Qt.rgba(Color.menu.background.r, Color.menu.background.g, Color.menu.background.b, 0.96)
+          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+          border.width: 1.5
+
+          layer.enabled: true
+          layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.85)
+            shadowBlur: 0.9
+            shadowVerticalOffset: 6
+          }
+
+          // Swallow clicks on the padding so they don't reach the dismiss backdrop
+          MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+          }
+
+          Flickable {
+            id: desktopPresetsFlick
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: Style.space(6)
+            height: Math.min(contentHeight, desktopWindow.height - 64)
+            contentHeight: desktopPresetsCol.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            ColumnLayout {
+              id: desktopPresetsCol
+              width: desktopPresetsFlick.width
+              spacing: 2
+
+              Repeater {
+                model: root.layoutProfiles.length > 0 ? root.layoutProfiles : [
+                  { name: "Default" }, { name: "Minimal" }, { name: "Productivity" }, { name: "Full Dashboard" }, { name: "Gaming" }
+                ]
+
+                Rectangle {
+                  id: presetRow
+                  required property var modelData
+                  property bool confirmingDelete: false
+                  readonly property bool canDelete: modelData.is_builtin === false
+                  Layout.fillWidth: true
+                  height: 28
+                  radius: 6
+                  color: (modelData.name === root.activeProfile)
+                    ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                    : (rowMouse.containsMouse ? Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.08) : "transparent")
+                  onVisibleChanged: if (!visible) confirmingDelete = false
+
+                  // Declared before the row so the delete pill's MouseArea stacks above it
+                  MouseArea {
+                    id: rowMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      desktopContextMenu.isOpen = false
+                      root.switchProfile(modelData.name)
+                    }
+                  }
+
+                  RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 8
+                    spacing: 8
+
+                    Text {
+                      text: (modelData.name === root.activeProfile) ? "\uf00c" : "\uf111"
+                      font.family: Style.font.family
+                      font.pixelSize: (modelData.name === root.activeProfile) ? 10 : 6
+                      color: (modelData.name === root.activeProfile) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+                      Layout.preferredWidth: 12
+                      horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    Text {
+                      Layout.fillWidth: true
+                      text: modelData.name
+                      font.family: Style.font.family
+                      font.pixelSize: 11
+                      font.weight: (modelData.name === root.activeProfile) ? Font.Bold : Font.Normal
+                      color: (modelData.name === root.activeProfile) ? Color.accent : Color.foreground
+                      elide: Text.ElideRight
+                    }
+
+                    Rectangle {
+                      readonly property bool armed: presetRow.confirmingDelete || rowDeleteMouse.containsMouse
+                      visible: presetRow.canDelete
+                      implicitWidth: rowDeleteRow.implicitWidth + 14
+                      implicitHeight: 20
+                      radius: 10
+                      color: Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, armed ? 0.35 : 0.18)
+                      border.color: armed ? root.deleteRed : Qt.rgba(root.deleteRed.r, root.deleteRed.g, root.deleteRed.b, 0.3)
+                      border.width: 1
+
+                      RowLayout {
+                        id: rowDeleteRow
+                        anchors.centerIn: parent
+                        spacing: 5
+                        Text {
+                          text: ""
+                          font.family: Style.font.family
+                          font.pixelSize: 9
+                          color: root.deleteRed
+                        }
+                        Text {
+                          text: presetRow.confirmingDelete ? "Confirm?" : "Delete"
+                          font.family: Style.font.family
+                          font.pixelSize: 10
+                          font.weight: Font.DemiBold
+                          color: root.deleteRed
+                        }
+                      }
+
+                      MouseArea {
+                        id: rowDeleteMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                          if (presetRow.confirmingDelete) root.deleteProfile(modelData.name)
+                          else presetRow.confirmingDelete = true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.06)
+                Layout.topMargin: 2
+                Layout.bottomMargin: 2
+              }
+
+              // Save: the row saves over the active preset, the pill saves as a new one
+              Rectangle {
+                Layout.fillWidth: true
+                height: 26
+                radius: 6
+                color: (saveActiveMouse.containsMouse && !saveNewMouse.containsMouse) ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+                // Declared before the row so the pill's MouseArea stacks above it
+                MouseArea {
+                  id: saveActiveMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    desktopContextMenu.isOpen = false
+                    root.saveCurrentLayout()
+                  }
+                }
+
+                RowLayout {
+                  anchors.fill: parent
+                  anchors.leftMargin: 8
+                  anchors.rightMargin: 3
+                  spacing: 8
+                  Text { text: ""; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                  Text { Layout.fillWidth: true; text: "Save to '" + root.activeProfile + "'"; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground; elide: Text.ElideRight }
+
+                  Rectangle {
+                    implicitWidth: saveNewRow.implicitWidth + 14
+                    implicitHeight: 20
+                    radius: 10
+                    color: saveNewMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.06)
+                    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+                    border.width: 1
+
+                    RowLayout {
+                      id: saveNewRow
+                      anchors.centerIn: parent
+                      spacing: 4
+                      Text { text: ""; font.family: Style.font.family; font.pixelSize: 9; color: Color.accent }
+                      Text { text: "New..."; font.family: Style.font.family; font.pixelSize: 10; font.weight: Font.DemiBold; color: Color.foreground }
+                    }
+
+                    MouseArea {
+                      id: saveNewMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        desktopContextMenu.isOpen = false
+                        root.saveNewProfileDialog()
+                      }
+                    }
+                  }
+                }
+              }
+
+              // Revert / Reset Layout
+              Rectangle {
+                Layout.fillWidth: true
+                height: 26
+                radius: 6
+                color: resetLayoutMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.22) : "transparent"
+
+                RowLayout {
+                  anchors.fill: parent
+                  anchors.leftMargin: 8
+                  spacing: 8
+                  Text { text: "\uf0e2"; font.family: Style.font.family; font.pixelSize: 10; color: resetLayoutMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7) }
+                  Text { text: root.hasSavedLayout ? "Revert to Saved Layout" : "Reset Widget Layout"; font.family: Style.font.family; font.pixelSize: 11; color: resetLayoutMouse.containsMouse ? Color.urgent : Color.foreground }
+                }
+                MouseArea {
+                  id: resetLayoutMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: {
+                    desktopContextMenu.isOpen = false
+                    root.resetWidgetPositions()
+                  }
+                }
+              }
+
+              Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.06)
+                Layout.topMargin: 2
+                Layout.bottomMargin: 2
+              }
+
+              // Import / Export Preset JSON
+              RowLayout {
+                Layout.fillWidth: true
+                spacing: 2
+
+                Rectangle {
+                  Layout.fillWidth: true
+                  Layout.preferredWidth: 1
+                  height: 26
+                  radius: 6
+                  color: importMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+                  RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    spacing: 8
+                    Text { text: ""; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                    Text { Layout.fillWidth: true; text: "Import..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground; elide: Text.ElideRight }
+                  }
+                  MouseArea {
+                    id: importMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      desktopContextMenu.isOpen = false
+                      root.importProfile()
+                    }
+                  }
+                }
+
+                Rectangle {
+                  Layout.fillWidth: true
+                  Layout.preferredWidth: 1
+                  height: 26
+                  radius: 6
+                  color: exportMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+
+                  RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    spacing: 8
+                    Text { text: ""; font.family: Style.font.family; font.pixelSize: 10; color: Color.accent }
+                    Text { Layout.fillWidth: true; text: "Export..."; font.family: Style.font.family; font.pixelSize: 11; color: Color.foreground; elide: Text.ElideRight }
+                  }
+                  MouseArea {
+                    id: exportMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                      desktopContextMenu.isOpen = false
+                      root.exportCurrentProfile()
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
 
         // ⚙️ Global Widget Preferences Dialog
         PreferencesDialog {
