@@ -99,9 +99,11 @@ def list_folder(folder_path):
 
                 try:
                     stat = entry.stat(follow_symlinks=True)
-                    size_str = format_size(stat.st_size) if not is_dir else ""
+                    size_bytes = stat.st_size if not is_dir else 0
+                    size_str = format_size(size_bytes) if not is_dir else ""
                     mtime = int(stat.st_mtime)
                 except Exception:
+                    size_bytes = 0
                     size_str = ""
                     mtime = 0
 
@@ -128,12 +130,14 @@ def list_folder(folder_path):
                     "exec": app_exec,
                     "terminal": terminal,
                     "size": size_str,
+                    "size_bytes": size_bytes,
                     "mtime": mtime
                 })
     except Exception as e:
         pass
 
-    # Sort: folders first, then desktop apps / files alphabetically
+    # Sort: folders first, then desktop apps / files alphabetically. The widget
+    # re-sorts by its chosen key; this keeps the raw listing order stable.
     items.sort(key=lambda x: (not x['is_dir'], x['display_name'].lower()))
 
     print(json.dumps({

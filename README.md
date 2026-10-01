@@ -62,6 +62,7 @@ Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GP
     - Transparent or frosted glass desktop card displaying files and directories (defaults to `~/Desktop`).
     - Full `.desktop` launcher shortcut support with actual application names and icons.
     - Interactive directory drill-down with breadcrumb back navigation and native file chooser dialog.
+    - Icons or Details view (size and modified columns, click a header to sort), persistent sort by name / date / size / type, folders kept on top with their own name / date sort (or mixed in with files), and an item spacing slider in the right-click menu.
 13. **🪙 Coin Tracker** (`widgets/CoinTrackerWidget.qml`)
     - Live cryptocurrency market tracker featuring multi-coin watchlist, cycling navigation, and custom Coinbase coin adding.
     - Interactive 24-hour canvas sparkline area chart with hover scrubber crosshair and hourly price tooltips.
