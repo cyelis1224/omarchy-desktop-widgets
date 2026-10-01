@@ -274,7 +274,7 @@ Open the preferences dialog at any time via:
      - **Coarse (40px)**: Bold modular alignment for large displays.
 6. **Auto-Hide Behavior Modes**:
    - Customize when widgets automatically hide beneath applications:
-     - **Hide on Any Window (Tiled)** *(Default)*: Widgets hide whenever any window is active on the current workspace.
+     - **Hide Behind Tiled Windows** *(Default)*: Widgets hide when tiled or fullscreen windows cover the desktop. Floating windows leave them visible.
      - **Hide on Fullscreen Only**: Widgets stay visible beneath floating and tiled windows, hiding only when an app goes fullscreen.
      - **Always Keep Visible**: Widgets remain permanently rendered on the desktop canvas behind windows.
      - **Manual Toggle Only**: Widgets disregard window states; toggle manually via top bar or shortcut.

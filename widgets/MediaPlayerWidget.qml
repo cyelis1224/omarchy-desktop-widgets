@@ -221,9 +221,8 @@ WidgetCard {
   property real animPhase: 0
   property bool visualizerFlat: false
 
-  // Each tick replaces the Repeater model (rebuilding all 24 bars), so only
-  // tick while bars can be seen and are moving: keep going while playing, and
-  // once more after playback stops to flatten them, then idle.
+  // Only tick while bars can be seen and are moving: keep going while
+  // playing, and once more after playback stops to flatten them, then idle.
   Timer {
     interval: 65
     running: mediaWidgetRoot.visible && mediaWidgetRoot.showVisualizer && (mediaWidgetRoot.isPlaying || !mediaWidgetRoot.visualizerFlat)
@@ -494,22 +493,20 @@ WidgetCard {
         anchors.centerIn: parent
         spacing: Style.space(4)
 
+        // A fixed count, with each bar reading its own height: binding the
+        // array itself as the model would rebuild all 24 bars on every tick.
         Repeater {
-          model: mediaWidgetRoot.visualizerHeights
+          model: mediaWidgetRoot.visualizerHeights.length
 
           Rectangle {
-            required property int modelData
             required property int index
 
             width: 7
-            height: Math.max(3, Math.round(modelData * 0.55))
+            height: Math.max(3, Math.round(mediaWidgetRoot.visualizerHeights[index] * 0.55))
             radius: 3.5
             color: Color.accent
             opacity: mediaWidgetRoot.isPlaying ? 0.95 : 0.40
 
-            Behavior on height {
-              NumberAnimation { duration: 75; easing.type: Easing.OutQuad }
-            }
             Behavior on opacity {
               NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
             }

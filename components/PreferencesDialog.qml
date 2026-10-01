@@ -944,8 +944,8 @@ Item {
             model: [
               {
                 idVal: "tiled",
-                title: "Hide on Any Active Window (Default)",
-                desc: "Widgets automatically hide whenever any app window is open on the workspace.",
+                title: "Hide Behind Tiled Windows (Default)",
+                desc: "Widgets hide when tiled or fullscreen windows cover the desktop. Floating windows leave them visible.",
                 icon: "\uf2d0"
               },
               {

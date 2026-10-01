@@ -125,6 +125,23 @@ Item {
     id: widgetRegistry
   }
 
+  // One CPU / RAM / GPU poller for every System Monitor instance, loaded
+  // while the widget is enabled on at least one monitor.
+  readonly property bool sysmonInUse: {
+    var screens = Quickshell.screens
+    for (var i = 0; i < screens.length; i++) {
+      if (root.isWidgetActiveOnMonitor("sysmon", screens[i].name)) return true
+    }
+    return false
+  }
+  readonly property var sysmonSampler: sysmonSamplerLoader.item
+
+  Loader {
+    id: sysmonSamplerLoader
+    active: root.sysmonInUse
+    source: "widgets/SysmonSampler.qml"
+  }
+
   readonly property string manageScriptPath: Qt.resolvedUrl("manage-positions.sh").toString().replace(/^file:\/\//, "")
 
   property bool hasSavedLayout: false
@@ -679,6 +696,29 @@ Item {
     }
   }
 
+  // Whether a window floats is only in HyprlandToplevel.lastIpcObject, which
+  // Quickshell fills on refreshToplevels() and does not update when a window
+  // opens, toggles floating or changes workspace. Debounced so a burst of
+  // events costs one `clients` request.
+  Timer {
+    id: toplevelRefreshTimer
+    interval: 30
+    repeat: false
+    onTriggered: Hyprland.refreshToplevels()
+  }
+
+  Connections {
+    target: Hyprland
+    function onRawEvent(event) {
+      var n = event.name
+      if (n === "openwindow" || n === "changefloatingmode" || n === "movewindow" || n === "movewindowv2") {
+        toplevelRefreshTimer.restart()
+      }
+    }
+  }
+
+  Component.onCompleted: Hyprland.refreshToplevels()
+
   function isMediaPlaying() {
     try {
       var players = Mpris.players ? Mpris.players.values : []
@@ -925,22 +965,34 @@ Item {
           return !!((ws && ws.toplevels && ws.toplevels.values.length > 0) || (ws && ws.windows > 0))
         }
 
-        readonly property bool hasFullscreenWindows: {
-          var dummy = ToplevelManager.toplevels.values.length
+        // Tiled windows fill the monitor, floating ones only cover part of it.
+        // A window whose IPC object has not been refreshed yet counts as not
+        // tiled: a new floating window then never starts a fade-out, and a
+        // tiled one hides as soon as the refresh lands.
+        readonly property bool hasTiledWindows: {
           var ws = desktopWindow.monitorWorkspace
           if (!ws || !ws.toplevels) return false
-          for (var i = 0; i < ws.toplevels.values.length; i++) {
-            if (ws.toplevels.values[i].fullscreen) return true
+          var tops = ws.toplevels.values
+          for (var i = 0; i < tops.length; i++) {
+            var ipc = tops[i].lastIpcObject
+            if (ipc && ipc.floating === false) return true
           }
           return false
         }
 
+        readonly property bool hasFullscreenWindows: {
+          var ws = desktopWindow.monitorWorkspace
+          return !!(ws && ws.hasFullscreen)
+        }
+
+        readonly property bool coveredByWindows: desktopWindow.hasTiledWindows || desktopWindow.hasFullscreenWindows
+
         readonly property bool isAutoHidden: {
-          if (autoHideMode === "tiled") return desktopWindow.hasOpenWindows
+          if (autoHideMode === "tiled") return desktopWindow.coveredByWindows
           if (autoHideMode === "fullscreen") return desktopWindow.hasFullscreenWindows
           if (autoHideMode === "always") return false
           if (autoHideMode === "manual") return false
-          return desktopWindow.hasOpenWindows
+          return desktopWindow.coveredByWindows
         }
 
         // Unmap the full-screen surface once windows cover the desktop and the fade-out

@@ -9,8 +9,9 @@ import qs.Ui
 
 // CPU / RAM / GPU utilization history on a log-time axis (ported from the
 // ezp.sysmon floating panel). WidgetCard supplies positioning, resizing, the
-// context menu and settings persistence; this file keeps the poller, the
-// tiered history buffers, the chart and the readouts.
+// context menu and settings persistence; this file keeps the chart and the
+// readouts. The poller and the tiered history buffers live in SysmonSampler,
+// shared by every instance.
 WidgetCard {
   id: sysmonRoot
 
@@ -634,207 +635,46 @@ WidgetCard {
   }
 
   // ---------------------------------------------------------------------------
-  // Poller: CPU / RAM / GPU / top processes, one sh process every 2 s
+  // Data: polled once for every instance by SysmonSampler, which
+  // DesktopWidgets.qml owns and exposes as rootRef.sysmonSampler
   // ---------------------------------------------------------------------------
-  // CPU use over the last poll interval, as a share of all cores (what btop
-  // shows); -1 until the second poll, since it needs a /proc/stat delta
-  property real cpuPct: -1
-  property real lastTotal: -1
-  property real lastIdle: -1
-  // utime + stime ticks per process at the previous poll, keyed "pid_starttime"
-  // so a reused pid is never mistaken for the old process
-  property var procTicks: ({})
+  readonly property var sampler: (rootRef && rootRef.sysmonSampler) ? rootRef.sysmonSampler : null
 
-  property real memUsedPct: -1
-  property real memTotalKb: 0
-  property real memAvailKb: 0
+  // -1 while unknown: CPU until the second poll, GPU until nvidia-smi answers
+  // (its readout stays hidden)
+  readonly property real cpuPct: sampler ? sampler.cpuPct : -1
+  readonly property real memUsedPct: sampler ? sampler.memUsedPct : -1
+  readonly property real gpuPct: sampler ? sampler.gpuPct : -1
 
-  // nvidia-smi; -1 until the first successful read (GPU readout stays hidden)
-  property real gpuPct: -1
-  property real gpuMemUsedMb: 0
-  property real gpuMemTotalMb: 0
+  // Tiered histories, each tier newest-LAST; SysmonSampler documents the layout
+  readonly property int baseInterval: sampler ? sampler.baseInterval : 2
+  readonly property int decimation: sampler ? sampler.decimation : 10
+  readonly property var cpuHistory: sampler ? sampler.cpuHistory : [[], []]
+  readonly property var memHistory: sampler ? sampler.memHistory : [[], []]
+  readonly property var gpuHistory: sampler ? sampler.gpuHistory : [[], []]
 
-  // Tiered in-memory history for the chart. Tier t holds up to
-  // tierLengths[t] samples spaced baseInterval * decimation^t seconds apart:
-  // 15 min at 2s, then 1 h at 20s. Every decimation-th sample of a tier is
-  // averaged into the next coarser tier, so memory stays constant. The fine
-  // tier is long enough that the linear time scales up to 15 min are drawn
-  // entirely at 2s resolution; beyond that a 20s mean is still under 2px
-  // wide at the default card size. Each tier array is newest-LAST. Invalid
-  // samples are -1 (GPU absent, first CPU poll); the mean ignores them and
-  // the chart draws them as gaps.
-  readonly property int baseInterval: 2 // seconds, matches pollTimer below
-  readonly property var tierLengths: [451, 181]
-  readonly property int tierCount: tierLengths.length
-  readonly property int decimation: 10
-  property var cpuHistory: [[], []]
-  property var memHistory: [[], []]
-  property var gpuHistory: [[], []]
-  // Finer samples waiting to be averaged into tier t+1, one accumulator per
-  // tier boundary.
-  property var cpuPending: [[]]
-  property var memPending: [[]]
-  property var gpuPending: [[]]
-
-  property string topCpuName: ""
-  property real topCpuPct: -1
-  property string topMemName: ""
-  property real topMemPct: -1
+  readonly property string topCpuName: sampler ? sampler.topCpuName : ""
+  readonly property real topCpuPct: sampler ? sampler.topCpuPct : -1
+  readonly property string topMemName: sampler ? sampler.topMemName : ""
+  readonly property real topMemPct: sampler ? sampler.topMemPct : -1
   // Process with the highest GPU utilization; empty while no process is using the GPU
-  property string topGpuName: ""
-  property real topGpuPct: -1
+  readonly property string topGpuName: sampler ? sampler.topGpuName : ""
+  readonly property real topGpuPct: sampler ? sampler.topGpuPct : -1
 
-  function isValidSample(v) {
-    return typeof v === "number" && isFinite(v) && v >= 0
+  // The sampler scans processes only while some instance has the Top line
+  // enabled and on screen; topSampler is the one this instance is counted on.
+  property var topSampler: null
+  function syncTopInterest() {
+    var want = (showTop && visible) ? sampler : null
+    if (want === topSampler) return
+    if (topSampler) topSampler.topViewers--
+    if (want) want.topViewers++
+    topSampler = want
   }
-
-  function meanValid(list) {
-    const ok = list.filter(sysmonRoot.isValidSample)
-    return ok.length ? ok.reduce((a, b) => a + b, 0) / ok.length : -1
-  }
-
-  // Appends one sample to tier 0 and cascades a mean into each coarser tier
-  // whose accumulator fills. Returns { tiers, pending } built from NEW arrays:
-  // QML `var` properties only emit their change signal on assignment, never
-  // on an in-place push, so callers must assign both results back.
-  function pushTiered(hist, pending, value) {
-    const tiers = hist.slice()
-    const pend = pending.slice()
-    let v = value
-    for (let t = 0; t < sysmonRoot.tierCount; t++) {
-      const tier = tiers[t].slice(-(sysmonRoot.tierLengths[t] - 1))
-      tier.push(v)
-      tiers[t] = tier
-      if (t === sysmonRoot.tierCount - 1) break
-      const acc = pend[t].slice()
-      acc.push(v)
-      if (acc.length < sysmonRoot.decimation) {
-        pend[t] = acc
-        break
-      }
-      pend[t] = []
-      v = sysmonRoot.meanValid(acc)
-    }
-    return { tiers: tiers, pending: pend }
-  }
-
-  function parse(text) {
-    const lines = text.trim().split("\n")
-    // Live top CPU process: the largest tick delta since the previous poll, as
-    // a share of the all-core jiffies elapsed over the same interval, so it is
-    // on the same scale as cpuPct (and btop's default per-process CPU%).
-    let totalDelta = 0
-    let sawProcs = false
-    const ticks = {}
-    let bestDelta = -1
-    let bestName = ""
-    for (const line of lines) {
-      const parts = line.trim().split(/\s+/)
-      if (parts[0] === "P") {
-        // "P <pid_starttime> <ticks> <comm, may contain spaces>"
-        sawProcs = true
-        const t = Number(parts[2])
-        ticks[parts[1]] = t
-        const prev = sysmonRoot.procTicks[parts[1]]
-        if (prev !== undefined && t - prev > bestDelta) {
-          bestDelta = t - prev
-          bestName = parts.slice(3).join(" ")
-        }
-      } else if (parts[0] === "cpu") {
-        const nums = parts.slice(1).map(Number)
-        const idle = nums[3] + (nums[4] || 0)
-        const total = nums.reduce((a, b) => a + b, 0)
-        if (sysmonRoot.lastTotal >= 0 && total > sysmonRoot.lastTotal) {
-          totalDelta = total - sysmonRoot.lastTotal
-          const pct = 100 * (1 - (idle - sysmonRoot.lastIdle) / totalDelta)
-          sysmonRoot.cpuPct = Math.max(0, Math.min(100, pct))
-        }
-        sysmonRoot.lastTotal = total
-        sysmonRoot.lastIdle = idle
-      } else if (parts[0] === "MemTotal:") {
-        sysmonRoot.memTotalKb = Number(parts[1])
-      } else if (parts[0] === "MemAvailable:") {
-        sysmonRoot.memAvailKb = Number(parts[1])
-      } else if (parts[0] === "GPU") {
-        const nums = line.slice(4).split(",").map(Number)
-        if (nums.length === 3 && nums.every(isFinite)) {
-          sysmonRoot.gpuPct = nums[0]
-          sysmonRoot.gpuMemUsedMb = nums[1]
-          sysmonRoot.gpuMemTotalMb = nums[2]
-        }
-      } else if (parts[0] === "TOPMEM" && parts.length >= 3) {
-        // comm may contain spaces ("Web Content"); the percentage is the last column
-        sysmonRoot.topMemName = parts.slice(1, -1).join(" ")
-        sysmonRoot.topMemPct = Number(parts[parts.length - 1])
-      } else if (parts[0] === "TOPGPU") {
-        // "TOPGPU" alone means no process reported GPU utilization this poll
-        sysmonRoot.topGpuName = parts.length >= 3 ? parts.slice(1, -1).join(" ") : ""
-        sysmonRoot.topGpuPct = parts.length >= 3 ? Number(parts[parts.length - 1]) : -1
-      }
-    }
-    if (sysmonRoot.memTotalKb > 0)
-      sysmonRoot.memUsedPct = 100 * (1 - sysmonRoot.memAvailKb / sysmonRoot.memTotalKb)
-
-    if (sawProcs) {
-      if (bestDelta >= 0 && totalDelta > 0) {
-        sysmonRoot.topCpuName = bestName
-        sysmonRoot.topCpuPct = Math.min(100, 100 * bestDelta / totalDelta)
-      } else {
-        // First poll with process data: no previous snapshot to diff against yet
-        sysmonRoot.topCpuName = ""
-        sysmonRoot.topCpuPct = -1
-      }
-      sysmonRoot.procTicks = ticks
-    } else if (Object.keys(sysmonRoot.procTicks).length > 0) {
-      // Top line hidden: drop the snapshot so re-enabling never diffs a stale one
-      sysmonRoot.procTicks = ({})
-    }
-
-    // All three series are pushed every poll (GPU as -1 when unavailable) so
-    // their tiers stay index-aligned and share one age sequence in the chart.
-    const c = sysmonRoot.pushTiered(sysmonRoot.cpuHistory, sysmonRoot.cpuPending, sysmonRoot.cpuPct)
-    sysmonRoot.cpuHistory = c.tiers
-    sysmonRoot.cpuPending = c.pending
-    const m = sysmonRoot.pushTiered(sysmonRoot.memHistory, sysmonRoot.memPending, sysmonRoot.memUsedPct)
-    sysmonRoot.memHistory = m.tiers
-    sysmonRoot.memPending = m.pending
-    const g = sysmonRoot.pushTiered(sysmonRoot.gpuHistory, sysmonRoot.gpuPending, sysmonRoot.gpuPct >= 0 ? sysmonRoot.gpuPct : -1)
-    sysmonRoot.gpuHistory = g.tiers
-    sysmonRoot.gpuPending = g.pending
-  }
-
-  Process {
-    id: statProc
-    // The process scans only run while the Top line is enabled and the widget is shown
-    command: ["sh", "-c",
-      "head -1 /proc/stat; " +
-      "grep -E '^(MemTotal|MemAvailable):' /proc/meminfo; " +
-      "echo \"GPU $(nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null | head -1)\"; " +
-      (sysmonRoot.showTop && sysmonRoot.visible
-        // One "P <pid_starttime> <utime+stime ticks> <comm>" line per process that
-        // has used any CPU; parse() diffs them against the previous poll. comm is
-        // everything between the first "(" and the last ")" of /proc/<pid>/stat.
-        ? "awk '{ s = $0; i = 0; while ((j = index(substr(s, i + 1), \")\")) > 0) i += j; o = index(s, \"(\"); split(substr(s, i + 2), f, \" \"); t = f[12] + f[13]; if (t > 0) print \"P\", $1 \"_\" f[20], t, substr(s, o + 1, i - o - 1) }' /proc/[0-9]*/stat 2>/dev/null; " +
-          "echo \"TOPMEM $(ps -eo comm,%mem --sort=-%mem --no-headers | head -1)\"; " +
-          // Per-process GPU utilization ("sm" column); the header row gives the column
-          // positions, which differ between driver versions
-          "echo \"TOPGPU $(nvidia-smi pmon -c 1 -s u 2>/dev/null | awk 'NR == 1 { for (i = 2; i <= NF; i++) { if ($i == \"sm\") s = i - 1; if ($i == \"command\") c = i - 1 } next } /^#/ { next } s && c && $s + 0 > max { max = $s + 0; name = $c } END { if (name != \"\") print name, max }')\""
-        : "")]
-    stdout: StdioCollector {
-      onStreamFinished: sysmonRoot.parse(this.text)
-    }
-  }
-
-  // Keeps running while hidden so the history stays continuous; the canvas
-  // below skips repaints until it is visible again.
-  Timer {
-    id: pollTimer
-    interval: sysmonRoot.baseInterval * 1000
-    running: true
-    repeat: true
-    triggeredOnStart: true
-    onTriggered: if (!statProc.running) statProc.running = true
-  }
+  onShowTopChanged: syncTopInterest()
+  onVisibleChanged: syncTopInterest()
+  onSamplerChanged: syncTopInterest()
+  Component.onDestruction: if (topSampler) topSampler.topViewers--
 
   // ---------------------------------------------------------------------------
   // Layout
@@ -1176,10 +1016,11 @@ WidgetCard {
 
         // Cached per series so hover bindings don't rebuild on every mouse
         // move. All three are pushed every poll, so they share one age
-        // sequence and one hover index.
-        readonly property var cPts: agePoints(cHist)
-        readonly property var mPts: agePoints(mHist)
-        readonly property var gPts: agePoints(gHist)
+        // sequence and one hover index. Not rebuilt while hidden: sampling
+        // goes on behind windows, and onPaint is skipped there anyway.
+        readonly property var cPts: visible ? agePoints(cHist) : []
+        readonly property var mPts: visible ? agePoints(mHist) : []
+        readonly property var gPts: visible ? agePoints(gHist) : []
         readonly property int sampleCount: cPts.length
 
         // Hover state fed by hoverArea (a no-button MouseArea, so right-clicks

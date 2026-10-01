@@ -56,6 +56,18 @@ Item {
   // Recessed panel (graph wells, clock sub-dials): darker than the card in either theme
   readonly property color wellColor: lightTheme ? fgTint(0.06) : Qt.rgba(0, 0, 0, 0.35)
 
+  // Drop shadow, drawn analytically behind the card. A layer effect on
+  // cardSurface would re-render the whole card offscreen and re-blur it every
+  // time anything inside changes (a clock tick, a graph repaint).
+  RectangularShadow {
+    anchors.fill: cardSurface
+    visible: !widgetCardRoot.frameless && ((rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true) && (!widgetCardRoot.transparentBg || widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode))
+    radius: cardSurface.radius
+    color: Qt.rgba(0, 0, 0, widgetCardRoot.isDragging ? 0.28 : 0.22)
+    blur: widgetCardRoot.isDragging ? 26 : 18
+    offset.y: widgetCardRoot.isDragging ? 5 : 3
+  }
+
   // Visual container
   Rectangle {
     id: cardSurface
@@ -64,14 +76,6 @@ Item {
     color: widgetCardRoot.frameless ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : "transparent") : (widgetCardRoot.transparentBg ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.20)) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85))
     border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Color.accent : (widgetCardRoot.frameless ? "transparent" : (widgetCardRoot.transparentBg ? widgetCardRoot.fgTint(0.10) : widgetCardRoot.fgTint(0.12)))
     border.width: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? 2 : (widgetCardRoot.frameless ? 0 : 1)
-
-    layer.enabled: !widgetCardRoot.frameless
-    layer.effect: MultiEffect {
-      shadowEnabled: ((rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true) && (!widgetCardRoot.transparentBg || widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode))
-      shadowColor: Qt.rgba(0, 0, 0, widgetCardRoot.isDragging ? 0.28 : 0.22)
-      shadowBlur: widgetCardRoot.isDragging ? 0.65 : 0.45
-      shadowVerticalOffset: widgetCardRoot.isDragging ? 5 : 3
-    }
 
     ColumnLayout {
       anchors.fill: parent

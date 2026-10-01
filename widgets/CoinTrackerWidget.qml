@@ -304,6 +304,8 @@ WidgetCard {
   property string lastUpdated: "--"
   property bool isLoading: false
   property bool isStale: false
+  // Emitted after each successful fetch; the header dot pulses on it
+  signal priceUpdated()
   property string errorMessage: ""
 
   // Hover inspection on sparkline
@@ -378,6 +380,7 @@ WidgetCard {
             btcWidgetRoot.lastUpdated = data.last_updated || ""
             btcWidgetRoot.isStale = Boolean(data.is_stale)
             btcWidgetRoot.errorMessage = ""
+            btcWidgetRoot.priceUpdated()
           } else {
             btcWidgetRoot.errorMessage = data.message || "Failed to fetch crypto feed"
           }
@@ -1469,13 +1472,21 @@ WidgetCard {
         radius: 3
         color: btcWidgetRoot.isStale ? "#F59E0B" : btcWidgetRoot.trendColor
 
-        // An infinite animation drives a repaint every frame, even behind
-        // windows; only pulse while the card is actually on screen.
+        // Pulses twice when a fresh price lands. An endless pulse would
+        // redraw the whole desktop surface every frame for a 6px dot.
         SequentialAnimation on opacity {
-          running: btcWidgetRoot.visible
-          loops: Animation.Infinite
+          id: pulseAnim
+          running: false
+          loops: 2
           NumberAnimation { from: 1.0; to: 0.3; duration: 1000; easing.type: Easing.InOutQuad }
           NumberAnimation { from: 0.3; to: 1.0; duration: 1000; easing.type: Easing.InOutQuad }
+        }
+
+        Connections {
+          target: btcWidgetRoot
+          function onPriceUpdated() {
+            if (btcWidgetRoot.visible) pulseAnim.restart()
+          }
         }
       }
 
