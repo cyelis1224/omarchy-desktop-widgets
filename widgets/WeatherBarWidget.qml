@@ -66,7 +66,7 @@ Item {
     implicitWidth: rowLayout.implicitWidth + 16
     radius: Style.cornerRadius || 8
     color: mouseArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.65)
-    border.color: Qt.rgba(1, 1, 1, 0.12)
+    border.color: Util.alpha(Color.foreground, 0.12)
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 150 } }

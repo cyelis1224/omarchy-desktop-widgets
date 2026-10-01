@@ -117,7 +117,6 @@ WidgetCard {
   // theme's dark or light background.
   // ---------------------------------------------------------------------------
   property var themePalette: ({})
-  readonly property bool darkTheme: Color.background.hslLightness < 0.5
 
   function loadThemePalette(raw) {
     var map = {}
@@ -135,7 +134,7 @@ WidgetCard {
       var c = Qt.color(hex)
       if (c.hslSaturation >= 0.12) return c
     }
-    return Qt.hsla(fallbackHue, 0.7, darkTheme ? 0.68 : 0.4, 1)
+    return Qt.hsla(fallbackHue, 0.7, lightTheme ? 0.4 : 0.68, 1)
   }
 
   readonly property color cpuColor: seriesColor("blue", 0.61)
@@ -268,7 +267,7 @@ WidgetCard {
             radius: 10
             color: sysmonRoot.timeScaleMenuOpen
               ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-              : Qt.rgba(1, 1, 1, 0.06)
+              : sysmonRoot.fgTint(0.06)
             border.color: sysmonRoot.timeScaleMenuOpen ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
             border.width: 1
 
@@ -312,7 +311,7 @@ WidgetCard {
         Layout.rightMargin: Style.space(6)
         implicitHeight: scaleOptionsCol.implicitHeight + 8
         radius: 6
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: sysmonRoot.fgTint(0.04)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
         border.width: 1
 
@@ -335,7 +334,7 @@ WidgetCard {
               radius: 5
               color: isSelected
                 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-                : (scaleOptionMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+                : (scaleOptionMouse.containsMouse ? sysmonRoot.fgTint(0.08) : "transparent")
 
               RowLayout {
                 anchors.fill: parent
@@ -509,7 +508,7 @@ WidgetCard {
             width: 20
             height: 20
             radius: 10
-            color: minusMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+            color: minusMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : sysmonRoot.fgTint(0.08)
             opacity: sysmonRoot.highThreshold > 50 ? 1 : 0.4
 
             Text {
@@ -543,7 +542,7 @@ WidgetCard {
             width: 20
             height: 20
             radius: 10
-            color: plusMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+            color: plusMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : sysmonRoot.fgTint(0.08)
             opacity: sysmonRoot.highThreshold < 100 ? 1 : 0.4
 
             Text {
@@ -569,7 +568,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: sysmonRoot.fgTint(0.08)
         Layout.topMargin: 4
         Layout.bottomMargin: 4
       }
@@ -921,7 +920,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeSysmonMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeSysmonMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : sysmonRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -952,7 +951,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: sysmonGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: sysmonGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : sysmonRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -1004,8 +1003,8 @@ WidgetCard {
       Layout.minimumHeight: 56
       implicitHeight: 84
       radius: 10
-      color: Qt.rgba(0, 0, 0, 0.35)
-      border.color: Qt.rgba(1, 1, 1, 0.06)
+      color: sysmonRoot.wellColor
+      border.color: sysmonRoot.fgTint(0.06)
       border.width: 1
       clip: true
 
@@ -1241,7 +1240,7 @@ WidgetCard {
           y: Math.max(0, Math.min(graph.height - height,
             graph.hoverY - height - Style.space(10)))
           radius: 6
-          color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+          color: sysmonRoot.bgTint(0.95)
           border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.55)
           border.width: 1
 
@@ -1437,8 +1436,8 @@ WidgetCard {
         implicitWidth: topTagText.implicitWidth + 10
         implicitHeight: 15
         radius: 7.5
-        color: Qt.rgba(1, 1, 1, 0.06)
-        border.color: Qt.rgba(1, 1, 1, 0.10)
+        color: sysmonRoot.fgTint(0.06)
+        border.color: sysmonRoot.fgTint(0.10)
         border.width: 1
 
         Text {
@@ -1477,7 +1476,7 @@ WidgetCard {
             Layout.preferredWidth: 1
             Layout.preferredHeight: 10
             Layout.rightMargin: Style.space(6)
-            color: Qt.rgba(1, 1, 1, 0.12)
+            color: sysmonRoot.fgTint(0.12)
           }
 
           Text {

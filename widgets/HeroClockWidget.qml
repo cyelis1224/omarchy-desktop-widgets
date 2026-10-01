@@ -187,10 +187,10 @@ Item {
       ctx.scale(1.0, ry / rx)
 
       var grad = ctx.createRadialGradient(0, 0, 0, 0, 0, rx)
-      grad.addColorStop(0.0, "rgba(0, 0, 0, 0.20)")
-      grad.addColorStop(0.35, "rgba(0, 0, 0, 0.12)")
-      grad.addColorStop(0.70, "rgba(0, 0, 0, 0.05)")
-      grad.addColorStop(1.0, "rgba(0, 0, 0, 0.0)")
+      grad.addColorStop(0.0, Util.alpha(Color.background, 0.20))
+      grad.addColorStop(0.35, Util.alpha(Color.background, 0.12))
+      grad.addColorStop(0.70, Util.alpha(Color.background, 0.05))
+      grad.addColorStop(1.0, Util.alpha(Color.background, 0.0))
 
       ctx.fillStyle = grad
       ctx.beginPath()
@@ -201,6 +201,12 @@ Item {
 
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
+
+    // Gradient stops derive from the theme background; repaint when it changes
+    Connections {
+      target: Color
+      function onBackgroundChanged() { centralShadowBackdrop.requestPaint() }
+    }
   }
 
   // Hover / Move Handle on top of clock
@@ -212,7 +218,7 @@ Item {
     width: 22
     height: 22
     radius: 11
-    color: clockGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+    color: clockGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Util.alpha(Color.background, 0.6)
     border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
     border.width: 1
     opacity: clockGripArea.containsMouse || clockGripArea.drag.active || (rootRef && rootRef.layoutEditMode) ? 1.0 : 0.0
@@ -269,7 +275,7 @@ Item {
     width: 22
     height: 22
     radius: 11
-    color: closeClockMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+    color: closeClockMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Util.alpha(Color.background, 0.6)
     border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
     border.width: 1
     opacity: clockGripArea.containsMouse || clockGripArea.drag.active || (rootRef && rootRef.layoutEditMode) ? 1.0 : 0.0
@@ -328,7 +334,7 @@ Item {
       color: Color.accent
       opacity: 0.95
       style: Text.Outline
-      styleColor: Qt.rgba(0, 0, 0, 0.75)
+      styleColor: Util.alpha(Color.background, 0.75)
     }
 
     // ⛅ Weather Status Line (Below greeting, click to toggle °F / °C)
@@ -361,7 +367,7 @@ Item {
           color: Color.accent
           opacity: 0.9
           style: Text.Outline
-          styleColor: Qt.rgba(0, 0, 0, 0.75)
+          styleColor: Util.alpha(Color.background, 0.75)
         }
 
         Text {
@@ -371,7 +377,7 @@ Item {
           color: Color.foreground
           opacity: 0.85
           style: Text.Outline
-          styleColor: Qt.rgba(0, 0, 0, 0.75)
+          styleColor: Util.alpha(Color.background, 0.75)
         }
       }
 
@@ -396,7 +402,7 @@ Item {
       font.letterSpacing: 2
       color: Color.foreground
       style: Text.Raised
-      styleColor: Qt.rgba(0, 0, 0, 0.85)
+      styleColor: Util.alpha(Color.background, 0.85)
     }
 
     Text {
@@ -407,7 +413,7 @@ Item {
       font.weight: Font.Medium
       color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.85)
       style: Text.Outline
-      styleColor: Qt.rgba(0, 0, 0, 0.75)
+      styleColor: Util.alpha(Color.background, 0.75)
     }
   }
 
@@ -509,7 +515,7 @@ Item {
     height: menuHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
+    color: Util.alpha(Color.menu.background, 0.96)
     border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
     border.width: 1.5
 
@@ -565,7 +571,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: clockCloseMenuMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: clockCloseMenuMouse.containsMouse ? Util.alpha(Color.foreground, 0.22) : Util.alpha(Color.foreground, 0.08)
 
           Text {
             anchors.centerIn: parent
@@ -589,7 +595,7 @@ Item {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: Util.alpha(Color.foreground, 0.08)
         Layout.bottomMargin: 3
       }
 
@@ -942,7 +948,7 @@ Item {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: Util.alpha(Color.foreground, 0.08)
         Layout.topMargin: 3
         Layout.bottomMargin: 3
       }

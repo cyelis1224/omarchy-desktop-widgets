@@ -306,8 +306,8 @@ WidgetCard {
         width: 26
         height: 26
         radius: 13
-        color: refreshHover.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.1)
+        color: refreshHover.containsMouse ? weatherWidgetRoot.fgTint(0.12) : weatherWidgetRoot.fgTint(0.05)
+        border.color: weatherWidgetRoot.fgTint(0.1)
         border.width: 1
 
         Text {
@@ -341,7 +341,7 @@ WidgetCard {
         width: 48
         height: 24
         radius: 12
-        color: unitHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+        color: unitHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : weatherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
         border.width: 1
 
@@ -388,7 +388,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeWeatherMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeWeatherMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : weatherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -420,7 +420,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: weatherGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: weatherGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : weatherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -536,8 +536,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: weatherWidgetRoot.fgTint(0.05)
+        border.color: weatherWidgetRoot.fgTint(0.08)
         border.width: 1
 
         RowLayout {
@@ -564,8 +564,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: weatherWidgetRoot.fgTint(0.05)
+        border.color: weatherWidgetRoot.fgTint(0.08)
         border.width: 1
 
         RowLayout {
@@ -592,8 +592,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: weatherWidgetRoot.fgTint(0.05)
+        border.color: weatherWidgetRoot.fgTint(0.08)
         border.width: 1
 
         RowLayout {
@@ -631,8 +631,8 @@ WidgetCard {
           Layout.fillWidth: true
           Layout.fillHeight: true
           radius: 10
-          color: Qt.rgba(1, 1, 1, 0.04)
-          border.color: Qt.rgba(1, 1, 1, 0.06)
+          color: weatherWidgetRoot.fgTint(0.04)
+          border.color: weatherWidgetRoot.fgTint(0.06)
           border.width: 1
 
           ColumnLayout {

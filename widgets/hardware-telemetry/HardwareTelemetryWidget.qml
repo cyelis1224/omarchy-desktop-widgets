@@ -191,7 +191,7 @@ WidgetCard {
             implicitHeight: 28
             radius: 6
             readonly property bool isSelected: hwWidgetRoot.useFahrenheit === modelData.isFahr
-            color: unitMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.06))
+            color: unitMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18) : hwWidgetRoot.fgTint(0.06))
             border.color: isSelected ? Color.accent : "transparent"
             border.width: 1
 
@@ -336,7 +336,7 @@ WidgetCard {
             implicitHeight: 24
             radius: 6
             readonly property bool isSelected: Math.abs(hwWidgetRoot.alertThresholdDeg - modelData.val) < 1.0
-            color: thMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.06))
+            color: thMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18) : hwWidgetRoot.fgTint(0.06))
             border.color: isSelected ? Color.accent : "transparent"
             border.width: 1
 
@@ -558,7 +558,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : hwWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -589,7 +589,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+        color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : hwWidgetRoot.fgTint(0.08))
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -645,8 +645,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 130
         radius: 14
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: hwWidgetRoot.fgTint(0.04)
+        border.color: hwWidgetRoot.fgTint(0.08)
         border.width: 1
 
         ColumnLayout {
@@ -673,7 +673,7 @@ WidgetCard {
                 // Track
                 ctx.beginPath()
                 ctx.arc(cx, cy, radius, startAngle, endAngle)
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.08)"
+                ctx.strokeStyle = hwWidgetRoot.fgTint(0.08)
                 ctx.lineWidth = 6
                 ctx.lineCap = "round"
                 ctx.stroke()
@@ -736,8 +736,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 130
         radius: 14
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: hwWidgetRoot.fgTint(0.04)
+        border.color: hwWidgetRoot.fgTint(0.08)
         border.width: 1
 
         ColumnLayout {
@@ -764,7 +764,7 @@ WidgetCard {
                 // Track
                 ctx.beginPath()
                 ctx.arc(cx, cy, radius, startAngle, endAngle)
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.08)"
+                ctx.strokeStyle = hwWidgetRoot.fgTint(0.08)
                 ctx.lineWidth = 6
                 ctx.lineCap = "round"
                 ctx.stroke()
@@ -842,8 +842,8 @@ WidgetCard {
           Layout.fillWidth: true
           implicitHeight: 34
           radius: 8
-          color: Qt.rgba(1, 1, 1, 0.04)
-          border.color: Qt.rgba(1, 1, 1, 0.07)
+          color: hwWidgetRoot.fgTint(0.04)
+          border.color: hwWidgetRoot.fgTint(0.07)
           border.width: 1
 
           RowLayout {
@@ -873,7 +873,7 @@ WidgetCard {
               Layout.fillWidth: true
               height: 6
               radius: 3
-              color: Qt.rgba(1, 1, 1, 0.08)
+              color: hwWidgetRoot.fgTint(0.08)
 
               Rectangle {
                 width: Math.max(4, parent.width * Math.min(1.0, (modelData.temp / modelData.high)))

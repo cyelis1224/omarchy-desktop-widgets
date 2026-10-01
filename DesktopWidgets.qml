@@ -1114,7 +1114,7 @@ Item {
             implicitWidth: editBannerRow.implicitWidth + Style.space(32)
             implicitHeight: 42
             radius: 21
-            color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
+            color: Util.alpha(Color.menu.background, 0.96)
             border.color: Color.accent
             border.width: 1.5
 
@@ -1149,7 +1149,7 @@ Item {
               Rectangle {
                 width: 1
                 height: 18
-                color: Qt.rgba(1, 1, 1, 0.15)
+                color: Util.alpha(Color.foreground, 0.15)
               }
 
               // Presets Dropdown
@@ -1173,7 +1173,7 @@ Item {
                   radius: 13
                   color: editBanner.presetMenuOpen
                     ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-                    : (presetTriggerMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+                    : (presetTriggerMouse.containsMouse ? Util.alpha(Color.foreground, 0.15) : Util.alpha(Color.foreground, 0.06))
                   border.color: editBanner.presetMenuOpen ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
                   border.width: 1
 
@@ -1216,7 +1216,7 @@ Item {
                   implicitWidth: newPresetText.implicitWidth + 14
                   implicitHeight: 26
                   radius: 13
-                  color: newPresetMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.06)
+                  color: newPresetMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Util.alpha(Color.foreground, 0.06)
                   border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
                   border.width: 1
 
@@ -1252,7 +1252,7 @@ Item {
               Rectangle {
                 width: 1
                 height: 18
-                color: Qt.rgba(1, 1, 1, 0.15)
+                color: Util.alpha(Color.foreground, 0.15)
               }
 
               // ⚙️ Appearance Preferences Button
@@ -1260,7 +1260,7 @@ Item {
                 implicitWidth: prefsBtnText.implicitWidth + 18
                 implicitHeight: 28
                 radius: 14
-                color: prefsBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.1)
+                color: prefsBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Util.alpha(Color.foreground, 0.1)
                 border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
                 border.width: 1
 
@@ -1298,7 +1298,7 @@ Item {
                 implicitWidth: addBtnText.implicitWidth + 20
                 implicitHeight: 28
                 radius: 14
-                color: addMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.1)
+                color: addMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Util.alpha(Color.foreground, 0.1)
                 border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
                 border.width: 1
 
@@ -1338,10 +1338,10 @@ Item {
                 radius: 14
                 color: root.layoutSavedFeedback
                   ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
-                  : (saveMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.1))
+                  : (saveMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Util.alpha(Color.foreground, 0.1))
                 border.color: root.layoutSavedFeedback
                   ? Color.accent
-                  : (saveMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6) : Qt.rgba(1, 1, 1, 0.18))
+                  : (saveMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6) : Util.alpha(Color.foreground, 0.18))
                 border.width: 1
 
                 RowLayout {
@@ -1420,7 +1420,7 @@ Item {
             width: Math.max(presetTrigger.width, 220)
             height: presetMenuFlick.height + Style.space(12)
             radius: 12
-            color: Qt.rgba(18/255, 18/255, 24/255, 0.96)
+            color: Util.alpha(Color.menu.background, 0.96)
             border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
             border.width: 1.5
 
@@ -1463,7 +1463,7 @@ Item {
                     radius: 6
                     color: (modelData.name === root.activeProfile)
                       ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-                      : (presetOptionMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+                      : (presetOptionMouse.containsMouse ? Util.alpha(Color.foreground, 0.08) : "transparent")
                     onVisibleChanged: if (!visible) confirmingDelete = false
 
                     // Declared before the row so the delete pill's MouseArea stacks above it
@@ -1997,6 +1997,16 @@ Item {
 
                       Text {
                         Layout.alignment: Qt.AlignVCenter
+                        Layout.maximumWidth: 90
+                        text: root.activeProfile
+                        font.family: Style.font.family
+                        font.pixelSize: 11
+                        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+                        elide: Text.ElideRight
+                      }
+
+                      Text {
+                        Layout.alignment: Qt.AlignVCenter
                         text: root.presetsSubmenuOpen ? "\uf107" : "\uf105"
                         font.family: Style.font.family
                         font.pixelSize: 12
@@ -2503,7 +2513,7 @@ Item {
           implicitWidth: noticeRow.implicitWidth + Style.space(28)
           implicitHeight: 38
           radius: 19
-          color: Qt.rgba(18/255, 18/255, 26/255, 0.96)
+          color: Util.alpha(Color.menu.background, 0.96)
           border.color: Color.accent
           border.width: 1.5
 

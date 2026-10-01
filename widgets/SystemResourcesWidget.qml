@@ -413,7 +413,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeSysMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeSysMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : systemWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -444,7 +444,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: sysGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: sysGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : systemWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -492,7 +492,7 @@ WidgetCard {
     Rectangle {
       Layout.fillWidth: true
       height: 1
-      color: Qt.rgba(1, 1, 1, 0.08)
+      color: systemWidgetRoot.fgTint(0.08)
     }
 
     // 🧠 RAM Usage Item
@@ -527,7 +527,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 6
         radius: 3
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: systemWidgetRoot.fgTint(0.08)
 
         Rectangle {
           width: Math.max(6, parent.width * Math.min(1.0, systemWidgetRoot.memUsedPct))
@@ -601,7 +601,7 @@ WidgetCard {
             Layout.fillWidth: true
             height: 6
             radius: 3
-            color: Qt.rgba(1, 1, 1, 0.08)
+            color: systemWidgetRoot.fgTint(0.08)
 
             Rectangle {
               width: Math.max(6, parent.width * Math.min(1.0, modelData.pct))

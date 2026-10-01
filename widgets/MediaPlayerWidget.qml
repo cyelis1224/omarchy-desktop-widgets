@@ -89,7 +89,7 @@ WidgetCard {
           implicitHeight: 28
           radius: 6
           readonly property bool isCurrent: mediaWidgetRoot.activePlayer === modelData
-          color: playerMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+          color: playerMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (isCurrent ? mediaWidgetRoot.fgTint(0.08) : "transparent")
 
           RowLayout {
             anchors.fill: parent
@@ -270,9 +270,9 @@ WidgetCard {
         width: 48
         height: 48
         radius: 10
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: mediaWidgetRoot.fgTint(0.08)
         clip: true
-        border.color: Qt.rgba(1, 1, 1, 0.14)
+        border.color: mediaWidgetRoot.fgTint(0.14)
         border.width: 1
 
         Image {
@@ -325,7 +325,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMediaMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeMediaMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : mediaWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -356,7 +356,7 @@ WidgetCard {
         width: 24
         height: 24
         radius: 12
-        color: mediaGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: mediaGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : mediaWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -409,8 +409,8 @@ WidgetCard {
           width: 28
           height: 28
           radius: 14
-          color: prevMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: Qt.rgba(1, 1, 1, 0.1)
+          color: prevMouse.containsMouse ? mediaWidgetRoot.fgTint(0.16) : mediaWidgetRoot.fgTint(0.08)
+          border.color: mediaWidgetRoot.fgTint(0.1)
           border.width: 1
 
           Text {
@@ -461,8 +461,8 @@ WidgetCard {
           width: 28
           height: 28
           radius: 14
-          color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: Qt.rgba(1, 1, 1, 0.1)
+          color: nextMouse.containsMouse ? mediaWidgetRoot.fgTint(0.16) : mediaWidgetRoot.fgTint(0.08)
+          border.color: mediaWidgetRoot.fgTint(0.1)
           border.width: 1
 
           Text {

@@ -276,7 +276,7 @@ WidgetCard {
         radius: 6
         color: (devTriggerMouse.containsMouse || networkWidgetRoot.devicePopoutOpen)
           ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
-          : Qt.rgba(1, 1, 1, 0.05)
+          : networkWidgetRoot.fgTint(0.05)
         border.color: networkWidgetRoot.devicePopoutOpen
           ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.55)
           : "transparent"
@@ -344,7 +344,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: networkWidgetRoot.fgTint(0.08)
         Layout.topMargin: 4
         Layout.bottomMargin: 4
       }
@@ -492,7 +492,7 @@ WidgetCard {
             radius: 10
             color: networkWidgetRoot.timeScaleMenuOpen
               ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-              : Qt.rgba(1, 1, 1, 0.06)
+              : networkWidgetRoot.fgTint(0.06)
             border.color: networkWidgetRoot.timeScaleMenuOpen ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
             border.width: 1
 
@@ -536,7 +536,7 @@ WidgetCard {
         Layout.rightMargin: Style.space(6)
         implicitHeight: scaleOptionsCol.implicitHeight + 8
         radius: 6
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: networkWidgetRoot.fgTint(0.04)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
         border.width: 1
 
@@ -559,7 +559,7 @@ WidgetCard {
               radius: 5
               color: isSelected
                 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-                : (scaleOptionMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+                : (scaleOptionMouse.containsMouse ? networkWidgetRoot.fgTint(0.08) : "transparent")
 
               RowLayout {
                 anchors.fill: parent
@@ -876,7 +876,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeNetMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeNetMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : networkWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -907,7 +907,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: netGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: netGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : networkWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -955,7 +955,7 @@ WidgetCard {
     Rectangle {
       Layout.fillWidth: true
       height: 1
-      color: Qt.rgba(1, 1, 1, 0.08)
+      color: networkWidgetRoot.fgTint(0.08)
     }
 
     // Speeds Metric Row
@@ -1010,8 +1010,8 @@ WidgetCard {
           width: 22
           height: 22
           radius: 11
-          color: Qt.rgba(1, 1, 1, 0.08)
-          border.color: Qt.rgba(1, 1, 1, 0.2)
+          color: networkWidgetRoot.fgTint(0.08)
+          border.color: networkWidgetRoot.fgTint(0.2)
           border.width: 1
 
           Text {
@@ -1050,8 +1050,8 @@ WidgetCard {
       Layout.minimumHeight: 40
       implicitHeight: 72
       radius: 10
-      color: Qt.rgba(0, 0, 0, 0.35)
-      border.color: Qt.rgba(1, 1, 1, 0.06)
+      color: networkWidgetRoot.wellColor
+      border.color: networkWidgetRoot.fgTint(0.06)
       border.width: 1
       clip: true
 
@@ -1150,7 +1150,7 @@ WidgetCard {
 
           // Horizontal subtle guideline, plus log timeline time markers
           // (their labels are Text items overlaid on the canvas)
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.06)"
+          ctx.strokeStyle = networkWidgetRoot.fgTint(0.06)
           ctx.lineWidth = 1
           ctx.beginPath()
           ctx.moveTo(0, h * 0.5)
@@ -1166,7 +1166,7 @@ WidgetCard {
           // 1. Draw TX (Upload) Area & Line
           drawSeries(points(txArr),
                      Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75), 1.5,
-                     "rgba(255, 255, 255, 0.18)", "rgba(255, 255, 255, 0.01)")
+                     networkWidgetRoot.fgTint(0.18), networkWidgetRoot.fgTint(0.01))
 
           // 2. Draw RX (Download) Area & Line
           drawSeries(points(rxArr), Color.accent, 2,
@@ -1178,14 +1178,14 @@ WidgetCard {
           if (hi >= start && hi < count) {
             var hx = networkWidgetRoot.xFraction(hi) * w
             ctx.save()
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)"
+            ctx.strokeStyle = networkWidgetRoot.fgTint(0.25)
             ctx.lineWidth = 1
             ctx.beginPath()
             ctx.moveTo(hx, 0)
             ctx.lineTo(hx, h)
             ctx.stroke()
 
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.6)"
+            ctx.strokeStyle = networkWidgetRoot.bgTint(0.6)
             ctx.lineWidth = 1.5
 
             ctx.beginPath()
@@ -1251,7 +1251,7 @@ WidgetCard {
         width: netHoverLayout.implicitWidth + 12
         height: 20
         radius: 6
-        color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+        color: networkWidgetRoot.bgTint(0.95)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.55)
         border.width: 1
 
@@ -1355,7 +1355,7 @@ WidgetCard {
     height: popoutHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.98)
+    color: Qt.rgba(Color.menu.background.r, Color.menu.background.g, Color.menu.background.b, 0.98)
     border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
     border.width: 1.5
 
@@ -1412,7 +1412,7 @@ WidgetCard {
           width: 20
           height: 20
           radius: 10
-          color: closePopoutMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: closePopoutMouse.containsMouse ? networkWidgetRoot.fgTint(0.22) : networkWidgetRoot.fgTint(0.08)
 
           Text {
             anchors.centerIn: parent
@@ -1436,7 +1436,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: networkWidgetRoot.fgTint(0.08)
         Layout.bottomMargin: 2
       }
 
@@ -1481,7 +1481,7 @@ WidgetCard {
                   radius: 11
                   color: isSelected
                     ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-                    : Qt.rgba(1, 1, 1, 0.06)
+                    : networkWidgetRoot.fgTint(0.06)
 
                   Text {
                     anchors.centerIn: parent

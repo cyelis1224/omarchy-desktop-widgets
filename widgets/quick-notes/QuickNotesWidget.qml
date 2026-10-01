@@ -528,7 +528,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : notesWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -559,7 +559,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+        color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : notesWidgetRoot.fgTint(0.08))
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -613,7 +613,7 @@ WidgetCard {
           implicitHeight: 26
           radius: 13
           readonly property bool isSelected: notesWidgetRoot.currentTab === modelData.key
-          color: tabMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.08))
+          color: tabMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Color.accent : notesWidgetRoot.fgTint(0.08))
 
           RowLayout {
             id: tabRow
@@ -662,8 +662,8 @@ WidgetCard {
         Layout.fillWidth: true
         height: 34
         radius: 17
-        color: Qt.rgba(1, 1, 1, 0.06)
-        border.color: taskInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+        color: notesWidgetRoot.fgTint(0.06)
+        border.color: taskInput.activeFocus ? Color.accent : notesWidgetRoot.fgTint(0.12)
         border.width: 1
 
         RowLayout {
@@ -777,8 +777,8 @@ WidgetCard {
           width: todosListView.width
           height: 38
           radius: 10
-          color: taskItemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03)
-          border.color: Qt.rgba(1, 1, 1, 0.07)
+          color: taskItemMouse.containsMouse ? notesWidgetRoot.fgTint(0.08) : notesWidgetRoot.fgTint(0.03)
+          border.color: notesWidgetRoot.fgTint(0.07)
           border.width: 1
 
           RowLayout {
@@ -793,7 +793,7 @@ WidgetCard {
               height: 18
               radius: 6
               color: modelData.done ? Color.accent : "transparent"
-              border.color: modelData.done ? Color.accent : Qt.rgba(1, 1, 1, 0.35)
+              border.color: modelData.done ? Color.accent : notesWidgetRoot.fgTint(0.35)
               border.width: 1.5
 
               Text {
@@ -834,7 +834,7 @@ WidgetCard {
                 if (modelData.tag === "#bug") return Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.2)
                 if (modelData.tag === "#work") return Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
                 if (modelData.tag === "#idea") return Qt.rgba(1, 0.75, 0.2, 0.2)
-                return Qt.rgba(1, 1, 1, 0.1)
+                return notesWidgetRoot.fgTint(0.1)
               }
 
               Text {
@@ -956,8 +956,8 @@ WidgetCard {
         Layout.fillWidth: true
         Layout.fillHeight: true
         radius: 12
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: scratchpadEdit.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.1)
+        color: notesWidgetRoot.fgTint(0.04)
+        border.color: scratchpadEdit.activeFocus ? Color.accent : notesWidgetRoot.fgTint(0.1)
         border.width: 1
 
         MouseArea {
@@ -1174,8 +1174,8 @@ WidgetCard {
               width: commandsListView.width - (scrollTrack.visible ? 8 : 0)
               height: 52
               radius: 10
-              color: cmdMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
-              border.color: cmdMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+              color: cmdMouse.containsMouse ? notesWidgetRoot.fgTint(0.08) : notesWidgetRoot.fgTint(0.04)
+              border.color: cmdMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : notesWidgetRoot.fgTint(0.08)
               border.width: 1
 
               RowLayout {
@@ -1261,8 +1261,8 @@ WidgetCard {
                     width: 24
                     height: 24
                     radius: 12
-                    color: editBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-                    border.color: editBtnMouse.containsMouse ? Color.accent : Qt.rgba(1, 1, 1, 0.15)
+                    color: editBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : notesWidgetRoot.fgTint(0.08)
+                    border.color: editBtnMouse.containsMouse ? Color.accent : notesWidgetRoot.fgTint(0.15)
                     border.width: 1
 
                     Text {
@@ -1287,8 +1287,8 @@ WidgetCard {
                     width: 24
                     height: 24
                     radius: 12
-                    color: delBtnMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-                    border.color: delBtnMouse.containsMouse ? Color.urgent : Qt.rgba(1, 1, 1, 0.15)
+                    color: delBtnMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : notesWidgetRoot.fgTint(0.08)
+                    border.color: delBtnMouse.containsMouse ? Color.urgent : notesWidgetRoot.fgTint(0.15)
                     border.width: 1
 
                     Text {
@@ -1327,7 +1327,7 @@ WidgetCard {
             anchors.bottom: parent.bottom
             width: 4
             radius: 2
-            color: Qt.rgba(1, 1, 1, 0.05)
+            color: notesWidgetRoot.fgTint(0.05)
             visible: commandsListView.contentHeight > commandsListView.height
 
             Rectangle {
@@ -1347,7 +1347,7 @@ WidgetCard {
         Layout.fillHeight: true
         visible: notesWidgetRoot.snippetEditorOpen
         radius: 12
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: notesWidgetRoot.fgTint(0.04)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
         border.width: 1
 
@@ -1393,7 +1393,7 @@ WidgetCard {
               width: 22
               height: 22
               radius: 11
-              color: closeEditMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent"
+              color: closeEditMouse.containsMouse ? notesWidgetRoot.fgTint(0.15) : "transparent"
 
               Text {
                 anchors.centerIn: parent
@@ -1417,7 +1417,7 @@ WidgetCard {
           Rectangle {
             Layout.fillWidth: true
             height: 1
-            color: Qt.rgba(1, 1, 1, 0.08)
+            color: notesWidgetRoot.fgTint(0.08)
           }
 
           // Field 1: Snippet Name
@@ -1437,8 +1437,8 @@ WidgetCard {
               Layout.fillWidth: true
               height: 32
               radius: 8
-              color: Qt.rgba(1, 1, 1, 0.06)
-              border.color: snipNameInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              color: notesWidgetRoot.fgTint(0.06)
+              border.color: snipNameInput.activeFocus ? Color.accent : notesWidgetRoot.fgTint(0.12)
               border.width: 1
 
               TextInput {
@@ -1484,8 +1484,8 @@ WidgetCard {
               Layout.fillWidth: true
               height: 32
               radius: 8
-              color: Qt.rgba(1, 1, 1, 0.06)
-              border.color: snipCmdInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              color: notesWidgetRoot.fgTint(0.06)
+              border.color: snipCmdInput.activeFocus ? Color.accent : notesWidgetRoot.fgTint(0.12)
               border.width: 1
 
               TextInput {
@@ -1531,8 +1531,8 @@ WidgetCard {
               Layout.fillWidth: true
               height: 30
               radius: 8
-              color: Qt.rgba(1, 1, 1, 0.06)
-              border.color: snipDescInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              color: notesWidgetRoot.fgTint(0.06)
+              border.color: snipDescInput.activeFocus ? Color.accent : notesWidgetRoot.fgTint(0.12)
               border.width: 1
 
               TextInput {
@@ -1617,8 +1617,8 @@ WidgetCard {
               implicitWidth: cancelText.implicitWidth + 18
               implicitHeight: 30
               radius: 15
-              color: cancelBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
-              border.color: Qt.rgba(1, 1, 1, 0.15)
+              color: cancelBtnMouse.containsMouse ? notesWidgetRoot.fgTint(0.12) : notesWidgetRoot.fgTint(0.06)
+              border.color: notesWidgetRoot.fgTint(0.15)
               border.width: 1
 
               Text {

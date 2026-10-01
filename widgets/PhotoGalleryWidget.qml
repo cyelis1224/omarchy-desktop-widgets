@@ -21,6 +21,13 @@ Item {
   readonly property real screenWidth: (monitorWidth > 0) ? monitorWidth : ((rootRef && rootRef.screenWidth > 0) ? rootRef.screenWidth : 1920)
   readonly property real screenHeight: (monitorHeight > 0) ? monitorHeight : ((rootRef && rootRef.screenHeight > 0) ? rootRef.screenHeight : 1080)
 
+  // Light themes pair a light card with a dark foreground, so fixed black scrims and
+  // white hairlines lose contrast there; these derive from the theme instead
+  // (same helpers as WidgetCard, which this widget doesn't extend).
+  readonly property bool lightTheme: Color.background.hslLightness >= 0.5
+  function fgTint(a) { return Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, a) }
+  function bgTint(a) { return Qt.rgba(Color.background.r, Color.background.g, Color.background.b, a) }
+
   property real defaultWidth: 360
   property real defaultHeight: 228
   property real minWidth: 260
@@ -246,7 +253,7 @@ Item {
     Rectangle {
       anchors.fill: parent
       radius: 16
-      color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+      color: galleryWidgetRoot.bgTint(0.95)
       layer.enabled: true
       layer.effect: MultiEffect {
         shadowEnabled: true
@@ -274,10 +281,11 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 300 } }
       }
 
-      // Dark depth shadow overlay (simulating upper cards blocking light)
+      // Depth overlay (simulating upper cards blocking light); fades toward the
+      // theme background so back cards recede in light themes too
       Rectangle {
         anchors.fill: parent
-        color: "black"
+        color: Color.background
         opacity: 0.36
       }
 
@@ -337,7 +345,7 @@ Item {
     Rectangle {
       anchors.fill: parent
       radius: 16
-      color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+      color: galleryWidgetRoot.bgTint(0.95)
       layer.enabled: true
       layer.effect: MultiEffect {
         shadowEnabled: true
@@ -365,10 +373,10 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 300 } }
       }
 
-      // Slightly lighter depth shadow
+      // Slightly lighter depth overlay
       Rectangle {
         anchors.fill: parent
-        color: "black"
+        color: Color.background
         opacity: 0.22
       }
 
@@ -428,7 +436,7 @@ Item {
     Rectangle {
       anchors.fill: parent
       radius: 16
-      color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+      color: galleryWidgetRoot.bgTint(0.95)
       layer.enabled: true
       layer.effect: MultiEffect {
         shadowEnabled: true
@@ -456,10 +464,10 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 300 } }
       }
 
-      // Subtle depth shadow
+      // Subtle depth overlay
       Rectangle {
         anchors.fill: parent
-        color: "black"
+        color: Color.background
         opacity: 0.12
       }
 
@@ -500,7 +508,7 @@ Item {
   Rectangle {
     anchors.fill: photoCardMain
     radius: 16
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    color: galleryWidgetRoot.bgTint(0.95)
     layer.enabled: true
     layer.effect: MultiEffect {
       shadowEnabled: true
@@ -517,7 +525,7 @@ Item {
     width: parent.width - 24
     height: parent.height - 18
     radius: 16
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    color: galleryWidgetRoot.bgTint(0.95)
     border.color: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? Color.accent : "transparent"
     border.width: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? 2 : 0
 
@@ -659,9 +667,11 @@ Item {
         NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
       }
       gradient: Gradient {
-        GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.72) }
-        GradientStop { position: 0.7; color: Qt.rgba(0, 0, 0, 0.25) }
-        GradientStop { position: 1.0; color: "transparent" }
+        // Light themes hold the scrim through the title line: dark text needs a
+        // solid light backing, where light text on a dark fade only needs a hint
+        GradientStop { position: 0.0; color: galleryWidgetRoot.bgTint(galleryWidgetRoot.lightTheme ? 0.85 : 0.72) }
+        GradientStop { position: 0.7; color: galleryWidgetRoot.bgTint(galleryWidgetRoot.lightTheme ? 0.85 : 0.25) }
+        GradientStop { position: 1.0; color: galleryWidgetRoot.bgTint(0) }
       }
 
       RowLayout {
@@ -687,7 +697,7 @@ Item {
           color: Color.foreground
           elide: Text.ElideRight
           style: Text.Outline
-          styleColor: Qt.rgba(0, 0, 0, 0.85)
+          styleColor: galleryWidgetRoot.bgTint(0.85)
         }
 
         // Close / Hide Button (when in edit mode)
@@ -696,7 +706,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: closePhotoMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.12)
+          color: closePhotoMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : galleryWidgetRoot.fgTint(0.12)
           border.color: closePhotoMouse.containsMouse ? Color.urgent : Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.6)
           border.width: 1
           z: 120
@@ -731,7 +741,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: galleryGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.12)
+          color: galleryGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : galleryWidgetRoot.fgTint(0.12)
           border.color: galleryGripArea.containsMouse ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
           border.width: 1
           z: 120
@@ -779,8 +789,8 @@ Item {
         Rectangle {
           visible: galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 0
           radius: 8
-          color: Qt.rgba(0, 0, 0, 0.6)
-          border.color: Qt.rgba(255, 255, 255, 0.15)
+          color: galleryWidgetRoot.bgTint(0.6)
+          border.color: galleryWidgetRoot.fgTint(0.15)
           border.width: 1
           implicitWidth: badgeText.implicitWidth + 12
           implicitHeight: 18
@@ -809,9 +819,9 @@ Item {
       z: 50
       opacity: galleryWidgetRoot.isHovered ? 1.0 : 0.0
       gradient: Gradient {
-        GradientStop { position: 0.0; color: "transparent" }
-        GradientStop { position: 0.3; color: Qt.rgba(0, 0, 0, 0.35) }
-        GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.85) }
+        GradientStop { position: 0.0; color: galleryWidgetRoot.bgTint(0) }
+        GradientStop { position: 0.3; color: galleryWidgetRoot.bgTint(0.35) }
+        GradientStop { position: 1.0; color: galleryWidgetRoot.bgTint(0.85) }
       }
 
       Behavior on opacity {
@@ -827,8 +837,8 @@ Item {
           width: 28
           height: 28
           radius: 14
-          color: prevPhotoMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.3) : Qt.rgba(0, 0, 0, 0.65)
-          border.color: Qt.rgba(255, 255, 255, 0.25)
+          color: prevPhotoMouse.containsMouse ? galleryWidgetRoot.fgTint(0.3) : galleryWidgetRoot.bgTint(0.65)
+          border.color: galleryWidgetRoot.fgTint(0.25)
           border.width: 1
 
           Text {
@@ -853,8 +863,8 @@ Item {
           width: 28
           height: 28
           radius: 14
-          color: shuffleMouse.containsMouse ? Color.accent : Qt.rgba(0, 0, 0, 0.65)
-          border.color: Qt.rgba(255, 255, 255, 0.25)
+          color: shuffleMouse.containsMouse ? Color.accent : galleryWidgetRoot.bgTint(0.65)
+          border.color: galleryWidgetRoot.fgTint(0.25)
           border.width: 1
 
           Text {
@@ -879,8 +889,8 @@ Item {
           width: 28
           height: 28
           radius: 14
-          color: nextPhotoMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.3) : Qt.rgba(0, 0, 0, 0.65)
-          border.color: Qt.rgba(255, 255, 255, 0.25)
+          color: nextPhotoMouse.containsMouse ? galleryWidgetRoot.fgTint(0.3) : galleryWidgetRoot.bgTint(0.65)
+          border.color: galleryWidgetRoot.fgTint(0.25)
           border.width: 1
 
           Text {
@@ -1099,7 +1109,7 @@ Item {
     implicitWidth: dimPillText.implicitWidth + Style.space(16)
     implicitHeight: 22
     radius: 11
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    color: galleryWidgetRoot.bgTint(0.95)
     border.color: Color.accent
     border.width: 1
 
@@ -1161,7 +1171,7 @@ Item {
     height: menuHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
+    color: Qt.rgba(Color.menu.background.r, Color.menu.background.g, Color.menu.background.b, 0.96)
     border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
     border.width: 1.5
 
@@ -1218,7 +1228,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: closeMenuMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: closeMenuMouse.containsMouse ? galleryWidgetRoot.fgTint(0.22) : galleryWidgetRoot.fgTint(0.08)
 
           Text {
             anchors.centerIn: parent
@@ -1267,7 +1277,7 @@ Item {
             implicitHeight: 24
             radius: 6
             readonly property bool isSelected: modelData.active ? (galleryWidgetRoot.autoCycleEnabled && galleryWidgetRoot.cycleIntervalMs === modelData.ms) : (!galleryWidgetRoot.autoCycleEnabled)
-            color: spdMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.06))
+            color: spdMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : galleryWidgetRoot.fgTint(0.06))
             border.color: isSelected ? Color.accent : "transparent"
             border.width: 1
 
@@ -1317,7 +1327,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: openPhotoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+        color: openPhotoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35)
         border.width: 1
 
@@ -1369,7 +1379,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: shufPhotoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+        color: shufPhotoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
 
         RowLayout {
           anchors.fill: parent
@@ -1410,7 +1420,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: openFldrMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+        color: openFldrMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
 
         RowLayout {
           anchors.fill: parent
@@ -1451,7 +1461,7 @@ Item {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: galleryWidgetRoot.fgTint(0.08)
         Layout.topMargin: 3
         Layout.bottomMargin: 3
       }

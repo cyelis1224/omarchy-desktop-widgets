@@ -204,7 +204,7 @@ WidgetCard {
         height: 22
         width: 22
         radius: 4
-        color: addFeedHeaderMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+        color: addFeedHeaderMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : rssWidgetRoot.fgTint(0.08)
 
         Text {
           anchors.centerIn: parent
@@ -229,7 +229,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: rssCloseMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: rssCloseMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : rssWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -261,7 +261,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: rssGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: rssGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : rssWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -332,7 +332,7 @@ WidgetCard {
 
             readonly property bool isSelected: (rssWidgetRoot.activeFeedIndex === index)
 
-            color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (tabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04))
+            color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (tabMouse.containsMouse ? rssWidgetRoot.fgTint(0.08) : rssWidgetRoot.fgTint(0.04))
             border.width: isSelected ? 1 : 0
             border.color: isSelected ? Color.accent : "transparent"
 
@@ -382,7 +382,7 @@ WidgetCard {
           height: 26
           width: 26
           radius: 6
-          color: addFeedMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+          color: addFeedMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : rssWidgetRoot.fgTint(0.06)
 
           Text {
             anchors.centerIn: parent
@@ -407,7 +407,7 @@ WidgetCard {
     Rectangle {
       Layout.fillWidth: true
       height: 1
-      color: Qt.rgba(1, 1, 1, 0.06)
+      color: rssWidgetRoot.fgTint(0.06)
     }
 
     // Feed Metadata & Quick Refresh Row
@@ -484,7 +484,7 @@ WidgetCard {
         width: articlesListView.width
         implicitHeight: articleCol.implicitHeight + 14
         radius: 8
-        color: cardMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : Qt.rgba(1, 1, 1, 0.03)
+        color: cardMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : rssWidgetRoot.fgTint(0.03)
 
         Behavior on color {
           ColorAnimation { duration: 150 }
@@ -702,7 +702,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: rssWidgetRoot.fgTint(0.06)
       }
 
       Text {
@@ -731,7 +731,7 @@ WidgetCard {
             Layout.fillWidth: true
             height: 24
             radius: 4
-            color: (rssWidgetRoot.refreshIntervalMinutes === modelData.mins) ? Color.accent : (intMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05))
+            color: (rssWidgetRoot.refreshIntervalMinutes === modelData.mins) ? Color.accent : (intMouse.containsMouse ? rssWidgetRoot.fgTint(0.1) : rssWidgetRoot.fgTint(0.05))
 
             Text {
               anchors.centerIn: parent

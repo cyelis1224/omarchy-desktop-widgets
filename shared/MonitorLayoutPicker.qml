@@ -116,7 +116,7 @@ ColumnLayout {
       radius: 6
       color: pickerRoot.onAll
         ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, allMouse.containsMouse ? 0.40 : 0.25)
-        : (allMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        : (allMouse.containsMouse ? Util.alpha(Color.foreground, 0.15) : Util.alpha(Color.foreground, 0.06))
       border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, pickerRoot.onAll ? 0.9 : 0.4)
       border.width: 1
 
@@ -166,8 +166,8 @@ ColumnLayout {
         radius: 4
         color: selected
           ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, tileMouse.containsMouse ? 0.50 : 0.35)
-          : (tileMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.06))
-        border.color: selected ? Color.accent : Qt.rgba(1, 1, 1, 0.18)
+          : (tileMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18) : Util.alpha(Color.foreground, 0.06))
+        border.color: selected ? Color.accent : Util.alpha(Color.foreground, 0.28)
         border.width: selected ? 1.5 : 1
 
         Text {

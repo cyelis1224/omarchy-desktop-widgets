@@ -122,6 +122,14 @@ WidgetCard {
   readonly property real centerX: width / 2.0
   readonly property real centerY: height / 2.0
 
+  // Light themes get a light dial so the foreground-colored hands stay visible;
+  // each style keeps a little character by tinting the theme background.
+  function dialFace(darkFace, tint, amount) {
+    if (!lightTheme) return darkFace
+    var c = Qt.tint(Color.background, Qt.rgba(tint.r, tint.g, tint.b, amount))
+    return Qt.rgba(c.r, c.g, c.b, darkFace.a)
+  }
+
   // ---------------------------------------------------------------------------
   // 🎨 Dial Surface
   // ---------------------------------------------------------------------------
@@ -136,16 +144,16 @@ WidgetCard {
       anchors.fill: parent
       radius: width / 2
       color: {
-        if (clockStyle === "cyber") return Qt.rgba(10/255, 15/255, 24/255, 0.92)
-        if (clockStyle === "bauhaus") return Qt.rgba(18/255, 20/255, 26/255, 0.90)
-        if (clockStyle === "flieger") return Qt.rgba(8/255, 10/255, 14/255, 0.95)
-        return Qt.rgba(14/255, 16/255, 22/255, 0.94) // chronograph
+        if (clockStyle === "cyber") return analogClockRoot.dialFace(Qt.rgba(10/255, 15/255, 24/255, 0.92), Color.accent, 0.08)
+        if (clockStyle === "bauhaus") return analogClockRoot.dialFace(Qt.rgba(18/255, 20/255, 26/255, 0.90), Color.foreground, 0.06)
+        if (clockStyle === "flieger") return analogClockRoot.dialFace(Qt.rgba(8/255, 10/255, 14/255, 0.95), Color.foreground, 0)
+        return analogClockRoot.dialFace(Qt.rgba(14/255, 16/255, 22/255, 0.94), Color.foreground, 0.03) // chronograph
       }
       border.width: clockStyle === "cyber" ? 1.5 : 1
       border.color: {
         if (clockStyle === "cyber") return Color.accent
         if (clockStyle === "chronograph") return Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
-        return Qt.rgba(1, 1, 1, 0.12)
+        return analogClockRoot.fgTint(0.12)
       }
 
       // Inner Concentric Texture (Chronograph)
@@ -156,7 +164,7 @@ WidgetCard {
         visible: clockStyle === "chronograph" || clockStyle === "cyber"
         color: "transparent"
         border.width: 1
-        border.color: clockStyle === "cyber" ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.05)
+        border.color: clockStyle === "cyber" ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : analogClockRoot.fgTint(0.05)
       }
     }
 
@@ -263,9 +271,9 @@ WidgetCard {
       Rectangle {
         anchors.fill: parent
         radius: width / 2
-        color: Qt.rgba(0, 0, 0, 0.35)
+        color: analogClockRoot.wellColor
         border.width: 1
-        border.color: clockStyle === "cyber" ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+        border.color: clockStyle === "cyber" ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : analogClockRoot.fgTint(0.08)
 
         Text {
           anchors.top: parent.top
@@ -321,9 +329,9 @@ WidgetCard {
       Rectangle {
         anchors.fill: parent
         radius: width / 2
-        color: Qt.rgba(0, 0, 0, 0.35)
+        color: analogClockRoot.wellColor
         border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        border.color: analogClockRoot.fgTint(0.08)
 
         Text {
           anchors.top: parent.top
@@ -378,7 +386,7 @@ WidgetCard {
       width: (clockStyle === "bauhaus") ? 26 : 46
       height: 20
       radius: 4
-      color: Qt.rgba(0, 0, 0, 0.45)
+      color: analogClockRoot.wellColor
       border.width: 1
       border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
 
@@ -403,7 +411,7 @@ WidgetCard {
           Layout.fillHeight: true
           Layout.topMargin: 2
           Layout.bottomMargin: 2
-          color: Qt.rgba(1, 1, 1, 0.1)
+          color: analogClockRoot.fgTint(0.1)
         }
 
         Text {
@@ -560,7 +568,7 @@ WidgetCard {
       width: 22
       height: 22
       radius: 11
-      color: closeClockMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+      color: closeClockMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : analogClockRoot.bgTint(0.6)
       border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
       border.width: 1
 
@@ -590,7 +598,7 @@ WidgetCard {
       width: 22
       height: 22
       radius: 11
-      color: clockGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+      color: clockGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : analogClockRoot.bgTint(0.6)
       border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
       border.width: 1
 
@@ -659,7 +667,7 @@ WidgetCard {
             Layout.fillWidth: true
             height: 24
             radius: 4
-            color: (analogClockRoot.clockStyle === modelData.id) ? Color.accent : (styleBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05))
+            color: (analogClockRoot.clockStyle === modelData.id) ? Color.accent : (styleBtnMouse.containsMouse ? analogClockRoot.fgTint(0.1) : analogClockRoot.fgTint(0.05))
 
             Text {
               anchors.centerIn: parent
@@ -667,7 +675,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: (analogClockRoot.clockStyle === modelData.id) ? Font.Bold : Font.Normal
-              color: (analogClockRoot.clockStyle === modelData.id) ? "#0a0a0f" : Color.foreground
+              color: (analogClockRoot.clockStyle === modelData.id) ? Color.background : Color.foreground
             }
 
             MouseArea {
@@ -687,7 +695,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: analogClockRoot.fgTint(0.06)
       }
 
       // Smooth Sweep Toggle

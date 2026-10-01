@@ -34,7 +34,7 @@ Item {
     implicitWidth: rowLayout.implicitWidth + 16
     radius: Style.cornerRadius || 8
     color: bgMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.65)
-    border.color: root.isPlaying ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+    border.color: root.isPlaying ? Color.accent : Util.alpha(Color.foreground, 0.12)
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 150 } }
@@ -98,7 +98,7 @@ Item {
         implicitHeight: 18
         radius: 9
         visible: root.activePlayer && root.activePlayer.canGoNext
-        color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent"
+        color: nextMouse.containsMouse ? Util.alpha(Color.foreground, 0.15) : "transparent"
 
         Text {
           anchors.centerIn: parent

@@ -48,13 +48,21 @@ Item {
     return gridSnap > 1 ? (Math.round(val / gridSnap) * gridSnap) : Math.round(val)
   }
 
+  // Light themes pair a light card with a dark foreground, so fixed black wells and
+  // white hairlines lose contrast there; these derive from the theme instead.
+  readonly property bool lightTheme: Color.background.hslLightness >= 0.5
+  function fgTint(a) { return Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, a) }
+  function bgTint(a) { return Qt.rgba(Color.background.r, Color.background.g, Color.background.b, a) }
+  // Recessed panel (graph wells, clock sub-dials): darker than the card in either theme
+  readonly property color wellColor: lightTheme ? fgTint(0.06) : Qt.rgba(0, 0, 0, 0.35)
+
   // Visual container
   Rectangle {
     id: cardSurface
     anchors.fill: parent
     radius: (rootRef && rootRef.appearance && rootRef.appearance.corner_radius !== undefined) ? rootRef.appearance.corner_radius : 18
     color: widgetCardRoot.frameless ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : "transparent") : (widgetCardRoot.transparentBg ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.20)) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85))
-    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Color.accent : (widgetCardRoot.frameless ? "transparent" : (widgetCardRoot.transparentBg ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.12)))
+    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Color.accent : (widgetCardRoot.frameless ? "transparent" : (widgetCardRoot.transparentBg ? widgetCardRoot.fgTint(0.10) : widgetCardRoot.fgTint(0.12)))
     border.width: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? 2 : (widgetCardRoot.frameless ? 0 : 1)
 
     layer.enabled: !widgetCardRoot.frameless
@@ -137,7 +145,7 @@ Item {
           height: 22
           radius: 11
           z: 130
-          color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+          color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : widgetCardRoot.fgTint(0.08)
           border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
           border.width: 1
 
@@ -170,7 +178,7 @@ Item {
           height: 22
           radius: 11
           z: 130
-          color: gripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+          color: gripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : widgetCardRoot.fgTint(0.08)
           border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
           border.width: 1
 
@@ -384,7 +392,7 @@ Item {
     implicitWidth: dimPillText.implicitWidth + Style.space(16)
     implicitHeight: 22
     radius: 11
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    color: widgetCardRoot.bgTint(0.95)
     border.color: Color.accent
     border.width: 1
 

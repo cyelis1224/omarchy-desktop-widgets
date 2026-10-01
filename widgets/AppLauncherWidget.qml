@@ -257,8 +257,8 @@ WidgetCard {
         Layout.fillWidth: true
         height: 34
         radius: 17
-        color: Qt.rgba(1, 1, 1, 0.07)
-        border.color: searchInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+        color: launcherWidgetRoot.fgTint(0.07)
+        border.color: searchInput.activeFocus ? Color.accent : launcherWidgetRoot.fgTint(0.12)
         border.width: 1
 
         MouseArea {
@@ -326,7 +326,7 @@ WidgetCard {
             width: 20
             height: 20
             radius: 10
-            color: clearHover.containsMouse ? Qt.rgba(1, 1, 1, 0.2) : "transparent"
+            color: clearHover.containsMouse ? launcherWidgetRoot.fgTint(0.2) : "transparent"
 
             Text {
               anchors.centerIn: parent
@@ -352,8 +352,8 @@ WidgetCard {
         height: 26
         implicitWidth: countText.implicitWidth + 16
         radius: 13
-        color: Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: launcherWidgetRoot.fgTint(0.05)
+        border.color: launcherWidgetRoot.fgTint(0.08)
         border.width: 1
 
         Text {
@@ -373,7 +373,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeAppMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeAppMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : launcherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
         border.width: 1
 
@@ -405,7 +405,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: appGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: appGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : launcherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
         border.width: 1
 
@@ -479,8 +479,8 @@ WidgetCard {
             height: 26
             radius: 13
             readonly property bool isSelected: launcherWidgetRoot.selectedCategory === modelData.name
-            color: catItemHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.06))
-            border.color: isSelected ? Qt.rgba(255, 255, 255, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+            color: isSelected ? Color.accent : (catItemHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : launcherWidgetRoot.fgTint(0.06))
+            border.color: isSelected ? launcherWidgetRoot.bgTint(0.25) : launcherWidgetRoot.fgTint(0.08)
             border.width: 1
 
             RowLayout {
@@ -570,7 +570,7 @@ WidgetCard {
             anchors.fill: parent
             anchors.margins: 4
             radius: 12
-            color: appMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.03)
+            color: appMouse.containsMouse ? launcherWidgetRoot.fgTint(0.12) : launcherWidgetRoot.fgTint(0.03)
             border.color: appMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : "transparent"
             border.width: 1
             scale: appMouse.pressed ? 0.95 : (appMouse.containsMouse ? 1.04 : 1.0)
