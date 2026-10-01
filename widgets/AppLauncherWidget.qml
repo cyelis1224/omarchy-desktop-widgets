@@ -29,6 +29,30 @@ WidgetCard {
   property var allApps: []
   property bool isLoading: false
 
+  readonly property bool hasInputFocus: (typeof searchInput !== "undefined" && searchInput && searchInput.activeFocus)
+
+  onHasInputFocusChanged: {
+    if (rootRef && "keyboardFocusRequested" in rootRef) {
+      rootRef.keyboardFocusRequested = hasInputFocus
+    }
+  }
+
+  Connections {
+    target: (rootRef && "keyboardFocusRequested" in rootRef) ? rootRef : null
+    ignoreUnknownSignals: true
+    function onKeyboardFocusRequestedChanged() {
+      if (rootRef && !rootRef.keyboardFocusRequested) {
+        if (typeof searchInput !== "undefined" && searchInput && searchInput.activeFocus) searchInput.focus = false
+      }
+    }
+  }
+
+  Component.onDestruction: {
+    if (rootRef && "keyboardFocusRequested" in rootRef && rootRef.keyboardFocusRequested) {
+      rootRef.keyboardFocusRequested = false
+    }
+  }
+
   function applySavedSettings() {
     var cat = getSetting("selectedCategory", undefined)
     if (cat !== undefined && typeof cat === "string") {
@@ -56,6 +80,11 @@ WidgetCard {
   function launchApp(execCommand) {
     if (!execCommand) return
     Quickshell.execDetached([launcherWidgetRoot.appsScriptPath, "launch", execCommand])
+    // Drop keyboard focus so the desktop layer falls back below the new window
+    if (typeof searchInput !== "undefined" && searchInput) searchInput.focus = false
+    if (rootRef && "keyboardFocusRequested" in rootRef) {
+      rootRef.keyboardFocusRequested = false
+    }
   }
 
   function getCategoryIcon(cat) {
@@ -203,7 +232,7 @@ WidgetCard {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             launcherWidgetRoot.contextMenuOpen = false
-            launcherWidgetRoot.searchQuery = ""
+            searchInput.text = ""
           }
         }
       }
@@ -232,6 +261,16 @@ WidgetCard {
         border.color: searchInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
         border.width: 1
 
+        MouseArea {
+          anchors.fill: parent
+          z: -1
+          cursorShape: Qt.IBeamCursor
+          onClicked: {
+            if (rootRef && "keyboardFocusRequested" in rootRef) rootRef.keyboardFocusRequested = true
+            searchInput.forceActiveFocus()
+          }
+        }
+
         RowLayout {
           anchors.fill: parent
           anchors.leftMargin: Style.space(12)
@@ -252,8 +291,24 @@ WidgetCard {
             font.pixelSize: 12
             color: Color.foreground
             clip: true
+            selectByMouse: true
             text: launcherWidgetRoot.searchQuery
             onTextChanged: launcherWidgetRoot.searchQuery = text
+            onAccepted: {
+              if (launcherWidgetRoot.filteredApps.length > 0) {
+                launcherWidgetRoot.launchApp(launcherWidgetRoot.filteredApps[0].exec)
+              }
+            }
+
+            // Escape clears the query first; with an empty query it falls
+            // through to the window-level Escape shortcut, which drops focus
+            Keys.onShortcutOverride: function(event) {
+              event.accepted = (event.key === Qt.Key_Escape && searchInput.text !== "")
+            }
+            Keys.onEscapePressed: function(event) {
+              searchInput.text = ""
+              event.accepted = true
+            }
 
             Text {
               anchors.fill: parent
