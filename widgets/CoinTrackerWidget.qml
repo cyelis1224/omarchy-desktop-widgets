@@ -1460,7 +1460,8 @@ WidgetCard {
         color: btcWidgetRoot.isStale ? "#F59E0B" : btcWidgetRoot.trendColor
 
         SequentialAnimation on opacity {
-          running: true
+          // Pause while hidden: a running animation keeps the whole shell repainting every vsync.
+          running: btcWidgetRoot.visible
           loops: Animation.Infinite
           NumberAnimation { from: 1.0; to: 0.3; duration: 1000; easing.type: Easing.InOutQuad }
           NumberAnimation { from: 0.3; to: 1.0; duration: 1000; easing.type: Easing.InOutQuad }
