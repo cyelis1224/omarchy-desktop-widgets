@@ -55,7 +55,7 @@ QtObject {
       category: "System",
       icon: "\uf0e4",
       badge: "1h History",
-      description: "CPU, RAM, and GPU utilization history with selectable time scale, linear or logarithmic timeline, theme-aware colors, and top process lines.",
+      description: "CPU, RAM, GPU, and VRAM utilization history with selectable time scale, linear or logarithmic timeline, theme-aware colors, and top process lines.",
       componentUrl: Qt.resolvedUrl("SysmonWidget.qml")
     },
     {

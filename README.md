@@ -83,9 +83,9 @@ Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GP
     - Built-in **Add Custom Feed** dialog allowing users to input any custom RSS or Atom URL.
     - Click article headlines to launch directly in your default browser via `xdg-open`.
 17. **📈 System Monitor** (`widgets/SysmonWidget.qml`)
-    - CPU, RAM, and GPU (NVIDIA) utilization history with a selectable time scale (30 sec to 1 hr) on a linear or logarithmic timeline, using tiered 2s / 20s sampling with constant memory.
+    - CPU, RAM, GPU, and VRAM (NVIDIA) utilization history with a selectable time scale (30 sec to 1 hr) on a linear or logarithmic timeline, using tiered 2s / 20s sampling with constant memory.
     - Wall-clock anchored sliding grid, time axis marks, and a hover crosshair with per-series readouts.
-    - Series colors follow the active theme's blue / green / yellow, with generated hues on monochrome themes.
+    - Series colors follow the active theme's blue / green / yellow / magenta, with generated hues on monochrome themes.
     - Compact layout: live values sit in the title row and turn urgent above a configurable alert threshold; the top CPU / RAM / GPU process line can be hidden.
     - Right-click menu: smooth 25 fps scrolling, time scale, logarithmic timeline, show top processes, alert threshold, and Open Task Manager (btop).
 

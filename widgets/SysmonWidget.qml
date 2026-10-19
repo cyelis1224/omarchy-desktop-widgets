@@ -7,7 +7,7 @@ import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
-// CPU / RAM / GPU utilization history on a log-time axis (ported from the
+// CPU / RAM / GPU / VRAM utilization history on a log-time axis (ported from the
 // ezp.sysmon floating panel). WidgetCard supplies positioning, resizing, the
 // context menu and settings persistence; this file keeps the chart and the
 // readouts. The poller and the tiered history buffers live in SysmonSampler,
@@ -24,7 +24,9 @@ WidgetCard {
 
   width: 360
   height: sysmonLayout.implicitHeight + sysmonLayout.anchors.topMargin + sysmonLayout.anchors.bottomMargin
-  minWidth: 280
+  // Room for every readout beside the edit-mode buttons with the title elided
+  // away: title icon (15) + two 22px buttons, six row gaps, the side margins
+  minWidth: Math.max(280, Math.ceil(readouts.implicitWidth) + 59 + Style.space(8) * 6 + Style.space(16) * 2)
   // Content height with the graph squeezed to its minimum, so no row is ever clipped
   minHeight: Math.ceil(sysmonLayout.implicitHeight - graphCard.implicitHeight + graphCard.Layout.minimumHeight
                        + sysmonLayout.anchors.topMargin + sysmonLayout.anchors.bottomMargin)
@@ -112,8 +114,8 @@ WidgetCard {
   }
 
   // ---------------------------------------------------------------------------
-  // Series colors: the active theme's named blue / green / yellow from its
-  // colors.toml. A monochrome theme defines those as greys, so a near-grey (or
+  // Series colors: the active theme's named blue / green / yellow / magenta from
+  // its colors.toml. A monochrome theme defines those as greys, so a near-grey (or
   // missing) entry falls back to a generated hue whose lightness follows the
   // theme's dark or light background.
   // ---------------------------------------------------------------------------
@@ -141,6 +143,7 @@ WidgetCard {
   readonly property color cpuColor: seriesColor("blue", 0.61)
   readonly property color memColor: seriesColor("green", 0.25)
   readonly property color gpuColor: seriesColor("yellow", 0.1)
+  readonly property color gpuMemColor: seriesColor("magenta", 0.8)
   // Readouts at/above the threshold. Not Color.urgent: that's the theme's red,
   // which monochrome themes make a dark grey that's unreadable on the card.
   readonly property color hotColor: seriesColor("red", 0.0)
@@ -640,11 +643,12 @@ WidgetCard {
   // ---------------------------------------------------------------------------
   readonly property var sampler: (rootRef && rootRef.sysmonSampler) ? rootRef.sysmonSampler : null
 
-  // -1 while unknown: CPU until the second poll, GPU until nvidia-smi answers
-  // (its readout stays hidden)
+  // -1 while unknown: CPU until the second poll, GPU and VRAM until nvidia-smi
+  // answers (their readouts stay hidden)
   readonly property real cpuPct: sampler ? sampler.cpuPct : -1
   readonly property real memUsedPct: sampler ? sampler.memUsedPct : -1
   readonly property real gpuPct: sampler ? sampler.gpuPct : -1
+  readonly property real gpuMemPct: sampler ? sampler.gpuMemPct : -1
 
   // Tiered histories, each tier newest-LAST; SysmonSampler documents the layout
   readonly property int baseInterval: sampler ? sampler.baseInterval : 2
@@ -652,6 +656,7 @@ WidgetCard {
   readonly property var cpuHistory: sampler ? sampler.cpuHistory : [[], []]
   readonly property var memHistory: sampler ? sampler.memHistory : [[], []]
   readonly property var gpuHistory: sampler ? sampler.gpuHistory : [[], []]
+  readonly property var gpuMemHistory: sampler ? sampler.gpuMemHistory : [[], []]
 
   readonly property string topCpuName: sampler ? sampler.topCpuName : ""
   readonly property real topCpuPct: sampler ? sampler.topCpuPct : -1
@@ -688,7 +693,7 @@ WidgetCard {
     anchors.rightMargin: Style.space(16)
     spacing: Style.space(6)
 
-    // Header Row: title on the left, live CPU / RAM / GPU values centered in the
+    // Header Row: title on the left, live CPU / RAM / GPU / VRAM values centered in the
     // remaining width (they double as the chart legend: each label is drawn in
     // its series color)
     RowLayout {
@@ -728,7 +733,8 @@ WidgetCard {
           model: [
             { color: sysmonRoot.cpuColor, label: "CPU", value: sysmonRoot.fmt(sysmonRoot.cpuPct), hot: sysmonRoot.cpuPct >= sysmonRoot.highThreshold, on: true },
             { color: sysmonRoot.memColor, label: "RAM", value: sysmonRoot.fmt(sysmonRoot.memUsedPct), hot: sysmonRoot.memUsedPct >= sysmonRoot.highThreshold, on: true },
-            { color: sysmonRoot.gpuColor, label: "GPU", value: sysmonRoot.fmt(sysmonRoot.gpuPct), hot: sysmonRoot.gpuPct >= sysmonRoot.highThreshold, on: sysmonRoot.gpuPct >= 0 }
+            { color: sysmonRoot.gpuColor, label: "GPU", value: sysmonRoot.fmt(sysmonRoot.gpuPct), hot: sysmonRoot.gpuPct >= sysmonRoot.highThreshold, on: sysmonRoot.gpuPct >= 0 },
+            { color: sysmonRoot.gpuMemColor, label: "VRAM", value: sysmonRoot.fmt(sysmonRoot.gpuMemPct), hot: sysmonRoot.gpuMemPct >= sysmonRoot.highThreshold, on: sysmonRoot.gpuMemPct >= 0 }
           ]
           delegate: RowLayout {
             required property var modelData
@@ -911,6 +917,7 @@ WidgetCard {
         property var cHist: sysmonRoot.cpuHistory
         property var mHist: sysmonRoot.memHistory
         property var gHist: sysmonRoot.gpuHistory
+        property var vHist: sysmonRoot.gpuMemHistory
 
         // requestPaint() runs onPaint even while hidden, so sampling behind
         // windows skips the redraw and the graph catches up once visible
@@ -947,6 +954,7 @@ WidgetCard {
         }
         onMHistChanged: repaintIfVisible()
         onGHistChanged: repaintIfVisible()
+        onVHistChanged: repaintIfVisible()
         onWidthChanged: repaintIfVisible()
         onHeightChanged: repaintIfVisible()
 
@@ -972,6 +980,7 @@ WidgetCard {
           function onCpuColorChanged() { graph.repaintIfVisible() }
           function onMemColorChanged() { graph.repaintIfVisible() }
           function onGpuColorChanged() { graph.repaintIfVisible() }
+          function onGpuMemColorChanged() { graph.repaintIfVisible() }
         }
 
         // The bottom axisStrip pixels hold the time-scale labels; the plot
@@ -1015,12 +1024,13 @@ WidgetCard {
         }
 
         // Cached per series so hover bindings don't rebuild on every mouse
-        // move. All three are pushed every poll, so they share one age
+        // move. All four are pushed every poll, so they share one age
         // sequence and one hover index. Not rebuilt while hidden: sampling
         // goes on behind windows, and onPaint is skipped there anyway.
         readonly property var cPts: visible ? agePoints(cHist) : []
         readonly property var mPts: visible ? agePoints(mHist) : []
         readonly property var gPts: visible ? agePoints(gHist) : []
+        readonly property var vPts: visible ? agePoints(vHist) : []
         readonly property int sampleCount: cPts.length
 
         // Hover state fed by hoverArea (a no-button MouseArea, so right-clicks
@@ -1095,6 +1105,7 @@ WidgetCard {
               + "CPU  " + graph.valueAt(graph.cPts)
               + "\nRAM  " + graph.valueAt(graph.mPts)
               + (sysmonRoot.gpuPct >= 0 ? "\nGPU  " + graph.valueAt(graph.gPts) : "")
+              + (sysmonRoot.gpuMemPct >= 0 ? "\nVRAM " + graph.valueAt(graph.vPts) : "")
           }
         }
 
@@ -1239,6 +1250,7 @@ WidgetCard {
           ctx.clearRect(0, 0, width, height)
           drawGrid(ctx)
           drawSeries(ctx, mPts, sysmonRoot.memColor)
+          drawSeries(ctx, vPts, sysmonRoot.gpuMemColor)
           drawSeries(ctx, gPts, sysmonRoot.gpuColor)
           drawSeries(ctx, cPts, sysmonRoot.cpuColor)
           drawAxisLabels(ctx)

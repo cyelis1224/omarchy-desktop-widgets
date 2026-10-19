@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// CPU / RAM / GPU sampler shared by every System Monitor instance, so the
+// CPU / RAM / GPU / VRAM sampler shared by every System Monitor instance, so the
 // widget on six monitors costs one poll instead of six. DesktopWidgets.qml
 // loads it while the widget is enabled anywhere and exposes it as
 // rootRef.sysmonSampler; SysmonWidget only draws what it finds here.
@@ -25,10 +25,12 @@ Item {
   property real memTotalKb: 0
   property real memAvailKb: 0
 
-  // nvidia-smi; -1 until the first successful read (GPU readout stays hidden)
+  // nvidia-smi; -1 until the first successful read (GPU readouts stay hidden)
   property real gpuPct: -1
   property real gpuMemUsedMb: 0
   property real gpuMemTotalMb: 0
+  // VRAM in use as a share of the card's total
+  property real gpuMemPct: -1
 
   // Tiered in-memory history for the chart. Tier t holds up to
   // tierLengths[t] samples spaced baseInterval * decimation^t seconds apart:
@@ -46,11 +48,13 @@ Item {
   property var cpuHistory: [[], []]
   property var memHistory: [[], []]
   property var gpuHistory: [[], []]
+  property var gpuMemHistory: [[], []]
   // Finer samples waiting to be averaged into tier t+1, one accumulator per
   // tier boundary.
   property var cpuPending: [[]]
   property var memPending: [[]]
   property var gpuPending: [[]]
+  property var gpuMemPending: [[]]
 
   property string topCpuName: ""
   property real topCpuPct: -1
@@ -131,8 +135,8 @@ Item {
     sampler.pushSample()
   }
 
-  // All three series are pushed every poll (GPU as -1 when unavailable) so
-  // their tiers stay index-aligned and share one age sequence in the chart.
+  // All four series are pushed every poll (GPU and VRAM as -1 when unavailable)
+  // so their tiers stay index-aligned and share one age sequence in the chart.
   function pushSample() {
     const c = sampler.pushTiered(sampler.cpuHistory, sampler.cpuPending, sampler.cpuPct)
     sampler.cpuHistory = c.tiers
@@ -143,6 +147,9 @@ Item {
     const g = sampler.pushTiered(sampler.gpuHistory, sampler.gpuPending, sampler.gpuPct >= 0 ? sampler.gpuPct : -1)
     sampler.gpuHistory = g.tiers
     sampler.gpuPending = g.pending
+    const v = sampler.pushTiered(sampler.gpuMemHistory, sampler.gpuMemPending, sampler.gpuMemPct >= 0 ? sampler.gpuMemPct : -1)
+    sampler.gpuMemHistory = v.tiers
+    sampler.gpuMemPending = v.pending
   }
 
   function parseTop(text) {
@@ -252,6 +259,7 @@ Item {
           sampler.gpuPct = nums[0]
           sampler.gpuMemUsedMb = nums[1]
           sampler.gpuMemTotalMb = nums[2]
+          if (nums[2] > 0) sampler.gpuMemPct = Math.max(0, Math.min(100, 100 * nums[1] / nums[2]))
         }
       }
     }

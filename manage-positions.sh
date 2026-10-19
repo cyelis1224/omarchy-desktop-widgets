@@ -481,6 +481,17 @@ def main():
             settings['positions'][widget_id] = geom
         save_settings(settings)
         print(json.dumps({"status": "geometry_saved", "widget_id": widget_id, "geometry": settings['positions'][widget_id]}))
+    elif action == 'save_stack_order' and len(sys.argv) >= 3:
+        try:
+            order = json.loads(sys.argv[2])
+        except Exception:
+            order = None
+        if isinstance(order, list):
+            settings['stack_order'] = [w for w in order if isinstance(w, str)]
+            save_settings(settings)
+            print(json.dumps({"status": "stack_order_saved", "stack_order": settings['stack_order']}))
+        else:
+            print(json.dumps({"status": "error", "error": "stack order must be a JSON list"}))
     elif action == 'toggle_widget' and len(sys.argv) >= 4:
         widget_id = sys.argv[2]
         enable = sys.argv[3].lower() in ('true', '1', 'yes')
@@ -1034,7 +1045,8 @@ def main():
             "profiles": profile_list,
             "appearance": settings.get('appearance', DEFAULT_APPEARANCE),
             "monitor_positions": settings.get('monitor_positions', {}),
-            "monitor_enabled_widgets": settings.get('monitor_enabled_widgets', {})
+            "monitor_enabled_widgets": settings.get('monitor_enabled_widgets', {}),
+            "stack_order": settings.get('stack_order', [])
         }))
 
 if __name__ == '__main__':

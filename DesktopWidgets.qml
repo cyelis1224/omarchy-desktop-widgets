@@ -175,10 +175,47 @@ Item {
           if (res.appearance) root.appearance = res.appearance
           if (res.monitor_positions) root.monitorPositions = res.monitor_positions
           if (res.monitor_enabled_widgets) root.monitorEnabledWidgets = res.monitor_enabled_widgets
+          if (Array.isArray(res.stack_order)) root.widgetStackOrder = res.stack_order
         } catch (e) {}
       }
     }
   }
+
+  // Widget ids from bottom to top. Widgets not listed sit below, in registry order.
+  property var widgetStackOrder: []
+
+  function raiseWidget(id) {
+    var order = root.widgetStackOrder
+    if (order.length > 0 && order[order.length - 1] === id) return
+    var next = order.filter(function(w) { return w !== id })
+    next.push(id)
+    root.widgetStackOrder = next
+    stackSaveTimer.restart()
+  }
+
+  // A press the top widget leaves unhandled carries on to the widgets under it.
+  // They are visited top-down, so only the first one in a press raises.
+  property bool pressRaiseTaken: false
+
+  function raiseWidgetOnPress(id) {
+    if (root.pressRaiseTaken) return
+    root.pressRaiseTaken = true
+    Qt.callLater(function() { root.pressRaiseTaken = false })
+    root.raiseWidget(id)
+  }
+
+  // Saved after the press settles rather than on it: a drag or click writes the
+  // widget's position on release, and two writers at once would lose one update.
+  Timer {
+    id: stackSaveTimer
+    interval: 800
+    repeat: false
+    onTriggered: {
+      if (root.isAnyWidgetDragging) restart()
+      else Quickshell.execDetached([root.manageScriptPath, "save_stack_order", JSON.stringify(root.widgetStackOrder)])
+    }
+  }
+  onIsAnyWidgetDraggingChanged: if (!isAnyWidgetDragging && stackSaveTimer.running) stackSaveTimer.restart()
 
   function saveWidgetPos(id, x, y, w, h, monitorName) {
     var screens = Quickshell.screens
@@ -297,6 +334,9 @@ Item {
     var screens = Quickshell.screens
     var isMulti = (screens && screens.length > 1)
     var isFirstScreen = root.isDefaultMonitor(monitorName)
+
+    // A newly added widget lands on top of the ones already there
+    if (enable) root.raiseWidget(targetId)
 
     if (isMulti && monitorName) {
       var mew = Object.assign({}, root.monitorEnabledWidgets)
@@ -1614,7 +1654,19 @@ Item {
               required property var modelData
               active: root.isWidgetActiveOnMonitor(modelData.id, desktopWindow.monitorName)
               source: modelData.componentUrl
-              z: 10
+              z: 11 + root.widgetStackOrder.indexOf(modelData.id)
+
+              // Raises the widget on any press. It sits above the widget because a
+              // handler below a MouseArea that takes the press never sees it; the
+              // grab is passive, so the widget's own MouseAreas still get the press.
+              Item {
+                anchors.fill: parent
+                z: 1
+                PointHandler {
+                  acceptedButtons: Qt.LeftButton | Qt.RightButton
+                  onActiveChanged: if (active) root.raiseWidgetOnPress(widgetLoader.modelData.id)
+                }
+              }
 
               property real defaultX: item && item.defaultX !== undefined ? item.defaultX : Style.space(24)
               property real defaultY: item && item.defaultY !== undefined ? item.defaultY : Style.space(64)
