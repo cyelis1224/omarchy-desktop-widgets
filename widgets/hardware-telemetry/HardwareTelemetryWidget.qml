@@ -112,12 +112,13 @@ WidgetCard {
 
   readonly property string telemetryScriptPath: Qt.resolvedUrl("telemetry_collector.py").toString().replace(/^file:\/\//, "")
 
-  // Backend Process calling telemetry_collector.py
+  // telemetry_collector.py streams one JSON line per poll interval for as long
+  // as the card is on screen; hiding the card ends the process and showing it
+  // starts a fresh one, whose first line arrives at once.
   Process {
     id: telemetryProc
-    command: [hwWidgetRoot.telemetryScriptPath]
-    running: true
-    onStarted: hwWidgetRoot.lastPollMs = Date.now()
+    command: [hwWidgetRoot.telemetryScriptPath, String(hwWidgetRoot.pollIntervalMs / 1000)]
+    running: hwWidgetRoot.visible
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -141,20 +142,12 @@ WidgetCard {
     }
   }
 
-  // Python + `sensors` per poll, so polling pauses while the card is off screen;
-  // coming back refreshes right away only if the readings are already stale
-  property real lastPollMs: 0
-  onVisibleChanged: {
-    if (visible && Date.now() - lastPollMs >= pollIntervalMs && !telemetryProc.running) telemetryProc.running = true
-  }
-
-  Timer {
-    interval: hwWidgetRoot.pollIntervalMs
-    running: hwWidgetRoot.visible
-    repeat: true
-    onTriggered: {
-      if (!telemetryProc.running) telemetryProc.running = true
-    }
+  // A changed interval only reaches the collector through its argument, so
+  // restart it; the new process reports immediately.
+  onPollIntervalMsChanged: {
+    if (!telemetryProc.running) return
+    telemetryProc.running = false
+    Qt.callLater(function() { telemetryProc.running = hwWidgetRoot.visible })
   }
 
   // ---------------------------------------------------------------------------

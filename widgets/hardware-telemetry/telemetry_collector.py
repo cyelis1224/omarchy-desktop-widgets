@@ -4,6 +4,7 @@ import json
 import re
 import os
 import sys
+import time
 
 def collect_telemetry():
     result = {
@@ -136,7 +137,28 @@ def collect_telemetry():
         result["status_badge"] = "Optimal"
         result["status_color"] = "#10b981"
 
-    print(json.dumps(result))
+    return result
+
+
+def main():
+    # With an interval argument (seconds) this streams one JSON line per cycle
+    # until the reader goes away, so the widget pays one interpreter start
+    # instead of one per poll. Without it, one sample and exit (old behaviour).
+    interval = 0.0
+    if len(sys.argv) > 1:
+        try:
+            interval = float(sys.argv[1])
+        except ValueError:
+            interval = 0.0
+    try:
+        while True:
+            print(json.dumps(collect_telemetry()), flush=True)
+            if interval <= 0:
+                break
+            time.sleep(interval)
+    except (BrokenPipeError, KeyboardInterrupt):
+        pass
+
 
 if __name__ == "__main__":
-    collect_telemetry()
+    main()
