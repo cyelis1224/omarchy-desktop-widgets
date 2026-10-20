@@ -713,7 +713,10 @@ WidgetCard {
     command: [networkWidgetRoot.netScriptPath]
     running: true
     // Device argument is a one-shot switch request; later polls must run without it
-    onStarted: command = [networkWidgetRoot.netScriptPath]
+    onStarted: {
+      networkWidgetRoot.lastNetInfoMs = Date.now()
+      command = [networkWidgetRoot.netScriptPath]
+    }
     onExited: {
       if (networkWidgetRoot.pendingDeviceId) {
         var devId = networkWidgetRoot.pendingDeviceId
@@ -737,11 +740,18 @@ WidgetCard {
     }
   }
 
-  // Picks up auto-detect changes (e.g. Wi-Fi to Ethernet) and fresh device IPs
+  // Picks up auto-detect changes (e.g. Wi-Fi to Ethernet) and fresh device IPs.
+  // This one forks (bash + python + ip), so it pauses while the card is off
+  // screen; coming back refreshes right away only if the last run is stale.
+  // The traffic sampling below is a plain file read and keeps running.
+  property real lastNetInfoMs: 0
+  onVisibleChanged: {
+    if (visible && Date.now() - lastNetInfoMs >= netMetaTimer.interval) refreshNetInfo()
+  }
   Timer {
     id: netMetaTimer
     interval: 30000
-    running: true
+    running: networkWidgetRoot.visible
     repeat: true
     onTriggered: networkWidgetRoot.refreshNetInfo()
   }
