@@ -144,7 +144,7 @@ WidgetCard {
   // away only if the last poll is already older than the interval
   property real lastPollMs: 0
   onVisibleChanged: {
-    if (visible && Date.now() - lastPollMs >= gitPollTimer.interval && !gitActionProc.running) {
+    if (visible && hasRepos && Date.now() - lastPollMs >= gitPollTimer.interval && !gitActionProc.running) {
       refreshGitPulse()
     }
   }
@@ -198,11 +198,13 @@ WidgetCard {
   }
 
   // Local git data every 15s; git_pulse.py throttles its own GitHub and remote
-  // fetch calls to every NETWORK_TTL seconds
+  // fetch calls to every NETWORK_TTL seconds. With nothing tracked there is
+  // nothing to poll: the first run at creation already reported the empty list,
+  // and adding a repository goes through gitActionProc, which polls on exit.
   Timer {
     id: gitPollTimer
     interval: 15000
-    running: gitWidgetRoot.visible
+    running: gitWidgetRoot.visible && gitWidgetRoot.hasRepos
     repeat: true
     onTriggered: {
       // Never poll while an interactive user action (like Zenity picker) is active
