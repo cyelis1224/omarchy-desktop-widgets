@@ -355,7 +355,7 @@ WidgetCard {
 
   Timer {
     id: disksTimer
-    interval: 10000
+    interval: 30000 // mounts and free space move slowly; each check is bash + python + df
     running: systemWidgetRoot.visible
     repeat: true
     onTriggered: {
