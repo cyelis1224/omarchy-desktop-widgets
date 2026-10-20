@@ -11,9 +11,11 @@ Item {
   visible: false
 
   // Visible instances that show the Top line. The per-process scans (the
-  // only part that forks) run only while this is above zero.
+  // only part that forks) run only while this is above zero, and on their own
+  // slower cadence: two processes every topInterval instead of seven every poll.
   property int topViewers: 0
   readonly property bool topActive: topViewers > 0
+  readonly property int topInterval: 5 // seconds
 
   // CPU use over the last poll interval, as a share of all cores (what btop
   // shows); -1 until the second poll, since it needs a /proc/stat delta
@@ -182,10 +184,6 @@ Item {
         // comm may contain spaces ("Web Content"); the percentage is the last column
         sampler.topMemName = parts.slice(1, -1).join(" ")
         sampler.topMemPct = Number(parts[parts.length - 1])
-      } else if (parts[0] === "TOPGPU") {
-        // "TOPGPU" alone means no process reported GPU utilization this poll
-        sampler.topGpuName = parts.length >= 3 ? parts.slice(1, -1).join(" ") : ""
-        sampler.topGpuPct = parts.length >= 3 ? Number(parts[parts.length - 1]) : -1
       }
     }
 
@@ -207,6 +205,13 @@ Item {
       // Drop the snapshot so the next viewer never diffs a stale one
       sampler.procTicks = ({})
       sampler.topLastTotal = -1
+      sampler.topGpuName = ""
+      sampler.topGpuPct = -1
+      sampler.pendingGpuSeen = false
+      sampler.pendingGpuPct = -1
+      sampler.pendingGpuName = ""
+      sampler.pmonSmCol = -1
+      sampler.pmonCmdCol = -1
     }
   }
 
@@ -234,13 +239,66 @@ Item {
       // One "P <pid_starttime> <utime+stime ticks> <comm>" line per process that
       // has used any CPU; parseTop() diffs them against the previous scan. comm is
       // everything between the first "(" and the last ")" of /proc/<pid>/stat.
-      "awk '{ s = $0; i = 0; while ((j = index(substr(s, i + 1), \")\")) > 0) i += j; o = index(s, \"(\"); split(substr(s, i + 2), f, \" \"); t = f[12] + f[13]; if (t > 0) print \"P\", $1 \"_\" f[20], t, substr(s, o + 1, i - o - 1) }' /proc/[0-9]*/stat 2>/dev/null; " +
-      "echo \"TOPMEM $(ps -eo comm,%mem --sort=-%mem --no-headers | head -1)\"; " +
-      // Per-process GPU utilization ("sm" column); the header row gives the column
-      // positions, which differ between driver versions
-      "echo \"TOPGPU $(nvidia-smi pmon -c 1 -s u 2>/dev/null | awk 'NR == 1 { for (i = 2; i <= NF; i++) { if ($i == \"sm\") s = i - 1; if ($i == \"command\") c = i - 1 } next } /^#/ { next } s && c && $s + 0 > max { max = $s + 0; name = $c } END { if (name != \"\") print name, max }')\""]
+      // The same pass tracks the largest resident set (field 24, in 4 KiB pages)
+      // and reports it as "TOPMEM <comm> <percent of MemTotal>", which is what
+      // `ps -eo comm,%mem --sort=-%mem | head -1` used to cost two more forks for.
+      "awk 'FILENAME == \"/proc/meminfo\" { if ($1 == \"MemTotal:\") mt = $2; next } { s = $0; i = 0; while ((j = index(substr(s, i + 1), \")\")) > 0) i += j; o = index(s, \"(\"); split(substr(s, i + 2), f, \" \"); t = f[12] + f[13]; if (t > 0) print \"P\", $1 \"_\" f[20], t, substr(s, o + 1, i - o - 1); if (f[22] + 0 > mr) { mr = f[22] + 0; mn = substr(s, o + 1, i - o - 1) } } END { if (mt > 0 && mn != \"\") printf \"TOPMEM %s %.1f\\n\", mn, mr * 400 / mt }' /proc/meminfo /proc/[0-9]*/stat 2>/dev/null"]
     stdout: StdioCollector {
       onStreamFinished: sampler.parseTop(this.text)
+    }
+  }
+
+  // Per-process GPU utilization ("sm" column) from ONE long-running pmon that
+  // prints every process once per topInterval, instead of a fresh nvidia-smi
+  // (~15 ms of NVML init) per scan. The header row gives the column positions,
+  // which differ between driver versions. Runs only while a Top line is shown.
+  property string pendingGpuName: ""
+  property real pendingGpuPct: -1
+  property bool pendingGpuSeen: false
+  property int pmonSmCol: -1
+  property int pmonCmdCol: -1
+  Process {
+    id: topGpuProc
+    command: ["nvidia-smi", "pmon", "-s", "u", "-d", String(sampler.topInterval)]
+    running: sampler.topActive
+    stdout: SplitParser {
+      onRead: function(line) {
+        const parts = String(line).trim().split(/\s+/)
+        if (parts[0] === "#") {
+          // Data rows have no leading "#", so every column shifts left by one
+          if (parts[1] === "gpu") {
+            sampler.pmonSmCol = parts.indexOf("sm") - 1
+            sampler.pmonCmdCol = parts.indexOf("command") - 1
+          }
+          return
+        }
+        if (sampler.pmonSmCol < 1 || sampler.pmonCmdCol < 1) return
+        sampler.pendingGpuSeen = true
+        const sm = Number(parts[sampler.pmonSmCol]) // "-" (idle) is NaN and skipped
+        if (isFinite(sm) && sm > sampler.pendingGpuPct) {
+          sampler.pendingGpuPct = sm
+          sampler.pendingGpuName = parts[sampler.pmonCmdCol]
+        }
+      }
+    }
+  }
+
+  Timer {
+    id: topTimer
+    interval: sampler.topInterval * 1000
+    running: sampler.topActive
+    repeat: true
+    onTriggered: {
+      if (!topProc.running) topProc.running = true
+      // Publish the best GPU user seen since the last tick; keep the previous
+      // answer when pmon has not reported a batch yet this tick.
+      if (sampler.pendingGpuSeen) {
+        sampler.topGpuName = sampler.pendingGpuPct >= 0 ? sampler.pendingGpuName : ""
+        sampler.topGpuPct = sampler.pendingGpuPct
+        sampler.pendingGpuSeen = false
+        sampler.pendingGpuPct = -1
+        sampler.pendingGpuName = ""
+      }
     }
   }
 
@@ -266,7 +324,8 @@ Item {
   }
 
   // Keeps running while every instance is hidden so the history stays
-  // continuous; that costs two /proc reads per poll and no fork.
+  // continuous; that costs two /proc reads per poll and no fork. The forking
+  // Top scan has its own slower timer above.
   Timer {
     id: pollTimer
     interval: sampler.baseInterval * 1000
@@ -275,7 +334,6 @@ Item {
     onTriggered: {
       memFile.reload()
       statFile.reload()
-      if (sampler.topActive && !topProc.running) topProc.running = true
     }
   }
 }
