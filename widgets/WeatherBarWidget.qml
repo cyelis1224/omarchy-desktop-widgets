@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -65,8 +66,8 @@ Item {
     implicitHeight: Math.min(parent.height - 4, 28)
     implicitWidth: rowLayout.implicitWidth + 16
     radius: Style.cornerRadius || 8
-    color: mouseArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.65)
-    border.color: Util.alpha(Color.foreground, 0.12)
+    color: mouseArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.65)
+    border.color: Util.alpha(Commons.Color.foreground, 0.12)
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 150 } }
@@ -80,7 +81,7 @@ Item {
         text: root.weatherIcon
         font.family: Style.font.family
         font.pixelSize: 11
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
@@ -88,7 +89,7 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 11
         font.weight: Font.Bold
-        color: Color.foreground
+        color: Commons.Color.foreground
       }
     }
 

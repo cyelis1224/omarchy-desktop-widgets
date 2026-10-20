@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // Import base WidgetCard from the shared repository link or parent widgets directory
@@ -78,7 +79,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 2
       }
@@ -96,7 +97,7 @@ WidgetCard {
           implicitHeight: 28
           radius: 6
           readonly property bool isSelected: pomodoroWidgetRoot.activePreset === modelData.id
-          color: pMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (isSelected ? pomodoroWidgetRoot.fgTint(0.08) : "transparent")
+          color: pMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (isSelected ? pomodoroWidgetRoot.fgTint(0.08) : "transparent")
 
           RowLayout {
             anchors.fill: parent
@@ -108,7 +109,7 @@ WidgetCard {
               text: modelData.icon
               font.family: Style.font.family
               font.pixelSize: 11
-              color: isSelected ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              color: isSelected ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
             }
 
             Text {
@@ -117,7 +118,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: isSelected ? Font.Bold : Font.Normal
-              color: isSelected ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
+              color: isSelected ? Commons.Color.foreground : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.8)
               elide: Text.ElideRight
             }
 
@@ -126,7 +127,7 @@ WidgetCard {
               text: "\uf00c"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.accent
+              color: Commons.Color.accent
             }
           }
 
@@ -145,7 +146,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 4
       }
@@ -155,7 +156,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: sndMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: sndMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -167,7 +168,7 @@ WidgetCard {
             text: pomodoroWidgetRoot.soundAlerts ? "\uf028" : "\uf6a9"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: pomodoroWidgetRoot.soundAlerts ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: pomodoroWidgetRoot.soundAlerts ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           Text {
@@ -175,14 +176,14 @@ WidgetCard {
             text: "Completion Audio Chimes"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: pomodoroWidgetRoot.soundAlerts ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: pomodoroWidgetRoot.soundAlerts ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: pomodoroWidgetRoot.soundAlerts ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -200,7 +201,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: notifMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: notifMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -212,7 +213,7 @@ WidgetCard {
             text: "\uf0f3"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: pomodoroWidgetRoot.showNotifications ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: pomodoroWidgetRoot.showNotifications ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           Text {
@@ -220,14 +221,14 @@ WidgetCard {
             text: "Desktop Notification Banners"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: pomodoroWidgetRoot.showNotifications ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: pomodoroWidgetRoot.showNotifications ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: pomodoroWidgetRoot.showNotifications ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -245,7 +246,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 4
       }
@@ -255,7 +256,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: restartMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: restartMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -267,7 +268,7 @@ WidgetCard {
             text: "\uf2f9"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -275,7 +276,7 @@ WidgetCard {
             text: "Restart Current Interval"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -296,7 +297,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: resetStreakMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.2) : "transparent"
+        color: resetStreakMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -308,7 +309,7 @@ WidgetCard {
             text: "\uf0e2"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: resetStreakMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: resetStreakMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
           }
 
           Text {
@@ -316,7 +317,7 @@ WidgetCard {
             text: "Reset Completed Sessions Streak"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: resetStreakMouse.containsMouse ? Color.urgent : Color.foreground
+            color: resetStreakMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground
           }
         }
 
@@ -338,7 +339,7 @@ WidgetCard {
   readonly property color modeColor: {
     if (currentMode === "SHORT") return "#10b981" // Emerald Mint
     if (currentMode === "LONG") return "#06b6d4"  // Electric Cyan
-    return Color.accent                           // Theme Accent / Focus Red
+    return Commons.Color.accent                           // Theme Accent / Focus Red
   }
 
   readonly property string modeTitle: {
@@ -445,7 +446,7 @@ WidgetCard {
 
   // The ring track is painted once, so repaint it when the theme foreground changes
   Connections {
-    target: Color
+    target: Commons.Color
     function onForegroundChanged() { trackCanvas.requestPaint() }
   }
 
@@ -488,13 +489,13 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 13
           font.weight: Font.Bold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
         Text {
           text: pomodoroWidgetRoot.modeTitle + " · Step " + pomodoroWidgetRoot.cycleStep + " of 4"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
         }
       }
 
@@ -506,8 +507,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : pomodoroWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : pomodoroWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -515,7 +516,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -537,8 +538,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : pomodoroWidgetRoot.fgTint(0.08))
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: customGripMouse.drag.active ? Commons.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : pomodoroWidgetRoot.fgTint(0.08))
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -546,7 +547,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: customGripMouse.drag.active ? Color.background : Color.accent
+          color: customGripMouse.drag.active ? Commons.Color.background : Commons.Color.accent
         }
 
         MouseArea {
@@ -580,7 +581,7 @@ WidgetCard {
 
       Repeater {
         model: [
-          { mode: "FOCUS", label: "Focus 25m", color: Color.accent },
+          { mode: "FOCUS", label: "Focus 25m", color: Commons.Color.accent },
           { mode: "SHORT", label: "Short 5m", color: "#10b981" },
           { mode: "LONG", label: "Long 15m", color: "#06b6d4" }
         ]
@@ -601,7 +602,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: isSelected ? Font.Bold : Font.Normal
-            color: isSelected ? modelData.color : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75)
+            color: isSelected ? modelData.color : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.75)
           }
 
           MouseArea {
@@ -673,7 +674,7 @@ WidgetCard {
           font.family: "Monospace"
           font.pixelSize: 32
           font.weight: Font.Bold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         RowLayout {
@@ -684,7 +685,7 @@ WidgetCard {
             width: 6
             height: 6
             radius: 3
-            color: pomodoroWidgetRoot.isTimerRunning ? pomodoroWidgetRoot.modeColor : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+            color: pomodoroWidgetRoot.isTimerRunning ? pomodoroWidgetRoot.modeColor : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
             Behavior on color { ColorAnimation { duration: 200 } }
           }
 
@@ -693,7 +694,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: Font.Bold
-            color: pomodoroWidgetRoot.isTimerRunning ? pomodoroWidgetRoot.modeColor : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: pomodoroWidgetRoot.isTimerRunning ? pomodoroWidgetRoot.modeColor : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
         }
       }
@@ -723,7 +724,7 @@ WidgetCard {
           text: "\uf0e2"
           font.family: Style.font.family
           font.pixelSize: 13
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         MouseArea {
@@ -759,7 +760,7 @@ WidgetCard {
             text: pomodoroWidgetRoot.isTimerRunning ? "\uf04c" : "\uf04b"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Color.background
+            color: Commons.Color.background
           }
 
           Text {
@@ -767,7 +768,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 12
             font.weight: Font.Bold
-            color: Color.background
+            color: Commons.Color.background
           }
         }
 
@@ -794,7 +795,7 @@ WidgetCard {
           text: "\uf051"
           font.family: Style.font.family
           font.pixelSize: 13
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         MouseArea {
@@ -849,7 +850,7 @@ WidgetCard {
           text: pomodoroWidgetRoot.completedSessions + (pomodoroWidgetRoot.completedSessions === 1 ? " session" : " sessions") + " completed"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.65)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.65)
         }
       }
     }

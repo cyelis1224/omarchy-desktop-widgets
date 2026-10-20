@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 WidgetCard {
@@ -126,7 +127,7 @@ WidgetCard {
   // each style keeps a little character by tinting the theme background.
   function dialFace(darkFace, tint, amount) {
     if (!lightTheme) return darkFace
-    var c = Qt.tint(Color.background, Qt.rgba(tint.r, tint.g, tint.b, amount))
+    var c = Qt.tint(Commons.Color.background, Qt.rgba(tint.r, tint.g, tint.b, amount))
     return Qt.rgba(c.r, c.g, c.b, darkFace.a)
   }
 
@@ -144,15 +145,15 @@ WidgetCard {
       anchors.fill: parent
       radius: width / 2
       color: {
-        if (clockStyle === "cyber") return analogClockRoot.dialFace(Qt.rgba(10/255, 15/255, 24/255, 0.92), Color.accent, 0.08)
-        if (clockStyle === "bauhaus") return analogClockRoot.dialFace(Qt.rgba(18/255, 20/255, 26/255, 0.90), Color.foreground, 0.06)
-        if (clockStyle === "flieger") return analogClockRoot.dialFace(Qt.rgba(8/255, 10/255, 14/255, 0.95), Color.foreground, 0)
-        return analogClockRoot.dialFace(Qt.rgba(14/255, 16/255, 22/255, 0.94), Color.foreground, 0.03) // chronograph
+        if (clockStyle === "cyber") return analogClockRoot.dialFace(Qt.rgba(10/255, 15/255, 24/255, 0.92), Commons.Color.accent, 0.08)
+        if (clockStyle === "bauhaus") return analogClockRoot.dialFace(Qt.rgba(18/255, 20/255, 26/255, 0.90), Commons.Color.foreground, 0.06)
+        if (clockStyle === "flieger") return analogClockRoot.dialFace(Qt.rgba(8/255, 10/255, 14/255, 0.95), Commons.Color.foreground, 0)
+        return analogClockRoot.dialFace(Qt.rgba(14/255, 16/255, 22/255, 0.94), Commons.Color.foreground, 0.03) // chronograph
       }
       border.width: clockStyle === "cyber" ? 1.5 : 1
       border.color: {
-        if (clockStyle === "cyber") return Color.accent
-        if (clockStyle === "chronograph") return Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+        if (clockStyle === "cyber") return Commons.Color.accent
+        if (clockStyle === "chronograph") return Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
         return analogClockRoot.fgTint(0.12)
       }
 
@@ -164,7 +165,7 @@ WidgetCard {
         visible: clockStyle === "chronograph" || clockStyle === "cyber"
         color: "transparent"
         border.width: 1
-        border.color: clockStyle === "cyber" ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : analogClockRoot.fgTint(0.05)
+        border.color: clockStyle === "cyber" ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : analogClockRoot.fgTint(0.05)
       }
     }
 
@@ -201,9 +202,9 @@ WidgetCard {
           }
           radius: 1
           color: {
-            if (clockStyle === "cyber") return (hourPipItem.index % 3 === 0) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
-            if (hourPipItem.index % 3 === 0) return Color.accent
-            return Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.65)
+            if (clockStyle === "cyber") return (hourPipItem.index % 3 === 0) ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
+            if (hourPipItem.index % 3 === 0) return Commons.Color.accent
+            return Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.65)
           }
         }
 
@@ -221,7 +222,7 @@ WidgetCard {
             text: "\uf0d8" // Triangle
             font.family: Style.font.family
             font.pixelSize: 13
-            color: Color.accent
+            color: Commons.Color.accent
           }
         }
       }
@@ -250,7 +251,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: (clockStyle === "flieger") ? 11 : 12
           font.weight: Font.Bold
-          color: (numItem.modelData % 3 === 0) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75)
+          color: (numItem.modelData % 3 === 0) ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.75)
         }
       }
     }
@@ -273,7 +274,7 @@ WidgetCard {
         radius: width / 2
         color: analogClockRoot.wellColor
         border.width: 1
-        border.color: clockStyle === "cyber" ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : analogClockRoot.fgTint(0.08)
+        border.color: clockStyle === "cyber" ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : analogClockRoot.fgTint(0.08)
 
         Text {
           anchors.top: parent.top
@@ -283,7 +284,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 7
           font.weight: Font.Bold
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -293,7 +294,7 @@ WidgetCard {
           text: "12"
           font.family: Style.font.family
           font.pixelSize: 7
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
       }
 
@@ -310,7 +311,7 @@ WidgetCard {
           width: 1.5
           height: topSubDial.height * 0.38
           radius: 0.75
-          color: Color.accent
+          color: Commons.Color.accent
           antialiasing: true
         }
       }
@@ -341,7 +342,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 7
           font.weight: Font.Bold
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
         }
 
         Text {
@@ -351,7 +352,7 @@ WidgetCard {
           text: "30"
           font.family: Style.font.family
           font.pixelSize: 7
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
       }
 
@@ -368,7 +369,7 @@ WidgetCard {
           width: 1.5
           height: bottomSubDial.height * 0.38
           radius: 0.75
-          color: Color.accent
+          color: Commons.Color.accent
           antialiasing: true
         }
       }
@@ -388,7 +389,7 @@ WidgetCard {
       radius: 4
       color: analogClockRoot.wellColor
       border.width: 1
-      border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
+      border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3)
 
       RowLayout {
         anchors.fill: parent
@@ -402,7 +403,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 8
           font.weight: Font.Bold
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Rectangle {
@@ -421,7 +422,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 9
           font.weight: Font.DemiBold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
       }
     }
@@ -446,7 +447,7 @@ WidgetCard {
         width: (clockStyle === "bauhaus") ? 4 : (clockStyle === "flieger" ? 5.5 : 4.5)
         height: dialContainer.height * 0.28 + 6
         radius: 2
-        color: (clockStyle === "cyber") ? Color.accent : Color.foreground
+        color: (clockStyle === "cyber") ? Commons.Color.accent : Commons.Color.foreground
         antialiasing: true
       }
     }
@@ -467,7 +468,7 @@ WidgetCard {
         width: (clockStyle === "bauhaus") ? 2.5 : 3.5
         height: dialContainer.height * 0.40 + 8
         radius: 1.5
-        color: Color.foreground
+        color: Commons.Color.foreground
         antialiasing: true
       }
     }
@@ -478,9 +479,9 @@ WidgetCard {
       width: 10
       height: 10
       radius: 5
-      color: Color.accent
+      color: Commons.Color.accent
       border.width: 1.5
-      border.color: Color.foreground
+      border.color: Commons.Color.foreground
       z: 15
     }
 
@@ -500,7 +501,7 @@ WidgetCard {
         width: 1.5
         height: dialContainer.height * 0.44
         radius: 0.75
-        color: (clockStyle === "cyber") ? "#38bdf8" : Color.accent
+        color: (clockStyle === "cyber") ? "#38bdf8" : Commons.Color.accent
         antialiasing: true
       }
 
@@ -511,7 +512,7 @@ WidgetCard {
         width: 3.5
         height: 14
         radius: 1.5
-        color: (clockStyle === "cyber") ? "#38bdf8" : Color.accent
+        color: (clockStyle === "cyber") ? "#38bdf8" : Commons.Color.accent
         antialiasing: true
       }
     }
@@ -522,7 +523,7 @@ WidgetCard {
       width: 4
       height: 4
       radius: 2
-      color: (clockStyle === "cyber") ? "#38bdf8" : Color.urgent
+      color: (clockStyle === "cyber") ? "#38bdf8" : Commons.Color.urgent
       z: 25
     }
   }
@@ -568,8 +569,8 @@ WidgetCard {
       width: 22
       height: 22
       radius: 11
-      color: closeClockMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : analogClockRoot.bgTint(0.6)
-      border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+      color: closeClockMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : analogClockRoot.bgTint(0.6)
+      border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
       border.width: 1
 
       Text {
@@ -577,7 +578,7 @@ WidgetCard {
         text: ""
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Color.urgent
+        color: Commons.Color.urgent
       }
 
       MouseArea {
@@ -598,8 +599,8 @@ WidgetCard {
       width: 22
       height: 22
       radius: 11
-      color: clockGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : analogClockRoot.bgTint(0.6)
-      border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+      color: clockGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : analogClockRoot.bgTint(0.6)
+      border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
       border.width: 1
 
       Text {
@@ -607,7 +608,7 @@ WidgetCard {
         text: ""
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       MouseArea {
@@ -645,7 +646,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: Style.space(8)
       }
 
@@ -667,7 +668,7 @@ WidgetCard {
             Layout.fillWidth: true
             height: 24
             radius: 4
-            color: (analogClockRoot.clockStyle === modelData.id) ? Color.accent : (styleBtnMouse.containsMouse ? analogClockRoot.fgTint(0.1) : analogClockRoot.fgTint(0.05))
+            color: (analogClockRoot.clockStyle === modelData.id) ? Commons.Color.accent : (styleBtnMouse.containsMouse ? analogClockRoot.fgTint(0.1) : analogClockRoot.fgTint(0.05))
 
             Text {
               anchors.centerIn: parent
@@ -675,7 +676,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: (analogClockRoot.clockStyle === modelData.id) ? Font.Bold : Font.Normal
-              color: (analogClockRoot.clockStyle === modelData.id) ? Color.background : Color.foreground
+              color: (analogClockRoot.clockStyle === modelData.id) ? Commons.Color.background : Commons.Color.foreground
             }
 
             MouseArea {
@@ -703,7 +704,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 28
         radius: 6
-        color: sweepMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15) : "transparent"
+        color: sweepMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -715,7 +716,7 @@ WidgetCard {
             text: "\uf01e"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -723,14 +724,14 @@ WidgetCard {
             text: "Smooth 60 FPS Sweep"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: analogClockRoot.smoothSweep ? "\uf205" : "\uf204"
             font.family: Style.font.family
             font.pixelSize: 13
-            color: analogClockRoot.smoothSweep ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: analogClockRoot.smoothSweep ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -751,7 +752,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 28
         radius: 6
-        color: compMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15) : "transparent"
+        color: compMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -763,7 +764,7 @@ WidgetCard {
             text: "\uf073"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -771,14 +772,14 @@ WidgetCard {
             text: "Show Date Window"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: analogClockRoot.showComplications ? "\uf205" : "\uf204"
             font.family: Style.font.family
             font.pixelSize: 13
-            color: analogClockRoot.showComplications ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: analogClockRoot.showComplications ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -799,7 +800,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 28
         radius: 6
-        color: subDialMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15) : "transparent"
+        color: subDialMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -811,7 +812,7 @@ WidgetCard {
             text: "\uf192"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -819,14 +820,14 @@ WidgetCard {
             text: "Show Sub-Dials"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: analogClockRoot.showSubDials ? "\uf205" : "\uf204"
             font.family: Style.font.family
             font.pixelSize: 13
-            color: analogClockRoot.showSubDials ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: analogClockRoot.showSubDials ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -847,7 +848,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 28
         radius: 6
-        color: frameMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15) : "transparent"
+        color: frameMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -859,7 +860,7 @@ WidgetCard {
             text: "\uf2d0"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -867,14 +868,14 @@ WidgetCard {
             text: analogClockRoot.frameless ? "Frameless (Clock Only)" : "Card Frame (In a Box)"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: !analogClockRoot.frameless ? "\uf205" : "\uf204"
             font.family: Style.font.family
             font.pixelSize: 13
-            color: !analogClockRoot.frameless ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: !analogClockRoot.frameless ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 

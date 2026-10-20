@@ -2,13 +2,14 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
   id: gridRoot
 
   property bool active: false
-  property color gridColor: Color.accent
+  property color gridColor: Commons.Color.accent
   property int minorGridSize: 20
   property int majorGridSize: 100
 
@@ -51,7 +52,7 @@ Item {
     }
 
     Connections {
-      target: Color
+      target: Commons.Color
       function onAccentChanged() {
         gridCanvas.requestPaint()
       }
@@ -231,8 +232,8 @@ Item {
     implicitWidth: hudRow.implicitWidth + Style.space(20)
     implicitHeight: 26
     radius: 13
-    color: Util.alpha(Color.menu.background, 0.85)
-    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+    color: Util.alpha(Commons.Color.menu.background, 0.85)
+    border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
     border.width: 1
 
     RowLayout {
@@ -244,7 +245,7 @@ Item {
         text: "\uf00a"
         font.family: Style.font.family
         font.pixelSize: 11
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
@@ -252,7 +253,7 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 10
         font.weight: Font.DemiBold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.85)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.85)
       }
     }
   }

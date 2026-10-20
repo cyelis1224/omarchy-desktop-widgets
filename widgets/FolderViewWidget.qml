@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 WidgetCard {
@@ -353,8 +354,8 @@ WidgetCard {
 
   function glyphColor(item) {
     if (item.is_dir) return "#FBBF24"
-    if (item.is_desktop) return Color.accent
-    return Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
+    if (item.is_desktop) return Commons.Color.accent
+    return Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.8)
   }
 
   // Details view columns; Modified drops out when the card is narrow
@@ -390,7 +391,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: pickOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: pickOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -402,7 +403,7 @@ WidgetCard {
             text: "\uf07c"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -410,7 +411,7 @@ WidgetCard {
             text: "Choose Folder..."
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -431,7 +432,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: openOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: openOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -443,7 +444,7 @@ WidgetCard {
             text: "\uf07b"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -451,7 +452,7 @@ WidgetCard {
             text: "Open in File Manager"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -472,7 +473,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: deskOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: deskOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -484,7 +485,7 @@ WidgetCard {
             text: "\uf108"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -492,7 +493,7 @@ WidgetCard {
             text: "Go to ~/Desktop"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -514,7 +515,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: downOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: downOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -526,7 +527,7 @@ WidgetCard {
             text: "\uf019"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -534,7 +535,7 @@ WidgetCard {
             text: "Go to ~/Downloads"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -556,7 +557,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: glassOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: glassOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -568,7 +569,7 @@ WidgetCard {
             text: "\uf06e"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -576,7 +577,7 @@ WidgetCard {
             text: folderWidgetRoot.transparentBg ? "Enable Frosted Glass Card" : "Enable Pure Transparent Card"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -607,7 +608,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: Style.space(10)
       }
 
@@ -629,7 +630,7 @@ WidgetCard {
             Layout.fillWidth: true
             implicitHeight: 24
             radius: 4
-            color: isActive ? Color.accent : (viewBtnMouse.containsMouse ? folderWidgetRoot.fgTint(0.1) : folderWidgetRoot.fgTint(0.05))
+            color: isActive ? Commons.Color.accent : (viewBtnMouse.containsMouse ? folderWidgetRoot.fgTint(0.1) : folderWidgetRoot.fgTint(0.05))
 
             Text {
               anchors.centerIn: parent
@@ -637,7 +638,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: isActive ? Font.Bold : Font.Normal
-              color: isActive ? Color.background : Color.foreground
+              color: isActive ? Commons.Color.background : Commons.Color.foreground
             }
 
             MouseArea {
@@ -657,7 +658,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: Style.space(10)
         Layout.topMargin: 2
       }
@@ -682,7 +683,7 @@ WidgetCard {
             Layout.fillWidth: true
             implicitHeight: 24
             radius: 4
-            color: isActive ? Color.accent : (sortBtnMouse.containsMouse ? folderWidgetRoot.fgTint(0.1) : folderWidgetRoot.fgTint(0.05))
+            color: isActive ? Commons.Color.accent : (sortBtnMouse.containsMouse ? folderWidgetRoot.fgTint(0.1) : folderWidgetRoot.fgTint(0.05))
 
             Text {
               anchors.centerIn: parent
@@ -690,7 +691,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: isActive ? Font.Bold : Font.Normal
-              color: isActive ? Color.background : Color.foreground
+              color: isActive ? Commons.Color.background : Commons.Color.foreground
             }
 
             MouseArea {
@@ -710,7 +711,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: Style.space(10)
         Layout.topMargin: 2
       }
@@ -733,7 +734,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: folderWidgetRoot.foldersTop ? Font.Bold : Font.Normal
-            color: folderWidgetRoot.foldersTop ? Color.accent : Color.foreground
+            color: folderWidgetRoot.foldersTop ? Commons.Color.accent : Commons.Color.foreground
           }
 
           MouseArea {
@@ -759,7 +760,7 @@ WidgetCard {
             implicitHeight: 24
             radius: 4
             opacity: folderWidgetRoot.foldersTop ? 1.0 : 0.35
-            color: isActive ? Color.accent : (folderSortMouse.containsMouse ? folderWidgetRoot.fgTint(0.1) : folderWidgetRoot.fgTint(0.05))
+            color: isActive ? Commons.Color.accent : (folderSortMouse.containsMouse ? folderWidgetRoot.fgTint(0.1) : folderWidgetRoot.fgTint(0.05))
 
             Text {
               anchors.centerIn: parent
@@ -767,7 +768,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: isActive ? Font.Bold : Font.Normal
-              color: isActive ? Color.background : Color.foreground
+              color: isActive ? Commons.Color.background : Commons.Color.foreground
             }
 
             MouseArea {
@@ -794,7 +795,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 9
           font.weight: Font.Bold
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         }
 
         Item { Layout.fillWidth: true }
@@ -804,7 +805,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 10
           font.weight: Font.Bold
-          color: Color.accent
+          color: Commons.Color.accent
         }
       }
 
@@ -825,7 +826,7 @@ WidgetCard {
           height: parent.height
           width: Math.max(parent.height, spacingKnob.x + spacingKnob.width / 2)
           radius: 3
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Rectangle {
@@ -835,7 +836,7 @@ WidgetCard {
           width: 14
           height: 14
           radius: 7
-          color: Color.accent
+          color: Commons.Color.accent
           border.color: "#ffffff"
           border.width: 2
         }
@@ -886,7 +887,7 @@ WidgetCard {
           text: "\uf060"
           font.family: Style.font.family
           font.pixelSize: 11
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         MouseArea {
@@ -903,7 +904,7 @@ WidgetCard {
         text: "\uf07b"
         font.family: Style.font.family
         font.pixelSize: 14
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       // Folder Name Title
@@ -913,7 +914,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 13
         font.weight: Font.Bold
-        color: Color.foreground
+        color: Commons.Color.foreground
         style: folderWidgetRoot.transparentBg ? Text.Outline : Text.Normal
         styleColor: folderWidgetRoot.bgTint(0.8)
         elide: Text.ElideRight
@@ -924,7 +925,7 @@ WidgetCard {
         width: 26
         height: 26
         radius: 13
-        color: pickBtnHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : folderWidgetRoot.fgTint(0.08)
+        color: pickBtnHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : folderWidgetRoot.fgTint(0.08)
         border.color: folderWidgetRoot.fgTint(0.12)
         border.width: 1
 
@@ -933,7 +934,7 @@ WidgetCard {
           text: "\uf07c"
           font.family: Style.font.family
           font.pixelSize: 11
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -959,7 +960,7 @@ WidgetCard {
           text: "\uf08e"
           font.family: Style.font.family
           font.pixelSize: 11
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
         }
 
         MouseArea {
@@ -977,8 +978,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeFolderMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : folderWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: closeFolderMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : folderWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -986,7 +987,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -1009,8 +1010,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: folderGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : folderWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: folderGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : folderWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -1018,7 +1019,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -1087,7 +1088,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 9
             font.weight: Font.Bold
-            color: (isActive || headerMouse.containsMouse) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.55)
+            color: (isActive || headerMouse.containsMouse) ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.55)
             style: folderWidgetRoot.transparentBg ? Text.Outline : Text.Normal
             styleColor: folderWidgetRoot.bgTint(0.8)
             elide: Text.ElideRight
@@ -1121,7 +1122,7 @@ WidgetCard {
           text: "\uf115"
           font.family: Style.font.family
           font.pixelSize: 32
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
         }
 
         Text {
@@ -1129,7 +1130,7 @@ WidgetCard {
           text: "Folder is empty"
           font.family: Style.font.family
           font.pixelSize: 12
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           style: folderWidgetRoot.transparentBg ? Text.Outline : Text.Normal
           styleColor: folderWidgetRoot.bgTint(0.8)
         }
@@ -1139,8 +1140,8 @@ WidgetCard {
           implicitWidth: emptyPickRow.implicitWidth + 24
           implicitHeight: 30
           radius: 15
-          color: emptyPickMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : folderWidgetRoot.fgTint(0.10)
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+          color: emptyPickMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : folderWidgetRoot.fgTint(0.10)
+          border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
           border.width: 1
 
           RowLayout {
@@ -1152,14 +1153,14 @@ WidgetCard {
               text: "\uf07c"
               font.family: Style.font.family
               font.pixelSize: 11
-              color: Color.accent
+              color: Commons.Color.accent
             }
             Text {
               text: "Choose Folder..."
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.DemiBold
-              color: Color.foreground
+              color: Commons.Color.foreground
             }
           }
 
@@ -1200,7 +1201,7 @@ WidgetCard {
             anchors.margins: folderWidgetRoot.itemSpacing / 2 - folderWidgetRoot.tileHoverPad
             radius: 12
             color: itemMouse.containsMouse ? (folderWidgetRoot.transparentBg ? folderWidgetRoot.fgTint(0.15) : folderWidgetRoot.fgTint(0.10)) : "transparent"
-            border.color: itemMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : "transparent"
+            border.color: itemMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : "transparent"
             border.width: 1
             scale: itemMouse.pressed ? 0.94 : (itemMouse.containsMouse ? 1.03 : 1.0)
 
@@ -1254,7 +1255,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: Font.DemiBold
-              color: itemMouse.containsMouse ? Color.accent : Color.foreground
+              color: itemMouse.containsMouse ? Commons.Color.accent : Commons.Color.foreground
               style: folderWidgetRoot.transparentBg ? Text.Outline : Text.Normal
               styleColor: folderWidgetRoot.bgTint(0.85)
               horizontalAlignment: Text.AlignHCenter
@@ -1296,7 +1297,7 @@ WidgetCard {
           height: 28
           radius: 6
           color: rowMouse.containsMouse ? (folderWidgetRoot.transparentBg ? folderWidgetRoot.fgTint(0.15) : folderWidgetRoot.fgTint(0.10)) : "transparent"
-          border.color: rowMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : "transparent"
+          border.color: rowMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : "transparent"
           border.width: 1
 
           Behavior on color {
@@ -1340,7 +1341,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.DemiBold
-              color: rowMouse.containsMouse ? Color.accent : Color.foreground
+              color: rowMouse.containsMouse ? Commons.Color.accent : Commons.Color.foreground
               style: folderWidgetRoot.transparentBg ? Text.Outline : Text.Normal
               styleColor: folderWidgetRoot.bgTint(0.85)
               elide: Text.ElideRight
@@ -1351,7 +1352,7 @@ WidgetCard {
               text: modelData.is_dir ? "—" : (modelData.size || "")
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.65)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.65)
               style: folderWidgetRoot.transparentBg ? Text.Outline : Text.Normal
               styleColor: folderWidgetRoot.bgTint(0.85)
               horizontalAlignment: Text.AlignRight
@@ -1364,7 +1365,7 @@ WidgetCard {
               text: folderWidgetRoot.formatModified(modelData.mtime)
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.65)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.65)
               style: folderWidgetRoot.transparentBg ? Text.Outline : Text.Normal
               styleColor: folderWidgetRoot.bgTint(0.85)
               horizontalAlignment: Text.AlignRight

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import qs.Commons
+import qs.Commons as Commons
 
 // Corner resize grips in the style of the ezp plugins: a bracket on each corner
 // that traces the card's own rounded corner. Each one resizes from its corner
@@ -80,7 +81,7 @@ Item {
         anchors.fill: parent
 
         ShapePath {
-          strokeColor: cornerArea.pressed || cornerArea.containsMouse ? Color.accent : Color.muted
+          strokeColor: cornerArea.pressed || cornerArea.containsMouse ? Commons.Color.accent : Commons.Color.muted
           strokeWidth: grip.barThickness
           fillColor: "transparent"
           capStyle: ShapePath.RoundCap

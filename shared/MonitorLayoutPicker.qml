@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 
 // Miniature map of the connected displays. Each display is a toggle that shows
 // or hides the widget on that output; "All" puts it on every connected display.
@@ -95,7 +96,7 @@ ColumnLayout {
         text: ""
         font.family: Style.font.family
         font.pixelSize: 11
-        color: Color.accent
+        color: Commons.Color.accent
       }
     }
 
@@ -106,7 +107,7 @@ ColumnLayout {
       font.family: Style.font.family
       font.pixelSize: 11
       font.weight: Font.Bold
-      color: Color.foreground
+      color: Commons.Color.foreground
       elide: Text.ElideRight
     }
 
@@ -115,9 +116,9 @@ ColumnLayout {
       implicitHeight: 20
       radius: 6
       color: pickerRoot.onAll
-        ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, allMouse.containsMouse ? 0.40 : 0.25)
-        : (allMouse.containsMouse ? Util.alpha(Color.foreground, 0.15) : Util.alpha(Color.foreground, 0.06))
-      border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, pickerRoot.onAll ? 0.9 : 0.4)
+        ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, allMouse.containsMouse ? 0.40 : 0.25)
+        : (allMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.15) : Util.alpha(Commons.Color.foreground, 0.06))
+      border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, pickerRoot.onAll ? 0.9 : 0.4)
       border.width: 1
 
       Text {
@@ -127,7 +128,7 @@ ColumnLayout {
         font.family: Style.font.family
         font.pixelSize: 10
         font.weight: Font.Bold
-        color: pickerRoot.onAll ? Color.accent : Color.foreground
+        color: pickerRoot.onAll ? Commons.Color.accent : Commons.Color.foreground
       }
 
       MouseArea {
@@ -165,9 +166,9 @@ ColumnLayout {
         height: Math.max(0, modelData.height * mapArea.mapScale - 3)
         radius: 4
         color: selected
-          ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, tileMouse.containsMouse ? 0.50 : 0.35)
-          : (tileMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18) : Util.alpha(Color.foreground, 0.06))
-        border.color: selected ? Color.accent : Util.alpha(Color.foreground, 0.28)
+          ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, tileMouse.containsMouse ? 0.50 : 0.35)
+          : (tileMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.18) : Util.alpha(Commons.Color.foreground, 0.06))
+        border.color: selected ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.28)
         border.width: selected ? 1.5 : 1
 
         Text {
@@ -178,7 +179,7 @@ ColumnLayout {
           font.family: Style.font.family
           font.pixelSize: 9
           font.weight: Font.Bold
-          color: screenTile.selected ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          color: screenTile.selected ? Commons.Color.foreground : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
           elide: Text.ElideRight
         }
 
@@ -191,7 +192,7 @@ ColumnLayout {
           width: 4
           height: 4
           radius: 2
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         MouseArea {

@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // Import WidgetCard from the shared directory or the plugin directory.
@@ -52,7 +53,7 @@ WidgetCard {
       font.family: Style.font.family
       font.pixelSize: 14
       font.weight: Font.DemiBold
-      color: Color.foreground
+      color: Commons.Color.foreground
     }
 
     Text {
@@ -60,7 +61,7 @@ WidgetCard {
       text: "Edit this template in ~/Projects/desktop-widgets to build your own desktop widgets."
       font.family: Style.font.family
       font.pixelSize: 11
-      color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.65)
+      color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.65)
       wrapMode: Text.WordWrap
     }
 
@@ -69,8 +70,8 @@ WidgetCard {
       Layout.fillWidth: true
       height: 32
       radius: 16
-      color: sampleMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
-      border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+      color: sampleMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+      border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
       border.width: 1
 
       RowLayout {
@@ -81,7 +82,7 @@ WidgetCard {
           text: "\uf00c"
           font.family: Style.font.family
           font.pixelSize: 11
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -89,7 +90,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 11
           font.weight: Font.DemiBold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
       }
 

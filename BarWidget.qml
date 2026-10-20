@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs.Ui
 import qs.Commons
+import qs.Commons as Commons
 
 BarWidget {
   id: root
@@ -60,7 +61,7 @@ BarWidget {
     bar: root.bar
     text: "\uf019"
     active: true
-    activeColor: Color.accent
+    activeColor: Commons.Color.accent
     useActiveColor: true
     slotSize: Style.bar.statusSlot
     fontSize: Style.font.caption
@@ -81,7 +82,7 @@ BarWidget {
       width: Style.space(6)
       height: Style.space(6)
       radius: Style.space(3)
-      color: Color.accent
+      color: Commons.Color.accent
 
       // Gated: an ungated infinite animation keeps every bar redrawing even while hidden
       SequentialAnimation on opacity {
@@ -120,7 +121,7 @@ BarWidget {
           width: Style.space(36)
           height: Style.space(36)
           radius: Style.space(18)
-          color: Util.alpha(Color.accent, 0.15)
+          color: Util.alpha(Commons.Color.accent, 0.15)
           borderSpec: Border.none()
           anchors.verticalCenter: parent.verticalCenter
 
@@ -129,7 +130,7 @@ BarWidget {
             text: "\uf019"
             font.family: Style.font.family
             font.pixelSize: Style.font.subtitle
-            color: Color.accent
+            color: Commons.Color.accent
           }
         }
 
@@ -140,7 +141,7 @@ BarWidget {
 
           Text {
             text: "Desktop Widgets Update"
-            color: root.bar ? root.bar.foreground : Color.foreground
+            color: root.bar ? root.bar.foreground : Commons.Color.foreground
             font.family: Style.font.family
             font.pixelSize: Style.font.subtitle
             font.bold: true
@@ -148,7 +149,7 @@ BarWidget {
 
           Text {
             text: "An update is available on Marketplace"
-            color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.4)
+            color: Qt.darker(root.bar ? root.bar.foreground : Commons.Color.foreground, 1.4)
             font.family: Style.font.family
             font.pixelSize: Style.font.caption
           }
@@ -160,14 +161,14 @@ BarWidget {
           height: Style.space(22)
           radius: Style.space(11)
           anchors.verticalCenter: parent.verticalCenter
-          color: closeMouse.containsMouse ? Util.alpha(Color.foreground, 0.2) : "transparent"
+          color: closeMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.2) : "transparent"
 
           Text {
             anchors.centerIn: parent
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: root.bar ? root.bar.foreground : Color.foreground
+            color: root.bar ? root.bar.foreground : Commons.Color.foreground
           }
 
           MouseArea {
@@ -187,7 +188,7 @@ BarWidget {
         width: parent.width
         implicitHeight: versionRow.implicitHeight + Style.space(20)
         radius: Style.space(10)
-        color: Util.alpha(root.bar ? root.bar.foreground : Color.foreground, 0.05)
+        color: Util.alpha(root.bar ? root.bar.foreground : Commons.Color.foreground, 0.05)
         borderSpec: Border.none()
 
         Row {
@@ -202,7 +203,7 @@ BarWidget {
 
             Text {
               text: "CURRENT"
-              color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.6)
+              color: Qt.darker(root.bar ? root.bar.foreground : Commons.Color.foreground, 1.6)
               font.family: Style.font.family
               font.pixelSize: 9
               font.bold: true
@@ -210,7 +211,7 @@ BarWidget {
 
             Text {
               text: "v" + root.currentVersion
-              color: root.bar ? root.bar.foreground : Color.foreground
+              color: root.bar ? root.bar.foreground : Commons.Color.foreground
               font.family: Style.font.family
               font.pixelSize: Style.font.body
               font.bold: true
@@ -219,7 +220,7 @@ BarWidget {
             Text {
               visible: root.currentCommit !== ""
               text: "(" + root.currentCommit + ")"
-              color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.6)
+              color: Qt.darker(root.bar ? root.bar.foreground : Commons.Color.foreground, 1.6)
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
             }
@@ -228,7 +229,7 @@ BarWidget {
           // Transfer Arrow
           Text {
             text: "➜"
-            color: Color.accent
+            color: Commons.Color.accent
             font.family: Style.font.family
             font.pixelSize: Style.font.title
             anchors.verticalCenter: parent.verticalCenter
@@ -244,7 +245,7 @@ BarWidget {
 
               Text {
                 text: "AVAILABLE"
-                color: Color.accent
+                color: Commons.Color.accent
                 font.family: Style.font.family
                 font.pixelSize: 9
                 font.bold: true
@@ -254,7 +255,7 @@ BarWidget {
                 height: 14
                 width: newBadge.implicitWidth + 8
                 radius: 7
-                color: Color.accent
+                color: Commons.Color.accent
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
@@ -264,14 +265,14 @@ BarWidget {
                   font.family: Style.font.family
                   font.pixelSize: 8
                   font.bold: true
-                  color: Color.background
+                  color: Commons.Color.background
                 }
               }
             }
 
             Text {
               text: "v" + root.newVersion
-              color: Color.accent
+              color: Commons.Color.accent
               font.family: Style.font.family
               font.pixelSize: Style.font.body
               font.bold: true
@@ -280,7 +281,7 @@ BarWidget {
             Text {
               visible: root.newCommit !== ""
               text: "(" + root.newCommit + ")"
-              color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.6)
+              color: Qt.darker(root.bar ? root.bar.foreground : Commons.Color.foreground, 1.6)
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
             }
@@ -295,7 +296,7 @@ BarWidget {
         width: parent.width
         implicitHeight: changelogCol.implicitHeight + Style.space(20)
         radius: Style.space(8)
-        color: Util.alpha(Color.accent, 0.07)
+        color: Util.alpha(Commons.Color.accent, 0.07)
         borderSpec: Border.none()
 
         Column {
@@ -324,7 +325,7 @@ BarWidget {
                 text: "\uf15c"
                 font.family: Style.font.family
                 font.pixelSize: Style.font.caption
-                color: Color.accent
+                color: Commons.Color.accent
               }
             }
 
@@ -335,7 +336,7 @@ BarWidget {
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
               font.bold: true
-              color: Color.accent
+              color: Commons.Color.accent
               elide: Text.ElideRight
             }
 
@@ -345,7 +346,7 @@ BarWidget {
               implicitWidth: ghLinkContent.implicitWidth + Style.space(14)
               implicitHeight: Style.space(22)
               radius: Style.space(11)
-              color: ghLinkMouse.containsMouse ? Util.alpha(Color.accent, 0.28) : Util.alpha(Color.accent, 0.14)
+              color: ghLinkMouse.containsMouse ? Util.alpha(Commons.Color.accent, 0.28) : Util.alpha(Commons.Color.accent, 0.14)
 
               RowLayout {
                 id: ghLinkContent
@@ -356,7 +357,7 @@ BarWidget {
                   text: "\uf08e"
                   font.family: Style.font.family
                   font.pixelSize: 9
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
 
                 Text {
@@ -364,7 +365,7 @@ BarWidget {
                   font.family: Style.font.family
                   font.pixelSize: 9
                   font.bold: true
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
               }
 
@@ -382,7 +383,7 @@ BarWidget {
             width: parent.width
             height: 1
             implicitHeight: 1
-            color: Util.alpha(Color.accent, 0.15)
+            color: Util.alpha(Commons.Color.accent, 0.15)
           }
 
           // Scrollable Markdown Changelog Body
@@ -405,7 +406,7 @@ BarWidget {
               width: parent.width - (notesText.implicitHeight > Style.space(180) ? Style.space(14) : 0)
               text: root.releaseNotes !== "" ? root.releaseNotes : (root.commitMessage !== "" ? root.commitMessage : "Includes enhancements, bug fixes, and performance updates.")
               textFormat: Text.MarkdownText
-              color: root.bar ? root.bar.foreground : Color.foreground
+              color: root.bar ? root.bar.foreground : Commons.Color.foreground
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
               wrapMode: Text.WordWrap
@@ -420,7 +421,7 @@ BarWidget {
         width: parent.width
         implicitHeight: mktCol.implicitHeight + Style.space(20)
         radius: Style.space(8)
-        color: Util.alpha(Color.accent, 0.08)
+        color: Util.alpha(Commons.Color.accent, 0.08)
         borderSpec: Border.none()
 
         Column {
@@ -441,7 +442,7 @@ BarWidget {
               text: "\uf019"
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
-              color: Color.accent
+              color: Commons.Color.accent
             }
 
             Text {
@@ -450,14 +451,14 @@ BarWidget {
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
               font.bold: true
-              color: Color.accent
+              color: Commons.Color.accent
             }
           }
 
           Text {
             width: parent.width
             text: "Update via the official Omarchy package manager in your terminal:"
-            color: Qt.darker(root.bar ? root.bar.foreground : Color.foreground, 1.3)
+            color: Qt.darker(root.bar ? root.bar.foreground : Commons.Color.foreground, 1.3)
             font.family: Style.font.family
             font.pixelSize: Style.font.caption
             wrapMode: Text.WordWrap
@@ -468,7 +469,7 @@ BarWidget {
             width: parent.width
             height: Style.space(34)
             radius: Style.space(6)
-            color: Util.alpha(root.bar ? root.bar.foreground : Color.foreground, 0.06)
+            color: Util.alpha(root.bar ? root.bar.foreground : Commons.Color.foreground, 0.06)
 
             RowLayout {
               anchors.fill: parent
@@ -482,7 +483,7 @@ BarWidget {
                 font.family: Style.font.family
                 font.pixelSize: 10
                 font.bold: true
-                color: root.bar ? root.bar.foreground : Color.foreground
+                color: root.bar ? root.bar.foreground : Commons.Color.foreground
                 elide: Text.ElideMiddle
               }
 
@@ -493,7 +494,7 @@ BarWidget {
                 iconText: copyProc.copied ? "\uf00c" : "\uf0c5"
                 bordered: true
                 fontSize: Style.font.caption
-                accent: Color.accent
+                accent: Commons.Color.accent
                 selected: copyProc.copied
                 onClicked: copyProc.copyCommand("omarchy plugin update dagyr.desktop-widgets")
               }
@@ -524,7 +525,7 @@ BarWidget {
           iconText: "\uf08e"
           bordered: true
           selected: true
-          accent: Color.accent
+          accent: Commons.Color.accent
           fontSize: Style.font.caption
           onClicked: {
             if (root.releaseUrl !== "") {

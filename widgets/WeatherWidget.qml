@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 WidgetCard {
@@ -151,7 +152,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: unitOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: unitOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -163,7 +164,7 @@ WidgetCard {
             text: "\uf2c9"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -171,7 +172,7 @@ WidgetCard {
             text: weatherWidgetRoot.useCelsius ? "Switch to Fahrenheit (°F)" : "Switch to Celsius (°C)"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -192,7 +193,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: refreshOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: refreshOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -204,7 +205,7 @@ WidgetCard {
             text: "\uf021"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -212,7 +213,7 @@ WidgetCard {
             text: "Refresh Weather Now"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -233,7 +234,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: browserOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: browserOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -245,7 +246,7 @@ WidgetCard {
             text: "\uf08e"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -253,7 +254,7 @@ WidgetCard {
             text: "Open Full Forecast in Browser"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -288,7 +289,7 @@ WidgetCard {
         text: "\uf3c5"
         font.family: Style.font.family
         font.pixelSize: 13
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
@@ -297,7 +298,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 13
         font.weight: Font.DemiBold
-        color: Color.foreground
+        color: Commons.Color.foreground
         elide: Text.ElideRight
       }
 
@@ -316,7 +317,7 @@ WidgetCard {
           text: "\uf021"
           font.family: Style.font.family
           font.pixelSize: 11
-          color: weatherWidgetRoot.isLoading ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          color: weatherWidgetRoot.isLoading ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
 
           RotationAnimation on rotation {
             running: weatherWidgetRoot.isLoading && weatherWidgetRoot.visible
@@ -341,8 +342,8 @@ WidgetCard {
         width: 48
         height: 24
         radius: 12
-        color: unitHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : weatherWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+        color: unitHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : weatherWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
         border.width: 1
 
         RowLayout {
@@ -354,14 +355,14 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: !weatherWidgetRoot.useCelsius ? Font.Bold : Font.Normal
-            color: !weatherWidgetRoot.useCelsius ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: !weatherWidgetRoot.useCelsius ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
 
           Text {
             text: "/"
             font.family: Style.font.family
             font.pixelSize: 9
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
           }
 
           Text {
@@ -369,7 +370,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: weatherWidgetRoot.useCelsius ? Font.Bold : Font.Normal
-            color: weatherWidgetRoot.useCelsius ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: weatherWidgetRoot.useCelsius ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -388,8 +389,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeWeatherMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : weatherWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: closeWeatherMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : weatherWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -397,7 +398,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -420,8 +421,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: weatherGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : weatherWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: weatherGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : weatherWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -429,7 +430,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -503,7 +504,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 30
             font.weight: Font.Bold
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -520,7 +521,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 13
           font.weight: Font.DemiBold
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.9)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.9)
           elide: Text.ElideRight
         }
       }
@@ -548,13 +549,13 @@ WidgetCard {
             text: "\uf2c9"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.accent
+            color: Commons.Color.accent
           }
           Text {
             text: weatherWidgetRoot.useCelsius ? weatherWidgetRoot.feelsLikeC : weatherWidgetRoot.feelsLikeF
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
       }
@@ -582,7 +583,7 @@ WidgetCard {
             text: weatherWidgetRoot.humidity
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
       }
@@ -610,7 +611,7 @@ WidgetCard {
             text: weatherWidgetRoot.useCelsius ? weatherWidgetRoot.windC : weatherWidgetRoot.windF
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
       }
@@ -646,7 +647,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: Font.DemiBold
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
             }
 
             Text {
@@ -654,7 +655,7 @@ WidgetCard {
               text: modelData.icon || "\uf0c2"
               font.family: Style.font.family
               font.pixelSize: 14
-              color: Color.accent
+              color: Commons.Color.accent
             }
 
             Text {
@@ -663,7 +664,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: Font.DemiBold
-              color: Color.foreground
+              color: Commons.Color.foreground
             }
           }
         }

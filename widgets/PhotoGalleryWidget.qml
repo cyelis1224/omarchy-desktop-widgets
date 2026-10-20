@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../shared"
 
@@ -24,9 +25,9 @@ Item {
   // Light themes pair a light card with a dark foreground, so fixed black scrims and
   // white hairlines lose contrast there; these derive from the theme instead
   // (same helpers as WidgetCard, which this widget doesn't extend).
-  readonly property bool lightTheme: Color.background.hslLightness >= 0.5
-  function fgTint(a) { return Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, a) }
-  function bgTint(a) { return Qt.rgba(Color.background.r, Color.background.g, Color.background.b, a) }
+  readonly property bool lightTheme: Commons.Color.background.hslLightness >= 0.5
+  function fgTint(a) { return Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, a) }
+  function bgTint(a) { return Qt.rgba(Commons.Color.background.r, Commons.Color.background.g, Commons.Color.background.b, a) }
 
   property real defaultWidth: 360
   property real defaultHeight: 228
@@ -287,7 +288,7 @@ Item {
       // theme background so back cards recede in light themes too
       Rectangle {
         anchors.fill: parent
-        color: Color.background
+        color: Commons.Color.background
         opacity: 0.36
       }
 
@@ -378,7 +379,7 @@ Item {
       // Slightly lighter depth overlay
       Rectangle {
         anchors.fill: parent
-        color: Color.background
+        color: Commons.Color.background
         opacity: 0.22
       }
 
@@ -469,7 +470,7 @@ Item {
       // Subtle depth overlay
       Rectangle {
         anchors.fill: parent
-        color: Color.background
+        color: Commons.Color.background
         opacity: 0.12
       }
 
@@ -528,7 +529,7 @@ Item {
     height: parent.height - 18
     radius: 16
     color: galleryWidgetRoot.bgTint(0.95)
-    border.color: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? Color.accent : "transparent"
+    border.color: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? Commons.Color.accent : "transparent"
     border.width: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? 2 : 0
 
     // Mask shape with rounded corners
@@ -634,7 +635,7 @@ Item {
         text: "\uf03e"
         font.family: Style.font.family
         font.pixelSize: 28
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
@@ -642,7 +643,7 @@ Item {
         text: galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 0 ? "Loading photo..." : "Drop photos in ~/.config/omarchy/plugins/dagyr.desktop-widgets/photos/"
         font.family: Style.font.family
         font.pixelSize: 11
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
       }
     }
 
@@ -687,7 +688,7 @@ Item {
           text: "\uf03e"
           font.family: Style.font.family
           font.pixelSize: 13
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -696,7 +697,7 @@ Item {
           font.family: Style.font.family
           font.pixelSize: 12
           font.weight: Font.DemiBold
-          color: Color.foreground
+          color: Commons.Color.foreground
           elide: Text.ElideRight
           style: Text.Outline
           styleColor: galleryWidgetRoot.bgTint(0.85)
@@ -708,8 +709,8 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: closePhotoMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : galleryWidgetRoot.fgTint(0.12)
-          border.color: closePhotoMouse.containsMouse ? Color.urgent : Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.6)
+          color: closePhotoMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : galleryWidgetRoot.fgTint(0.12)
+          border.color: closePhotoMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.6)
           border.width: 1
           z: 120
 
@@ -721,7 +722,7 @@ Item {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.urgent
+            color: Commons.Color.urgent
           }
 
           MouseArea {
@@ -743,8 +744,8 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: galleryGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : galleryWidgetRoot.fgTint(0.12)
-          border.color: galleryGripArea.containsMouse ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
+          color: galleryGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : galleryWidgetRoot.fgTint(0.12)
+          border.color: galleryGripArea.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.6)
           border.width: 1
           z: 120
 
@@ -756,7 +757,7 @@ Item {
             text: "\uf0b2"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           MouseArea {
@@ -804,7 +805,7 @@ Item {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: Font.Bold
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
       }
@@ -848,7 +849,7 @@ Item {
             text: "\uf053"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -865,7 +866,7 @@ Item {
           width: 28
           height: 28
           radius: 14
-          color: shuffleMouse.containsMouse ? Color.accent : galleryWidgetRoot.bgTint(0.65)
+          color: shuffleMouse.containsMouse ? Commons.Color.accent : galleryWidgetRoot.bgTint(0.65)
           border.color: galleryWidgetRoot.fgTint(0.25)
           border.width: 1
 
@@ -874,7 +875,7 @@ Item {
             text: "\uf074"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: shuffleMouse.containsMouse ? Color.background : Color.foreground
+            color: shuffleMouse.containsMouse ? Commons.Color.background : Commons.Color.foreground
           }
 
           MouseArea {
@@ -900,7 +901,7 @@ Item {
             text: "\uf054"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -1112,7 +1113,7 @@ Item {
     implicitHeight: 22
     radius: 11
     color: galleryWidgetRoot.bgTint(0.95)
-    border.color: Color.accent
+    border.color: Commons.Color.accent
     border.width: 1
 
     Text {
@@ -1122,7 +1123,7 @@ Item {
       font.family: Style.font.family
       font.pixelSize: 10
       font.weight: Font.Bold
-      color: Color.accent
+      color: Commons.Color.accent
     }
   }
 
@@ -1173,8 +1174,8 @@ Item {
     height: menuHeight
 
     radius: 14
-    color: Qt.rgba(Color.menu.background.r, Color.menu.background.g, Color.menu.background.b, 0.96)
-    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+    color: Qt.rgba(Commons.Color.menu.background.r, Commons.Color.menu.background.g, Commons.Color.menu.background.b, 0.96)
+    border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
     opacity: galleryWidgetRoot.folderMenuOpen ? 1.0 : 0.0
@@ -1212,7 +1213,7 @@ Item {
           text: "\uf07b"
           font.family: Style.font.family
           font.pixelSize: 13
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -1220,7 +1221,7 @@ Item {
           font.family: Style.font.family
           font.pixelSize: 12
           font.weight: Font.Bold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         Item { Layout.fillWidth: true }
@@ -1237,7 +1238,7 @@ Item {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -1256,7 +1257,7 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 2
       }
@@ -1279,8 +1280,8 @@ Item {
             implicitHeight: 24
             radius: 6
             readonly property bool isSelected: modelData.active ? (galleryWidgetRoot.autoCycleEnabled && galleryWidgetRoot.cycleIntervalMs === modelData.ms) : (!galleryWidgetRoot.autoCycleEnabled)
-            color: spdMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : galleryWidgetRoot.fgTint(0.06))
-            border.color: isSelected ? Color.accent : "transparent"
+            color: spdMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : galleryWidgetRoot.fgTint(0.06))
+            border.color: isSelected ? Commons.Color.accent : "transparent"
             border.width: 1
 
             Text {
@@ -1289,7 +1290,7 @@ Item {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: isSelected ? Font.Bold : Font.Normal
-              color: isSelected ? Color.accent : Color.foreground
+              color: isSelected ? Commons.Color.accent : Commons.Color.foreground
             }
 
             MouseArea {
@@ -1319,7 +1320,7 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 3
       }
@@ -1329,8 +1330,8 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: openPhotoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35)
+        color: openPhotoMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35)
         border.width: 1
 
         RowLayout {
@@ -1343,7 +1344,7 @@ Item {
             text: "\uf08e"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -1352,7 +1353,7 @@ Item {
             font.family: Style.font.family
             font.pixelSize: 11
             font.weight: Font.DemiBold
-            color: Color.foreground
+            color: Commons.Color.foreground
             elide: Text.ElideRight
           }
 
@@ -1360,7 +1361,7 @@ Item {
             text: "\uf054"
             font.family: Style.font.family
             font.pixelSize: 9
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
         }
 
@@ -1381,7 +1382,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: shufPhotoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
+        color: shufPhotoMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
 
         RowLayout {
           anchors.fill: parent
@@ -1393,7 +1394,7 @@ Item {
             text: "\uf074"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -1401,7 +1402,7 @@ Item {
             text: "Shuffle Deck Order"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
             elide: Text.ElideRight
           }
         }
@@ -1422,7 +1423,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: openFldrMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
+        color: openFldrMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
 
         RowLayout {
           anchors.fill: parent
@@ -1434,7 +1435,7 @@ Item {
             text: "\uf07c"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -1442,7 +1443,7 @@ Item {
             text: "Open Folder in File Manager"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
             elide: Text.ElideRight
           }
         }
@@ -1473,7 +1474,7 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
       }
 
@@ -1502,7 +1503,7 @@ Item {
           radius: 6
           readonly property bool isActionBtn: modelData.value === "TOGGLE_LAYOUT_MENU" || modelData.value === "RESET_LAYOUT" || modelData.value === "SAVE_LAYOUT" || modelData.value === "TOGGLE_EDIT_MODE" || modelData.value === "OPEN_SELECTOR" || modelData.value === "OPEN_PREFERENCES"
           readonly property bool isSelected: !isActionBtn && (galleryWidgetRoot.photoFolder === modelData.value || (modelData.value === "pick_dialog" && galleryWidgetRoot.photoFolder !== "ALL" && !galleryWidgetRoot.photoFolder.startsWith("~/.config") && !galleryWidgetRoot.photoFolder.startsWith("~/Wallpapers") && !galleryWidgetRoot.photoFolder.startsWith("~/Pictures")))
-          color: optMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)) : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : "transparent")
+          color: optMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.12) : "transparent")
 
           RowLayout {
             anchors.fill: parent
@@ -1520,7 +1521,7 @@ Item {
                 text: modelData.icon
                 font.family: Style.font.family
                 font.pixelSize: 11
-                color: modelData.value === "RESET_LAYOUT" ? (optMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : (isSelected || isActionBtn ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7))
+                color: modelData.value === "RESET_LAYOUT" ? (optMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)) : (isSelected || isActionBtn ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7))
               }
             }
 
@@ -1531,7 +1532,7 @@ Item {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: (isSelected || isActionBtn) ? Font.Bold : Font.Normal
-              color: modelData.value === "RESET_LAYOUT" ? (optMouse.containsMouse ? Color.urgent : Color.foreground) : (isSelected || isActionBtn ? Color.accent : Color.foreground)
+              color: modelData.value === "RESET_LAYOUT" ? (optMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground) : (isSelected || isActionBtn ? Commons.Color.accent : Commons.Color.foreground)
               elide: Text.ElideRight
             }
 
@@ -1542,7 +1543,7 @@ Item {
               text: (rootRef && rootRef.activeProfile) ? rootRef.activeProfile : ""
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
               elide: Text.ElideRight
             }
 
@@ -1552,7 +1553,7 @@ Item {
               text: galleryWidgetRoot.layoutSubmenuOpen ? "\uf107" : "\uf105"
               font.family: Style.font.family
               font.pixelSize: 11
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
             }
 
             Text {
@@ -1560,7 +1561,7 @@ Item {
               text: "\uf00c"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.accent
+              color: Commons.Color.accent
             }
           }
 

@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // Import base WidgetCard from shared or parent widgets directory
@@ -186,7 +187,7 @@ WidgetCard {
         text: "\uf09e"
         font.family: Style.font.family
         font.pixelSize: 13
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
@@ -194,7 +195,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 13
         font.weight: Font.Bold
-        color: Color.foreground
+        color: Commons.Color.foreground
       }
 
       Item { Layout.fillWidth: true }
@@ -204,14 +205,14 @@ WidgetCard {
         height: 22
         width: 22
         radius: 4
-        color: addFeedHeaderMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : rssWidgetRoot.fgTint(0.08)
+        color: addFeedHeaderMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : rssWidgetRoot.fgTint(0.08)
 
         Text {
           anchors.centerIn: parent
           text: "\uf067"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: addFeedHeaderMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          color: addFeedHeaderMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
         }
 
         MouseArea {
@@ -229,8 +230,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: rssCloseMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : rssWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: rssCloseMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : rssWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -238,7 +239,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -261,8 +262,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: rssGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : rssWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: rssGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : rssWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -270,7 +271,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -332,9 +333,9 @@ WidgetCard {
 
             readonly property bool isSelected: (rssWidgetRoot.activeFeedIndex === index)
 
-            color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (tabMouse.containsMouse ? rssWidgetRoot.fgTint(0.08) : rssWidgetRoot.fgTint(0.04))
+            color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tabMouse.containsMouse ? rssWidgetRoot.fgTint(0.08) : rssWidgetRoot.fgTint(0.04))
             border.width: isSelected ? 1 : 0
-            border.color: isSelected ? Color.accent : "transparent"
+            border.color: isSelected ? Commons.Color.accent : "transparent"
 
             RowLayout {
               id: tabRowLayout
@@ -346,7 +347,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 11
                 font.weight: isSelected ? Font.Bold : Font.Normal
-                color: isSelected ? Color.accent : Color.foreground
+                color: isSelected ? Commons.Color.accent : Commons.Color.foreground
               }
 
               // Close icon for custom feeds
@@ -355,7 +356,7 @@ WidgetCard {
                 text: "\uf00d"
                 font.family: Style.font.family
                 font.pixelSize: 9
-                color: delFeedMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+                color: delFeedMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
 
                 MouseArea {
                   id: delFeedMouse
@@ -382,14 +383,14 @@ WidgetCard {
           height: 26
           width: 26
           radius: 6
-          color: addFeedMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : rssWidgetRoot.fgTint(0.06)
+          color: addFeedMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : rssWidgetRoot.fgTint(0.06)
 
           Text {
             anchors.centerIn: parent
             text: "\uf067"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: addFeedMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: addFeedMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
           }
 
           MouseArea {
@@ -420,14 +421,14 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 11
         font.weight: Font.DemiBold
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
         text: "• " + (rssWidgetRoot.articlesList ? (rssWidgetRoot.articlesList.length + " stories") : "0 stories")
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
       }
 
       Item { Layout.fillWidth: true }
@@ -436,7 +437,7 @@ WidgetCard {
         text: rssWidgetRoot.lastStatus
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
       }
 
       // Manual Refresh Button
@@ -444,14 +445,14 @@ WidgetCard {
         width: 20
         height: 20
         radius: 4
-        color: refMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: refMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         Text {
           anchors.centerIn: parent
           text: "\uf021"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: rssWidgetRoot.isLoading ? Color.accent : (refMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5))
+          color: rssWidgetRoot.isLoading ? Commons.Color.accent : (refMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5))
           rotation: rssWidgetRoot.isLoading ? 180 : 0
 
           Behavior on rotation {
@@ -484,7 +485,7 @@ WidgetCard {
         width: articlesListView.width
         implicitHeight: articleCol.implicitHeight + 14
         radius: 8
-        color: cardMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.12) : rssWidgetRoot.fgTint(0.03)
+        color: cardMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.12) : rssWidgetRoot.fgTint(0.03)
 
         Behavior on color {
           ColorAnimation { duration: 150 }
@@ -507,7 +508,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.DemiBold
-              color: cardMouse.containsMouse ? Color.accent : Color.foreground
+              color: cardMouse.containsMouse ? Commons.Color.accent : Commons.Color.foreground
               wrapMode: Text.Wrap
               maximumLineCount: 2
               elide: Text.ElideRight
@@ -517,7 +518,7 @@ WidgetCard {
               text: "\uf08e"
               font.family: Style.font.family
               font.pixelSize: 9
-              color: cardMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+              color: cardMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
             }
           }
 
@@ -528,7 +529,7 @@ WidgetCard {
             text: modelData.snippet || ""
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
             wrapMode: Text.Wrap
             maximumLineCount: 2
             elide: Text.ElideRight
@@ -544,7 +545,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 9
               font.weight: Font.DemiBold
-              color: Color.accent
+              color: Commons.Color.accent
             }
 
             Text {
@@ -552,7 +553,7 @@ WidgetCard {
               text: "by " + modelData.author
               font.family: Style.font.family
               font.pixelSize: 9
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35)
               elide: Text.ElideRight
             }
           }
@@ -585,7 +586,7 @@ WidgetCard {
             text: rssWidgetRoot.isLoading ? "\uf021" : "\uf09e"
             font.family: Style.font.family
             font.pixelSize: 20
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -593,7 +594,7 @@ WidgetCard {
             text: rssWidgetRoot.isLoading ? "Fetching latest feed items..." : "No articles found in this feed"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
       }
@@ -613,7 +614,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: Style.space(8)
       }
 
@@ -622,7 +623,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 28
         radius: 6
-        color: addOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: addOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -634,7 +635,7 @@ WidgetCard {
             text: "\uf067"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -642,7 +643,7 @@ WidgetCard {
             text: "Add Custom RSS URL..."
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -663,7 +664,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 28
         radius: 6
-        color: refOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: refOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -675,7 +676,7 @@ WidgetCard {
             text: "\uf021"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -683,7 +684,7 @@ WidgetCard {
             text: "Force Refresh Feed"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -710,7 +711,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: Style.space(8)
       }
 
@@ -731,7 +732,7 @@ WidgetCard {
             Layout.fillWidth: true
             height: 24
             radius: 4
-            color: (rssWidgetRoot.refreshIntervalMinutes === modelData.mins) ? Color.accent : (intMouse.containsMouse ? rssWidgetRoot.fgTint(0.1) : rssWidgetRoot.fgTint(0.05))
+            color: (rssWidgetRoot.refreshIntervalMinutes === modelData.mins) ? Commons.Color.accent : (intMouse.containsMouse ? rssWidgetRoot.fgTint(0.1) : rssWidgetRoot.fgTint(0.05))
 
             Text {
               anchors.centerIn: parent
@@ -739,7 +740,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: (rssWidgetRoot.refreshIntervalMinutes === modelData.mins) ? Font.Bold : Font.Normal
-              color: (rssWidgetRoot.refreshIntervalMinutes === modelData.mins) ? "#0a0a0f" : Color.foreground
+              color: (rssWidgetRoot.refreshIntervalMinutes === modelData.mins) ? "#0a0a0f" : Commons.Color.foreground
             }
 
             MouseArea {

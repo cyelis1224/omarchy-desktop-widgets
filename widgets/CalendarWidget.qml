@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 WidgetCard {
@@ -97,7 +98,7 @@ WidgetCard {
   }
 
   function getCategoryColor(cat) {
-    if (cat === "meeting") return Color.accent
+    if (cat === "meeting") return Commons.Color.accent
     if (cat === "personal") return "#34d399" // Mint green
     if (cat === "deadline") return "#f87171" // Red
     return "#38bdf8" // Cyan for work
@@ -386,7 +387,7 @@ WidgetCard {
         text: "\uf073"
         font.family: Style.font.family
         font.pixelSize: 13
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
@@ -394,7 +395,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 13
         font.weight: Font.Bold
-        color: Color.foreground
+        color: Commons.Color.foreground
       }
 
       Item { Layout.fillWidth: true }
@@ -404,7 +405,7 @@ WidgetCard {
         width: todayTxt.implicitWidth + 12
         height: 22
         radius: 4
-        color: todayMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : calendarRoot.fgTint(0.08)
+        color: todayMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : calendarRoot.fgTint(0.08)
 
         Text {
           id: todayTxt
@@ -413,7 +414,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 10
           font.weight: Font.DemiBold
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -437,7 +438,7 @@ WidgetCard {
           text: "\uf053"
           font.family: Style.font.family
           font.pixelSize: 9
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         MouseArea {
@@ -461,7 +462,7 @@ WidgetCard {
           text: "\uf054"
           font.family: Style.font.family
           font.pixelSize: 9
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         MouseArea {
@@ -479,8 +480,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: calCloseMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : calendarRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: calCloseMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : calendarRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -488,7 +489,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -511,8 +512,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: calGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : calendarRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: calGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : calendarRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -520,7 +521,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -577,7 +578,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: Font.Bold
-            color: (index >= 5 && calendarRoot.startOnMonday) || (index === 0 && !calendarRoot.startOnMonday) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: (index >= 5 && calendarRoot.startOnMonday) || (index === 0 && !calendarRoot.startOnMonday) ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
         }
       }
@@ -602,14 +603,14 @@ WidgetCard {
           radius: 6
 
           color: {
-            if (modelData.isSelected) return Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.30)
-            if (modelData.isToday) return Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15)
+            if (modelData.isSelected) return Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.30)
+            if (modelData.isToday) return Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15)
             if (cellMouse.containsMouse) return calendarRoot.fgTint(0.08)
             return "transparent"
           }
 
           border.width: modelData.isSelected ? 1.5 : (modelData.isToday ? 1 : 0)
-          border.color: modelData.isSelected ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+          border.color: modelData.isSelected ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
 
           ColumnLayout {
             anchors.centerIn: parent
@@ -622,9 +623,9 @@ WidgetCard {
               font.pixelSize: 11
               font.weight: modelData.isToday ? Font.Bold : (modelData.isSelected ? Font.DemiBold : Font.Normal)
               color: {
-                if (modelData.isSelected || modelData.isToday) return Color.accent
-                if (!modelData.isCurrentMonth) return Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.25)
-                return Color.foreground
+                if (modelData.isSelected || modelData.isToday) return Commons.Color.accent
+                if (!modelData.isCurrentMonth) return Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.25)
+                return Commons.Color.foreground
               }
             }
 
@@ -635,7 +636,7 @@ WidgetCard {
               height: 3.5
               radius: 1.75
               visible: modelData.hasEvents
-              color: modelData.isSelected ? Color.foreground : Color.accent
+              color: modelData.isSelected ? Commons.Color.foreground : Commons.Color.accent
             }
           }
 
@@ -671,7 +672,7 @@ WidgetCard {
         text: "\uf022"
         font.family: Style.font.family
         font.pixelSize: 11
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
@@ -680,7 +681,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 11
         font.weight: Font.DemiBold
-        color: Color.foreground
+        color: Commons.Color.foreground
         elide: Text.ElideRight
       }
 
@@ -688,7 +689,7 @@ WidgetCard {
         text: calendarRoot.selectedEvents.length + " items"
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
       }
 
       // Quick Add Plus Button
@@ -696,14 +697,14 @@ WidgetCard {
         width: 20
         height: 20
         radius: 4
-        color: plusHeaderMouse.containsMouse ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
+        color: plusHeaderMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
 
         Text {
           anchors.centerIn: parent
           text: "\uf067"
           font.family: Style.font.family
           font.pixelSize: 9
-          color: plusHeaderMouse.containsMouse ? "#0a0a0f" : Color.accent
+          color: plusHeaderMouse.containsMouse ? "#0a0a0f" : Commons.Color.accent
         }
 
         MouseArea {
@@ -756,9 +757,9 @@ WidgetCard {
             width: 15
             height: 15
             radius: 3
-            color: modelData.done ? Color.accent : "transparent"
+            color: modelData.done ? Commons.Color.accent : "transparent"
             border.width: 1
-            border.color: modelData.done ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35)
+            border.color: modelData.done ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35)
 
             Text {
               anchors.centerIn: parent
@@ -789,7 +790,7 @@ WidgetCard {
               font.pixelSize: 11
               font.weight: Font.DemiBold
               font.strikeout: modelData.done
-              color: modelData.done ? Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4) : Color.foreground
+              color: modelData.done ? Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4) : Commons.Color.foreground
               elide: Text.ElideRight
             }
 
@@ -809,7 +810,7 @@ WidgetCard {
                   text: modelData.allDay ? "All Day" : (modelData.startTime + (modelData.endTime ? (" - " + modelData.endTime) : ""))
                   font.family: Style.font.family
                   font.pixelSize: 9
-                  color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+                  color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
                 }
               }
 
@@ -819,7 +820,7 @@ WidgetCard {
                 text: "• " + modelData.startDate + " → " + modelData.endDate
                 font.family: Style.font.family
                 font.pixelSize: 8
-                color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+                color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
               }
             }
           }
@@ -829,14 +830,14 @@ WidgetCard {
             width: 20
             height: 20
             radius: 4
-            color: editMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+            color: editMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
             Text {
               anchors.centerIn: parent
               text: "\uf044"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: editMouse.containsMouse ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+              color: editMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
             }
 
             MouseArea {
@@ -853,14 +854,14 @@ WidgetCard {
             width: 20
             height: 20
             radius: 4
-            color: delMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : "transparent"
+            color: delMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : "transparent"
 
             Text {
               anchors.centerIn: parent
               text: "\uf1f8"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: delMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+              color: delMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
             }
 
             MouseArea {
@@ -890,7 +891,7 @@ WidgetCard {
         text: "No events scheduled for this day"
         font.family: Style.font.family
         font.pixelSize: 11
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35)
       }
     }
 
@@ -899,9 +900,9 @@ WidgetCard {
       Layout.fillWidth: true
       height: 30
       radius: 6
-      color: schedBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : calendarRoot.fgTint(0.05)
+      color: schedBtnMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : calendarRoot.fgTint(0.05)
       border.width: 1
-      border.color: schedBtnMouse.containsMouse ? Color.accent : calendarRoot.fgTint(0.08)
+      border.color: schedBtnMouse.containsMouse ? Commons.Color.accent : calendarRoot.fgTint(0.08)
 
       RowLayout {
         anchors.centerIn: parent
@@ -911,7 +912,7 @@ WidgetCard {
           text: "\uf067"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -919,7 +920,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 10
           font.weight: Font.DemiBold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
       }
 
@@ -942,9 +943,9 @@ WidgetCard {
     z: 300
     visible: calendarRoot.showEventModal
     radius: 18
-    color: Qt.rgba(Color.menu.background.r, Color.menu.background.g, Color.menu.background.b, 0.97)
+    color: Qt.rgba(Commons.Color.menu.background.r, Commons.Color.menu.background.g, Commons.Color.menu.background.b, 0.97)
     border.width: 1.5
-    border.color: Color.accent
+    border.color: Commons.Color.accent
 
     MouseArea {
       anchors.fill: parent
@@ -964,8 +965,8 @@ WidgetCard {
           width: 26
           height: 26
           radius: 6
-          color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+          color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+          border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
           border.width: 1
 
           Text {
@@ -973,7 +974,7 @@ WidgetCard {
             text: "\uf073"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Color.accent
+            color: Commons.Color.accent
           }
         }
 
@@ -984,13 +985,13 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 12
             font.weight: Font.Bold
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
           Text {
             text: calendarRoot.editingEventId ? "Update your scheduled event details" : "Add to your personal calendar agenda"
             font.family: Style.font.family
             font.pixelSize: 9
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
         }
 
@@ -1001,14 +1002,14 @@ WidgetCard {
           width: 22
           height: 22
           radius: 11
-          color: modalCloseMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : calendarRoot.fgTint(0.08)
+          color: modalCloseMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : calendarRoot.fgTint(0.08)
 
           Text {
             anchors.centerIn: parent
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.urgent
+            color: Commons.Color.urgent
           }
 
           MouseArea {
@@ -1031,7 +1032,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 9
           font.weight: Font.Bold
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
 
         Rectangle {
@@ -1040,7 +1041,7 @@ WidgetCard {
           radius: 6
           color: calendarRoot.wellColor
           border.width: 1
-          border.color: titleInput.activeFocus ? Color.accent : calendarRoot.fgTint(0.12)
+          border.color: titleInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
           MouseArea {
             anchors.fill: parent
@@ -1060,7 +1061,7 @@ WidgetCard {
             verticalAlignment: TextInput.AlignVCenter
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
             selectByMouse: true
             activeFocusOnTab: true
             clip: true
@@ -1075,7 +1076,7 @@ WidgetCard {
               text: "e.g. Design Review, Flight, Doctor..."
               font.family: Style.font.family
               font.pixelSize: 11
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35)
             }
           }
         }
@@ -1091,7 +1092,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 9
           font.weight: Font.Bold
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
 
         RowLayout {
@@ -1104,7 +1105,7 @@ WidgetCard {
             radius: 6
             color: calendarRoot.wellColor
             border.width: 1
-            border.color: startInput.activeFocus ? Color.accent : calendarRoot.fgTint(0.12)
+            border.color: startInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
             MouseArea {
               anchors.fill: parent
@@ -1124,7 +1125,7 @@ WidgetCard {
               verticalAlignment: TextInput.AlignVCenter
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.foreground
+              color: Commons.Color.foreground
               selectByMouse: true
               activeFocusOnTab: true
               clip: true
@@ -1138,7 +1139,7 @@ WidgetCard {
             text: "→"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Rectangle {
@@ -1147,7 +1148,7 @@ WidgetCard {
             radius: 6
             color: calendarRoot.wellColor
             border.width: 1
-            border.color: endInput.activeFocus ? Color.accent : calendarRoot.fgTint(0.12)
+            border.color: endInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
             MouseArea {
               anchors.fill: parent
@@ -1167,7 +1168,7 @@ WidgetCard {
               verticalAlignment: TextInput.AlignVCenter
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.foreground
+              color: Commons.Color.foreground
               selectByMouse: true
               activeFocusOnTab: true
               clip: true
@@ -1192,7 +1193,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 9
             font.weight: Font.Bold
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           Item { Layout.fillWidth: true }
@@ -1205,9 +1206,9 @@ WidgetCard {
               width: 14
               height: 14
               radius: 3
-              color: calendarRoot.modalAllDay ? Color.accent : "transparent"
+              color: calendarRoot.modalAllDay ? Commons.Color.accent : "transparent"
               border.width: 1
-              border.color: calendarRoot.modalAllDay ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+              border.color: calendarRoot.modalAllDay ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
 
               Text {
                 anchors.centerIn: parent
@@ -1229,7 +1230,7 @@ WidgetCard {
               text: "All Day Event"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.foreground
+              color: Commons.Color.foreground
             }
           }
         }
@@ -1245,7 +1246,7 @@ WidgetCard {
             radius: 6
             color: calendarRoot.wellColor
             border.width: 1
-            border.color: sTimeInput.activeFocus ? Color.accent : calendarRoot.fgTint(0.12)
+            border.color: sTimeInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
             MouseArea {
               anchors.fill: parent
@@ -1265,7 +1266,7 @@ WidgetCard {
               verticalAlignment: TextInput.AlignVCenter
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.foreground
+              color: Commons.Color.foreground
               selectByMouse: true
               activeFocusOnTab: true
               clip: true
@@ -1279,7 +1280,7 @@ WidgetCard {
             text: "to"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           Rectangle {
@@ -1288,7 +1289,7 @@ WidgetCard {
             radius: 6
             color: calendarRoot.wellColor
             border.width: 1
-            border.color: eTimeInput.activeFocus ? Color.accent : calendarRoot.fgTint(0.12)
+            border.color: eTimeInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
             MouseArea {
               anchors.fill: parent
@@ -1308,7 +1309,7 @@ WidgetCard {
               verticalAlignment: TextInput.AlignVCenter
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.foreground
+              color: Commons.Color.foreground
               selectByMouse: true
               activeFocusOnTab: true
               clip: true
@@ -1330,7 +1331,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 9
           font.weight: Font.Bold
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
 
         RowLayout {
@@ -1340,7 +1341,7 @@ WidgetCard {
           Repeater {
             model: [
               { id: "work", label: "Work", color: "#38bdf8" },
-              { id: "meeting", label: "Meeting", color: Color.accent },
+              { id: "meeting", label: "Meeting", color: Commons.Color.accent },
               { id: "personal", label: "Personal", color: "#34d399" },
               { id: "deadline", label: "Deadline", color: "#f87171" }
             ]
@@ -1361,7 +1362,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 9
                 font.weight: isSelected ? Font.Bold : Font.Normal
-                color: isSelected ? modelData.color : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                color: isSelected ? modelData.color : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
               }
 
               MouseArea {
@@ -1392,7 +1393,7 @@ WidgetCard {
             text: "Cancel"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
           }
 
           MouseArea {
@@ -1408,7 +1409,7 @@ WidgetCard {
           Layout.fillWidth: true
           height: 30
           radius: 6
-          color: saveBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.9) : Color.accent
+          color: saveBtnMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.9) : Commons.Color.accent
 
           RowLayout {
             anchors.centerIn: parent
@@ -1475,7 +1476,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: Style.space(8)
       }
 
@@ -1484,7 +1485,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 28
         radius: 6
-        color: somMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15) : "transparent"
+        color: somMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -1496,7 +1497,7 @@ WidgetCard {
             text: "\uf073"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -1504,14 +1505,14 @@ WidgetCard {
             text: "Start Week on Monday"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: calendarRoot.startOnMonday ? "\uf205" : "\uf204"
             font.family: Style.font.family
             font.pixelSize: 13
-            color: calendarRoot.startOnMonday ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: calendarRoot.startOnMonday ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -1532,7 +1533,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 28
         radius: 6
-        color: clearDayMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.15) : "transparent"
+        color: clearDayMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.15) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -1544,7 +1545,7 @@ WidgetCard {
             text: "\uf1f8"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.urgent
+            color: Commons.Color.urgent
           }
 
           Text {
@@ -1552,7 +1553,7 @@ WidgetCard {
             text: "Clear Today's Agenda"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 

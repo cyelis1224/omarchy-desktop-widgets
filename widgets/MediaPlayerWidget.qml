@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 WidgetCard {
@@ -65,7 +66,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 2
       }
@@ -75,7 +76,7 @@ WidgetCard {
         text: "No active media players"
         font.family: Style.font.family
         font.pixelSize: 11
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         Layout.leftMargin: 8
         Layout.bottomMargin: 4
       }
@@ -89,7 +90,7 @@ WidgetCard {
           implicitHeight: 28
           radius: 6
           readonly property bool isCurrent: mediaWidgetRoot.activePlayer === modelData
-          color: playerMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (isCurrent ? mediaWidgetRoot.fgTint(0.08) : "transparent")
+          color: playerMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (isCurrent ? mediaWidgetRoot.fgTint(0.08) : "transparent")
 
           RowLayout {
             anchors.fill: parent
@@ -101,7 +102,7 @@ WidgetCard {
               text: "\uf001"
               font.family: Style.font.family
               font.pixelSize: 11
-              color: isCurrent ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              color: isCurrent ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
             }
 
             Text {
@@ -110,7 +111,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: isCurrent ? Font.Bold : Font.Normal
-              color: isCurrent ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
+              color: isCurrent ? Commons.Color.foreground : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.8)
               elide: Text.ElideRight
             }
 
@@ -118,7 +119,7 @@ WidgetCard {
               text: (modelData.playbackState === MprisPlaybackState.Playing) ? "\uf04b" : "\uf04c"
               font.family: Style.font.family
               font.pixelSize: 9
-              color: (modelData.playbackState === MprisPlaybackState.Playing) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+              color: (modelData.playbackState === MprisPlaybackState.Playing) ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
             }
 
             Text {
@@ -126,7 +127,7 @@ WidgetCard {
               text: "\uf00c"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.accent
+              color: Commons.Color.accent
             }
           }
 
@@ -150,7 +151,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 4
       }
@@ -160,7 +161,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: visMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: visMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -172,7 +173,7 @@ WidgetCard {
             text: "\uf080"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: mediaWidgetRoot.showVisualizer ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: mediaWidgetRoot.showVisualizer ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           Text {
@@ -180,14 +181,14 @@ WidgetCard {
             text: "Audio Spectrum Visualizer"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: mediaWidgetRoot.showVisualizer ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: mediaWidgetRoot.showVisualizer ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: mediaWidgetRoot.showVisualizer ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -289,7 +290,7 @@ WidgetCard {
           text: "\uf001"
           font.family: Style.font.family
           font.pixelSize: 20
-          color: Color.accent
+          color: Commons.Color.accent
         }
       }
 
@@ -304,7 +305,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 14
           font.weight: Font.Bold
-          color: Color.foreground
+          color: Commons.Color.foreground
           elide: Text.ElideRight
         }
 
@@ -313,7 +314,7 @@ WidgetCard {
           text: mediaWidgetRoot.trackArtist
           font.family: Style.font.family
           font.pixelSize: 12
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
           elide: Text.ElideRight
         }
       }
@@ -324,8 +325,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMediaMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : mediaWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: closeMediaMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : mediaWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -333,7 +334,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -355,8 +356,8 @@ WidgetCard {
         width: 24
         height: 24
         radius: 12
-        color: mediaGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : mediaWidgetRoot.fgTint(0.08)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: mediaGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : mediaWidgetRoot.fgTint(0.08)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -364,7 +365,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -417,7 +418,7 @@ WidgetCard {
             text: "\uf048"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -434,7 +435,7 @@ WidgetCard {
           width: 32
           height: 32
           radius: 16
-          color: playMouse.containsMouse ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.85)
+          color: playMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.85)
           border.color: Qt.rgba(255, 255, 255, 0.3)
           border.width: 1
 
@@ -443,7 +444,7 @@ WidgetCard {
             text: mediaWidgetRoot.isPlaying ? "\uf04c" : "\uf04b"
             font.family: Style.font.family
             font.pixelSize: 13
-            color: Color.background
+            color: Commons.Color.background
           }
 
           MouseArea {
@@ -469,7 +470,7 @@ WidgetCard {
             text: "\uf051"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -504,7 +505,7 @@ WidgetCard {
             width: 7
             height: Math.max(3, Math.round(mediaWidgetRoot.visualizerHeights[index] * 0.55))
             radius: 3.5
-            color: Color.accent
+            color: Commons.Color.accent
             opacity: mediaWidgetRoot.isPlaying ? 0.95 : 0.40
 
             Behavior on opacity {

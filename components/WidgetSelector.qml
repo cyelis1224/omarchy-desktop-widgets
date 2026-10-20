@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -45,8 +46,8 @@ Item {
     width: Math.min(parent.width - Style.space(48), 920)
     height: Math.min(parent.height - Style.space(120), 480)
     radius: 24
-    color: Util.alpha(Color.menu.background, 0.95)
-    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+    color: Util.alpha(Commons.Color.menu.background, 0.95)
+    border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
     Behavior on anchors.bottomMargin {
@@ -77,8 +78,8 @@ Item {
           width: 36
           height: 36
           radius: 18
-          color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+          color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+          border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
           border.width: 1
 
           Text {
@@ -86,7 +87,7 @@ Item {
             text: "\uf009"
             font.family: Style.font.family
             font.pixelSize: 16
-            color: Color.accent
+            color: Commons.Color.accent
           }
         }
 
@@ -97,13 +98,13 @@ Item {
             font.family: Style.font.family
             font.pixelSize: 16
             font.weight: Font.Bold
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
           Text {
             text: "Toggle or drag widgets directly onto your desktop"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.65)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.65)
           }
         }
 
@@ -114,8 +115,8 @@ Item {
           implicitWidth: importRow.implicitWidth + 20
           implicitHeight: 32
           radius: 16
-          color: importMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Util.alpha(Color.foreground, 0.08)
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+          color: importMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : Util.alpha(Commons.Color.foreground, 0.08)
+          border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
           border.width: 1
 
           RowLayout {
@@ -127,14 +128,14 @@ Item {
               text: "\uf093"
               font.family: Style.font.family
               font.pixelSize: 12
-              color: Color.accent
+              color: Commons.Color.accent
             }
             Text {
               text: "Import QML Widget..."
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.DemiBold
-              color: Color.foreground
+              color: Commons.Color.foreground
             }
           }
 
@@ -156,14 +157,14 @@ Item {
           width: 32
           height: 32
           radius: 16
-          color: closeDrawerMouse.containsMouse ? Util.alpha(Color.foreground, 0.22) : Util.alpha(Color.foreground, 0.08)
+          color: closeDrawerMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.22) : Util.alpha(Commons.Color.foreground, 0.08)
 
           Text {
             anchors.centerIn: parent
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 13
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -183,8 +184,8 @@ Item {
         Layout.fillWidth: true
         height: 36
         radius: 18
-        color: Util.alpha(Color.foreground, 0.08)
-        border.color: searchInput.activeFocus ? Color.accent : Util.alpha(Color.foreground, 0.12)
+        color: Util.alpha(Commons.Color.foreground, 0.08)
+        border.color: searchInput.activeFocus ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.12)
         border.width: 1
 
         RowLayout {
@@ -197,7 +198,7 @@ Item {
             text: "\uf002"
             font.family: Style.font.family
             font.pixelSize: 13
-            color: searchInput.activeFocus ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: searchInput.activeFocus ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           TextInput {
@@ -205,7 +206,7 @@ Item {
             Layout.fillWidth: true
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Color.foreground
+            color: Commons.Color.foreground
             verticalAlignment: TextInput.AlignVCenter
             selectByMouse: true
             clip: true
@@ -217,7 +218,7 @@ Item {
               text: "Search all widgets (e.g. coin tracker, clock, system, notes)..."
               font.family: Style.font.family
               font.pixelSize: 12
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
               visible: !searchInput.text && !searchInput.activeFocus
             }
           }
@@ -227,7 +228,7 @@ Item {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
             MouseArea {
               anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
@@ -270,9 +271,9 @@ Item {
               implicitHeight: 30
               radius: 15
               readonly property bool isSelected: selectorRoot.selectedCategory === modelData.cat
-              // Selected wins over hover: the label is Color.background, so it needs the solid accent under it
-              color: isSelected ? Color.accent : (catMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Util.alpha(Color.foreground, 0.08))
-              border.color: isSelected ? Util.alpha(Color.foreground, 0.3) : Util.alpha(Color.foreground, 0.1)
+              // Selected wins over hover: the label is Commons.Color.background, so it needs the solid accent under it
+              color: isSelected ? Commons.Color.accent : (catMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Util.alpha(Commons.Color.foreground, 0.08))
+              border.color: isSelected ? Util.alpha(Commons.Color.foreground, 0.3) : Util.alpha(Commons.Color.foreground, 0.1)
               border.width: 1
 
               RowLayout {
@@ -284,14 +285,14 @@ Item {
                   text: modelData.icon
                   font.family: Style.font.family
                   font.pixelSize: 11
-                  color: isSelected ? Color.background : Color.accent
+                  color: isSelected ? Commons.Color.background : Commons.Color.accent
                 }
                 Text {
                   text: modelData.label
                   font.family: Style.font.family
                   font.pixelSize: 12
                   font.weight: isSelected ? Font.Bold : Font.Normal
-                  color: isSelected ? Color.background : Color.foreground
+                  color: isSelected ? Commons.Color.background : Commons.Color.foreground
                 }
               }
 
@@ -356,8 +357,8 @@ Item {
               width: (widgetFlow.width - Style.space(12)) / 2
               implicitHeight: 120
               radius: 16
-              color: Util.alpha(Color.foreground, cardHoverArea.containsMouse ? 0.08 : 0.04)
-              border.color: isAdded ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : Util.alpha(Color.foreground, 0.1)
+              color: Util.alpha(Commons.Color.foreground, cardHoverArea.containsMouse ? 0.08 : 0.04)
+              border.color: isAdded ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : Util.alpha(Commons.Color.foreground, 0.1)
               border.width: 1
 
               readonly property bool isAdded: {
@@ -378,8 +379,8 @@ Item {
                   width: 44
                   height: 44
                   radius: 12
-                  color: isAdded ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : Util.alpha(Color.foreground, 0.08)
-                  border.color: isAdded ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : Util.alpha(Color.foreground, 0.12)
+                  color: isAdded ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : Util.alpha(Commons.Color.foreground, 0.08)
+                  border.color: isAdded ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : Util.alpha(Commons.Color.foreground, 0.12)
                   border.width: 1
 
                   Text {
@@ -387,7 +388,7 @@ Item {
                     text: modelData.icon
                     font.family: Style.font.family
                     font.pixelSize: 20
-                    color: isAdded ? Color.accent : Color.foreground
+                    color: isAdded ? Commons.Color.accent : Commons.Color.foreground
                   }
                 }
 
@@ -407,7 +408,7 @@ Item {
                       font.family: Style.font.family
                       font.pixelSize: 13
                       font.weight: Font.Bold
-                      color: Color.foreground
+                      color: Commons.Color.foreground
                       elide: Text.ElideRight
                     }
 
@@ -416,7 +417,7 @@ Item {
                       implicitWidth: badgeText.implicitWidth + 10
                       implicitHeight: 18
                       radius: 9
-                      color: isAdded ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : Util.alpha(Color.foreground, 0.1)
+                      color: isAdded ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : Util.alpha(Commons.Color.foreground, 0.1)
 
                       Text {
                         id: badgeText
@@ -425,7 +426,7 @@ Item {
                         font.family: Style.font.family
                         font.pixelSize: 9
                         font.weight: Font.DemiBold
-                        color: isAdded ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                        color: isAdded ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
                       }
                     }
                   }
@@ -435,7 +436,7 @@ Item {
                     text: modelData.description
                     font.family: Style.font.family
                     font.pixelSize: 11
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.65)
+                    color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.65)
                     wrapMode: Text.WordWrap
                     maximumLineCount: 2
                     elide: Text.ElideRight
@@ -453,8 +454,8 @@ Item {
                       implicitWidth: actionBtnText.implicitWidth + 20
                       implicitHeight: 26
                       radius: 13
-                      color: actionMouse.containsMouse ? (isAdded ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.lighter(Color.accent, 1.2)) : (isAdded ? Util.alpha(Color.foreground, 0.1) : Color.accent)
-                      border.color: isAdded ? (actionMouse.containsMouse ? Color.urgent : Util.alpha(Color.foreground, 0.2)) : "transparent"
+                      color: actionMouse.containsMouse ? (isAdded ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.lighter(Commons.Color.accent, 1.2)) : (isAdded ? Util.alpha(Commons.Color.foreground, 0.1) : Commons.Color.accent)
+                      border.color: isAdded ? (actionMouse.containsMouse ? Commons.Color.urgent : Util.alpha(Commons.Color.foreground, 0.2)) : "transparent"
                       border.width: 1
 
                       RowLayout {
@@ -466,14 +467,14 @@ Item {
                           text: isAdded ? (actionMouse.containsMouse ? "\uf00d" : "\uf00c") : "\uf067"
                           font.family: Style.font.family
                           font.pixelSize: 10
-                          color: isAdded ? (actionMouse.containsMouse ? Color.urgent : Color.accent) : Color.background
+                          color: isAdded ? (actionMouse.containsMouse ? Commons.Color.urgent : Commons.Color.accent) : Commons.Color.background
                         }
                         Text {
                           text: isAdded ? (actionMouse.containsMouse ? "Remove" : "On Desktop") : "Add to Desktop"
                           font.family: Style.font.family
                           font.pixelSize: 11
                           font.weight: Font.Bold
-                          color: isAdded ? (actionMouse.containsMouse ? Color.urgent : Color.foreground) : Color.background
+                          color: isAdded ? (actionMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground) : Commons.Color.background
                         }
                       }
 
