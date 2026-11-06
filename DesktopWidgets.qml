@@ -1655,6 +1655,7 @@ Item {
               required property var modelData
               active: root.isWidgetActiveOnMonitor(modelData.id, desktopWindow.monitorName)
               source: modelData.componentUrl
+              asynchronous: true
               z: 11 + root.widgetStackOrder.indexOf(modelData.id)
 
               // Raises the widget on any press. It sits above the widget because a
