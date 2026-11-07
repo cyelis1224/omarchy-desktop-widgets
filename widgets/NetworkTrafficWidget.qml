@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 WidgetCard {
@@ -246,7 +247,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 2
       }
@@ -257,10 +258,10 @@ WidgetCard {
         implicitHeight: 34
         radius: 6
         color: (devTriggerMouse.containsMouse || networkWidgetRoot.devicePopoutOpen)
-          ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
+          ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
           : Qt.rgba(1, 1, 1, 0.05)
         border.color: networkWidgetRoot.devicePopoutOpen
-          ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.55)
+          ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.55)
           : "transparent"
         border.width: 1
 
@@ -274,7 +275,7 @@ WidgetCard {
             text: networkWidgetRoot.getSelectedDeviceIcon()
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           ColumnLayout {
@@ -287,7 +288,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.DemiBold
-              color: Color.foreground
+              color: Commons.Color.foreground
               elide: Text.ElideRight
             }
 
@@ -297,8 +298,8 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 9
               color: networkWidgetRoot.devicePopoutOpen
-                ? Color.accent
-                : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+                ? Commons.Color.accent
+                : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
               elide: Text.ElideRight
             }
           }
@@ -308,8 +309,8 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             color: (devTriggerMouse.containsMouse || networkWidgetRoot.devicePopoutOpen)
-              ? Color.accent
-              : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+              ? Commons.Color.accent
+              : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -336,7 +337,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 2
       }
@@ -346,7 +347,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: fillMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: fillMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -358,7 +359,7 @@ WidgetCard {
             text: "\uf201"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: networkWidgetRoot.fillGraph ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: networkWidgetRoot.fillGraph ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           Text {
@@ -366,14 +367,14 @@ WidgetCard {
             text: "Filled Area Chart"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: networkWidgetRoot.fillGraph ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: networkWidgetRoot.fillGraph ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: networkWidgetRoot.fillGraph ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -396,7 +397,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: totMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: totMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -408,7 +409,7 @@ WidgetCard {
             text: "\uf0ec"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: networkWidgetRoot.showTotals ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: networkWidgetRoot.showTotals ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           Text {
@@ -416,14 +417,14 @@ WidgetCard {
             text: "Show Session Totals"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: networkWidgetRoot.showTotals ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: networkWidgetRoot.showTotals ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: networkWidgetRoot.showTotals ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -445,7 +446,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: scaleMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: scaleMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -457,7 +458,7 @@ WidgetCard {
             text: "\uf017"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -465,7 +466,7 @@ WidgetCard {
             text: "Time Scale"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Rectangle {
@@ -473,9 +474,9 @@ WidgetCard {
             implicitHeight: 20
             radius: 10
             color: networkWidgetRoot.timeScaleMenuOpen
-              ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+              ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
               : Qt.rgba(1, 1, 1, 0.06)
-            border.color: networkWidgetRoot.timeScaleMenuOpen ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+            border.color: networkWidgetRoot.timeScaleMenuOpen ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
             border.width: 1
 
             RowLayout {
@@ -488,14 +489,14 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 10
                 font.weight: Font.DemiBold
-                color: Color.foreground
+                color: Commons.Color.foreground
               }
 
               Text {
                 text: networkWidgetRoot.timeScaleMenuOpen ? "\uf077" : "\uf078"
                 font.family: Style.font.family
                 font.pixelSize: 8
-                color: Color.accent
+                color: Commons.Color.accent
               }
             }
           }
@@ -519,7 +520,7 @@ WidgetCard {
         implicitHeight: scaleOptionsCol.implicitHeight + 8
         radius: 6
         color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3)
         border.width: 1
 
         ColumnLayout {
@@ -540,7 +541,7 @@ WidgetCard {
               implicitHeight: 24
               radius: 5
               color: isSelected
-                ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
                 : (scaleOptionMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
 
               RowLayout {
@@ -553,7 +554,7 @@ WidgetCard {
                   text: isSelected ? "\uf00c" : ""
                   font.family: Style.font.family
                   font.pixelSize: 10
-                  color: Color.accent
+                  color: Commons.Color.accent
                   Layout.preferredWidth: 12
                   horizontalAlignment: Text.AlignHCenter
                 }
@@ -564,7 +565,7 @@ WidgetCard {
                   font.family: Style.font.family
                   font.pixelSize: 11
                   font.weight: isSelected ? Font.Bold : Font.Normal
-                  color: isSelected ? Color.accent : Color.foreground
+                  color: isSelected ? Commons.Color.accent : Commons.Color.foreground
                 }
               }
 
@@ -591,7 +592,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: logMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: logMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -603,7 +604,7 @@ WidgetCard {
             text: "\uf1da"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: networkWidgetRoot.logTimeScale ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: networkWidgetRoot.logTimeScale ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
 
           Text {
@@ -611,14 +612,14 @@ WidgetCard {
             text: "Logarithmic Timeline"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: networkWidgetRoot.logTimeScale ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: networkWidgetRoot.logTimeScale ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: networkWidgetRoot.logTimeScale ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
 
@@ -641,7 +642,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: refNetMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: refNetMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -653,7 +654,7 @@ WidgetCard {
             text: "\uf021"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -661,7 +662,7 @@ WidgetCard {
             text: "Refresh Network Interface"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -740,7 +741,7 @@ WidgetCard {
         text: "\uf0ec"
         font.family: Style.font.family
         font.pixelSize: 15
-        color: Color.accent
+        color: Commons.Color.accent
       }
 
       Text {
@@ -748,7 +749,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 13
         font.weight: Font.Bold
-        color: Color.foreground
+        color: Commons.Color.foreground
       }
 
       Item { Layout.fillWidth: true }
@@ -757,14 +758,14 @@ WidgetCard {
         width: 7
         height: 7
         radius: 3.5
-        color: networkWidgetRoot.netRxSpeed > 0 || networkWidgetRoot.netTxSpeed > 0 ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3)
+        color: networkWidgetRoot.netRxSpeed > 0 || networkWidgetRoot.netTxSpeed > 0 ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
       }
 
       Text {
         text: networkWidgetRoot.netIface
         font.family: Style.font.family
         font.pixelSize: 11
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
         elide: Text.ElideRight
         // Full name when there's room; only this label shrinks (eliding) on narrow
         // cards, since the title isn't fillWidth and so keeps its natural width.
@@ -781,8 +782,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeNetMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: closeNetMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -790,7 +791,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -812,8 +813,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: netGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: netGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -821,7 +822,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -875,8 +876,8 @@ WidgetCard {
           width: 22
           height: 22
           radius: 11
-          color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.15)
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35)
+          color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15)
+          border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35)
           border.width: 1
 
           Text {
@@ -884,7 +885,7 @@ WidgetCard {
             text: "\uf063"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.accent
+            color: Commons.Color.accent
           }
         }
 
@@ -894,14 +895,14 @@ WidgetCard {
             text: "Down"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
           }
           Text {
             text: networkWidgetRoot.netRxSpeedStr
             font.family: Style.font.family
             font.pixelSize: 12
             font.weight: Font.DemiBold
-            color: Color.accent
+            color: Commons.Color.accent
           }
         }
       }
@@ -924,7 +925,7 @@ WidgetCard {
             text: "\uf062"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -934,14 +935,14 @@ WidgetCard {
             text: "Up"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
           }
           Text {
             text: networkWidgetRoot.netTxSpeedStr
             font.family: Style.font.family
             font.pixelSize: 12
             font.weight: Font.DemiBold
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
       }
@@ -1063,13 +1064,13 @@ WidgetCard {
 
           // 1. Draw TX (Upload) Area & Line
           drawSeries(points(txArr),
-                     Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75), 1.5,
+                     Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.75), 1.5,
                      "rgba(255, 255, 255, 0.18)", "rgba(255, 255, 255, 0.01)")
 
           // 2. Draw RX (Download) Area & Line
-          drawSeries(points(rxArr), Color.accent, 2,
-                     Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45),
-                     Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.02))
+          drawSeries(points(rxArr), Commons.Color.accent, 2,
+                     Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45),
+                     Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.02))
 
           // 3. Hover Crosshair & Sample Dots
           var hi = networkWidgetRoot.hoverIndex
@@ -1088,13 +1089,13 @@ WidgetCard {
 
             ctx.beginPath()
             ctx.arc(hx, yFor(txArr[hi]), 3, 0, Math.PI * 2)
-            ctx.fillStyle = Color.foreground
+            ctx.fillStyle = Commons.Color.foreground
             ctx.fill()
             ctx.stroke()
 
             ctx.beginPath()
             ctx.arc(hx, yFor(rxArr[hi]), 3.5, 0, Math.PI * 2)
-            ctx.fillStyle = Color.accent
+            ctx.fillStyle = Commons.Color.accent
             ctx.fill()
             ctx.stroke()
             ctx.restore()
@@ -1128,7 +1129,7 @@ WidgetCard {
           width: markerText.implicitWidth + 6
           height: markerText.implicitHeight + 2
           radius: 3
-          color: Qt.rgba(Color.background.r, Color.background.g, Color.background.b, 0.85)
+          color: Qt.rgba(Commons.Color.background.r, Commons.Color.background.g, Commons.Color.background.b, 0.85)
 
           Text {
             id: markerText
@@ -1137,7 +1138,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 9
             font.weight: Font.DemiBold
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
       }
@@ -1150,7 +1151,7 @@ WidgetCard {
         height: 20
         radius: 6
         color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.55)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.55)
         border.width: 1
 
         readonly property real targetX: netCanvas.x + networkWidgetRoot.xFraction(networkWidgetRoot.hoverIndex) * netCanvas.width
@@ -1166,7 +1167,7 @@ WidgetCard {
             text: networkWidgetRoot.hoverTimeOffset()
             font.family: Style.font.family
             font.pixelSize: 9
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
           }
 
           Text {
@@ -1174,7 +1175,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: Font.Bold
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -1182,7 +1183,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: Font.Bold
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
       }
@@ -1198,13 +1199,13 @@ WidgetCard {
         text: "\uf019"
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Color.accent
+        color: Commons.Color.accent
       }
       Text {
         text: "Total Down: " + networkWidgetRoot.netRxTotalStr
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
       }
 
       Item { Layout.fillWidth: true }
@@ -1213,13 +1214,13 @@ WidgetCard {
         text: "\uf093"
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
       }
       Text {
         text: "Total Up: " + networkWidgetRoot.netTxTotalStr
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
       }
     }
   }
@@ -1254,7 +1255,7 @@ WidgetCard {
 
     radius: 14
     color: Qt.rgba(14/255, 14/255, 20/255, 0.98)
-    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+    border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
     border.width: 1.5
 
     opacity: (networkWidgetRoot.contextMenuOpen && networkWidgetRoot.devicePopoutOpen) ? 1.0 : 0.0
@@ -1293,7 +1294,7 @@ WidgetCard {
           text: "\uf0ec"
           font.family: Style.font.family
           font.pixelSize: 11
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -1301,7 +1302,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 10
           font.weight: Font.Bold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         Item { Layout.fillWidth: true }
@@ -1317,7 +1318,7 @@ WidgetCard {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 9
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -1362,9 +1363,9 @@ WidgetCard {
               radius: 6
               readonly property bool isSelected: modelData.is_selected || networkWidgetRoot.selectedDeviceId === modelData.id
               color: devItemMouse.containsMouse
-                ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
-                : (isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.1) : "transparent")
-              border.color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : "transparent"
+                ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+                : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.1) : "transparent")
+              border.color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : "transparent"
               border.width: 1
 
               RowLayout {
@@ -1378,7 +1379,7 @@ WidgetCard {
                   height: 22
                   radius: 11
                   color: isSelected
-                    ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                    ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
                     : Qt.rgba(1, 1, 1, 0.06)
 
                   Text {
@@ -1387,8 +1388,8 @@ WidgetCard {
                     font.family: Style.font.family
                     font.pixelSize: 11
                     color: isSelected
-                      ? Color.accent
-                      : (modelData.is_up ? Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.75) : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35))
+                      ? Commons.Color.accent
+                      : (modelData.is_up ? Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.75) : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35))
                   }
                 }
 
@@ -1402,7 +1403,7 @@ WidgetCard {
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: isSelected ? Font.Bold : Font.Normal
-                    color: isSelected ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.85)
+                    color: isSelected ? Commons.Color.foreground : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.85)
                     elide: Text.ElideRight
                   }
 
@@ -1413,8 +1414,8 @@ WidgetCard {
                     font.family: Style.font.family
                     font.pixelSize: 9
                     color: isSelected
-                      ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.85)
-                      : (modelData.is_up ? Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5) : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.3))
+                      ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.85)
+                      : (modelData.is_up ? Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5) : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3))
                     elide: Text.ElideRight
                   }
                 }
@@ -1425,7 +1426,7 @@ WidgetCard {
                   text: "\uf00c"
                   font.family: Style.font.family
                   font.pixelSize: 11
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
               }
 

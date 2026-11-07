@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -21,7 +22,7 @@ Item {
   readonly property color modeColor: {
     if (currentMode === "SHORT") return "#10b981"
     if (currentMode === "LONG") return "#06b6d4"
-    return Color.accent
+    return Commons.Color.accent
   }
 
   function formatTime(totalSec) {
@@ -79,7 +80,7 @@ Item {
     implicitHeight: Math.min(parent.height - 4, 28)
     implicitWidth: rowLayout.implicitWidth + 16
     radius: Style.cornerRadius || 8
-    color: mouseArea.containsMouse ? Qt.rgba(root.modeColor.r, root.modeColor.g, root.modeColor.b, 0.22) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.65)
+    color: mouseArea.containsMouse ? Qt.rgba(root.modeColor.r, root.modeColor.g, root.modeColor.b, 0.22) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.65)
     border.color: root.isTimerRunning ? root.modeColor : Qt.rgba(1, 1, 1, 0.12)
     border.width: 1
 
@@ -112,7 +113,7 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 11
         font.weight: Font.Bold
-        color: Color.foreground
+        color: Commons.Color.foreground
       }
 
       // Small Play/Pause Indicator
@@ -120,7 +121,7 @@ Item {
         text: root.isTimerRunning ? "\uf04c" : "\uf04b"
         font.family: Style.font.family
         font.pixelSize: 9
-        color: root.isTimerRunning ? root.modeColor : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+        color: root.isTimerRunning ? root.modeColor : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
       }
     }
 

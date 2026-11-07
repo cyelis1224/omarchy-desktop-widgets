@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -14,7 +15,7 @@ Item {
   property real cpuTemp: 45.0
   property real cpuAvgGhz: 2.5
   property string statusBadge: "Normal"
-  property color statusColor: Color.accent
+  property color statusColor: Commons.Color.accent
 
   readonly property string telemetryScriptPath: {
     var u = Qt.resolvedUrl("telemetry_collector.py").toString()
@@ -56,8 +57,8 @@ Item {
     implicitHeight: Math.min(parent.height - 4, 28)
     implicitWidth: rowLayout.implicitWidth + 16
     radius: Style.cornerRadius || 8
-    color: mouseArea.containsMouse ? Qt.rgba(root.statusColor.r, root.statusColor.g, root.statusColor.b, 0.22) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.65)
-    border.color: root.cpuTemp > 75 ? Color.urgent : Qt.rgba(1, 1, 1, 0.12)
+    color: mouseArea.containsMouse ? Qt.rgba(root.statusColor.r, root.statusColor.g, root.statusColor.b, 0.22) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.65)
+    border.color: root.cpuTemp > 75 ? Commons.Color.urgent : Qt.rgba(1, 1, 1, 0.12)
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 150 } }
@@ -79,14 +80,14 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 11
         font.weight: Font.Bold
-        color: Color.foreground
+        color: Commons.Color.foreground
       }
 
       Text {
         text: root.cpuAvgGhz.toFixed(1) + " GHz"
         font.family: Style.font.family
         font.pixelSize: 10
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
       }
     }
 

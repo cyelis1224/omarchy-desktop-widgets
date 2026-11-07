@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -190,8 +191,8 @@ Item {
     width: 22
     height: 22
     radius: 11
-    color: clockGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
-    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+    color: clockGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+    border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
     border.width: 1
     opacity: clockGripArea.containsMouse || clockGripArea.drag.active || (rootRef && rootRef.layoutEditMode) ? 1.0 : 0.0
     visible: rootRef && rootRef.layoutEditMode
@@ -206,7 +207,7 @@ Item {
       text: "\uf0b2"
       font.family: Style.font.family
       font.pixelSize: 10
-      color: Color.accent
+      color: Commons.Color.accent
     }
 
     MouseArea {
@@ -247,8 +248,8 @@ Item {
     width: 22
     height: 22
     radius: 11
-    color: closeClockMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
-    border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+    color: closeClockMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+    border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
     border.width: 1
     opacity: clockGripArea.containsMouse || clockGripArea.drag.active || (rootRef && rootRef.layoutEditMode) ? 1.0 : 0.0
     visible: rootRef && rootRef.layoutEditMode
@@ -263,7 +264,7 @@ Item {
       text: "\uf00d"
       font.family: Style.font.family
       font.pixelSize: 10
-      color: Color.urgent
+      color: Commons.Color.urgent
     }
 
     MouseArea {
@@ -303,7 +304,7 @@ Item {
       font.family: Style.font.family
       font.pixelSize: 20
       font.weight: Font.DemiBold
-      color: Color.accent
+      color: Commons.Color.accent
       opacity: 0.95
       style: Text.Outline
       styleColor: Qt.rgba(0, 0, 0, 0.75)
@@ -319,8 +320,8 @@ Item {
       Rectangle {
         anchors.fill: parent
         radius: 8
-        color: weatherHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
-        border.color: weatherHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45) : "transparent"
+        color: weatherHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : "transparent"
+        border.color: weatherHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45) : "transparent"
         border.width: 1
 
         Behavior on color { ColorAnimation { duration: 150 } }
@@ -336,7 +337,7 @@ Item {
           text: clockWidgetRoot.weatherIcon
           font.family: Style.font.family
           font.pixelSize: 16
-          color: Color.accent
+          color: Commons.Color.accent
           opacity: 0.9
           style: Text.Outline
           styleColor: Qt.rgba(0, 0, 0, 0.75)
@@ -346,7 +347,7 @@ Item {
           text: clockWidgetRoot.weatherTemp ? (clockWidgetRoot.weatherTemp + (clockWidgetRoot.weatherDesc ? ("  ·  " + clockWidgetRoot.weatherDesc) : "")) : clockWidgetRoot.weatherDesc
           font.family: Style.font.family
           font.pixelSize: 15
-          color: Color.foreground
+          color: Commons.Color.foreground
           opacity: 0.85
           style: Text.Outline
           styleColor: Qt.rgba(0, 0, 0, 0.75)
@@ -372,7 +373,7 @@ Item {
       font.pixelSize: 96
       font.weight: Font.Bold
       font.letterSpacing: 2
-      color: Color.foreground
+      color: Commons.Color.foreground
       style: Text.Raised
       styleColor: Qt.rgba(0, 0, 0, 0.85)
     }
@@ -383,7 +384,7 @@ Item {
       font.family: Style.font.family
       font.pixelSize: 20
       font.weight: Font.Medium
-      color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.85)
+      color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.85)
       style: Text.Outline
       styleColor: Qt.rgba(0, 0, 0, 0.75)
     }
@@ -488,7 +489,7 @@ Item {
 
     radius: 14
     color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
-    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+    border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
     opacity: clockWidgetRoot.contextMenuOpen ? 1.0 : 0.0
@@ -526,7 +527,7 @@ Item {
           text: "\uf017"
           font.family: Style.font.family
           font.pixelSize: 13
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -534,7 +535,7 @@ Item {
           font.family: Style.font.family
           font.pixelSize: 12
           font.weight: Font.Bold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         Item { Layout.fillWidth: true }
@@ -550,7 +551,7 @@ Item {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -577,7 +578,7 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 2
       }
@@ -587,7 +588,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: clkFormatMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: clkFormatMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -599,20 +600,20 @@ Item {
             text: "\uf017"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: "Time Format"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
           Rectangle {
             implicitWidth: fmtLabel.implicitWidth + 12
             implicitHeight: 18
             radius: 9
-            color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+            color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
             Text {
               id: fmtLabel
               anchors.centerIn: parent
@@ -620,7 +621,7 @@ Item {
               font.family: Style.font.family
               font.pixelSize: 9
               font.weight: Font.Bold
-              color: Color.accent
+              color: Commons.Color.accent
             }
           }
         }
@@ -642,7 +643,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: secMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: secMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -654,20 +655,20 @@ Item {
             text: "\uf2f2"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: clockWidgetRoot.showSeconds ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: clockWidgetRoot.showSeconds ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
           Text {
             Layout.fillWidth: true
             text: "Show Seconds (:SS)"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
           Text {
             text: clockWidgetRoot.showSeconds ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: clockWidgetRoot.showSeconds ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: clockWidgetRoot.showSeconds ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
         MouseArea {
@@ -688,7 +689,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: dateFmtMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: dateFmtMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -700,20 +701,20 @@ Item {
             text: "\uf073"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: clockWidgetRoot.compactDate ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: clockWidgetRoot.compactDate ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
           Text {
             Layout.fillWidth: true
             text: "Compact Date Format"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
           Text {
             text: clockWidgetRoot.compactDate ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: clockWidgetRoot.compactDate ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: clockWidgetRoot.compactDate ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
         MouseArea {
@@ -734,7 +735,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: weaMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: weaMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -746,20 +747,20 @@ Item {
             text: "\uf185"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: clockWidgetRoot.showWeather ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: clockWidgetRoot.showWeather ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
           Text {
             Layout.fillWidth: true
             text: "Show Weather Status"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
           Text {
             text: clockWidgetRoot.showWeather ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: clockWidgetRoot.showWeather ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: clockWidgetRoot.showWeather ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
         MouseArea {
@@ -781,7 +782,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: tempUnitMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: tempUnitMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -793,20 +794,20 @@ Item {
             text: clockWidgetRoot.useCelsius ? "\uf2c9" : "\uf2c7"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: "Temperature Scale"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
           Rectangle {
             implicitWidth: tempUnitLabel.implicitWidth + 12
             implicitHeight: 18
             radius: 9
-            color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+            color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
             Text {
               id: tempUnitLabel
               anchors.centerIn: parent
@@ -814,7 +815,7 @@ Item {
               font.family: Style.font.family
               font.pixelSize: 9
               font.weight: Font.Bold
-              color: Color.accent
+              color: Commons.Color.accent
             }
           }
         }
@@ -836,7 +837,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: greetMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: greetMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -848,20 +849,20 @@ Item {
             text: "\uf086"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: clockWidgetRoot.showGreeting ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: clockWidgetRoot.showGreeting ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
           }
           Text {
             Layout.fillWidth: true
             text: "Show Greeting Message"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
           Text {
             text: clockWidgetRoot.showGreeting ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: clockWidgetRoot.showGreeting ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: clockWidgetRoot.showGreeting ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4)
           }
         }
         MouseArea {
@@ -882,7 +883,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: refWeaMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: refWeaMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -894,14 +895,14 @@ Item {
             text: "\uf021"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: "Refresh Weather"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
         MouseArea {
@@ -940,7 +941,7 @@ Item {
           Layout.fillWidth: true
           implicitHeight: 28
           radius: 6
-          color: clockOptMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)) : "transparent"
+          color: clockOptMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)) : "transparent"
 
           RowLayout {
             anchors.fill: parent
@@ -958,7 +959,7 @@ Item {
                 text: modelData.icon
                 font.family: Style.font.family
                 font.pixelSize: 11
-                color: modelData.value === "RESET_LAYOUT" ? (clockOptMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : Color.accent
+                color: modelData.value === "RESET_LAYOUT" ? (clockOptMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)) : Commons.Color.accent
               }
             }
 
@@ -969,7 +970,7 @@ Item {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.Bold
-              color: modelData.value === "RESET_LAYOUT" ? (clockOptMouse.containsMouse ? Color.urgent : Color.foreground) : Color.accent
+              color: modelData.value === "RESET_LAYOUT" ? (clockOptMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground) : Commons.Color.accent
               elide: Text.ElideRight
             }
           }

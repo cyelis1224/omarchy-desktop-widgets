@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 WidgetCard {
@@ -131,7 +132,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: reloadOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: reloadOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -143,7 +144,7 @@ WidgetCard {
             text: "\uf021"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           Text {
@@ -151,7 +152,7 @@ WidgetCard {
             text: "Reload Installed Applications"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -171,7 +172,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: clearSearchOptMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+        color: clearSearchOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
         visible: launcherWidgetRoot.searchQuery !== ""
 
         RowLayout {
@@ -184,7 +185,7 @@ WidgetCard {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.urgent
+            color: Commons.Color.urgent
           }
 
           Text {
@@ -192,7 +193,7 @@ WidgetCard {
             text: "Clear Search Filter"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
@@ -229,7 +230,7 @@ WidgetCard {
         height: 34
         radius: 17
         color: Qt.rgba(1, 1, 1, 0.07)
-        border.color: searchInput.activeFocus ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+        border.color: searchInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
         border.width: 1
 
         RowLayout {
@@ -242,7 +243,7 @@ WidgetCard {
             text: "\uf002"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: searchInput.activeFocus ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+            color: searchInput.activeFocus ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
           }
 
           TextInput {
@@ -250,7 +251,7 @@ WidgetCard {
             Layout.fillWidth: true
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Color.foreground
+            color: Commons.Color.foreground
             clip: true
             text: launcherWidgetRoot.searchQuery
             onTextChanged: launcherWidgetRoot.searchQuery = text
@@ -261,7 +262,7 @@ WidgetCard {
               text: "Search applications..."
               font.family: Style.font.family
               font.pixelSize: 12
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.35)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35)
             }
           }
 
@@ -278,7 +279,7 @@ WidgetCard {
               text: "\uf00d"
               font.family: Style.font.family
               font.pixelSize: 9
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
             }
 
             MouseArea {
@@ -308,7 +309,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 10
           font.weight: Font.DemiBold
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
         }
       }
 
@@ -318,8 +319,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeAppMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: closeAppMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -327,7 +328,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -350,8 +351,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: appGripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: appGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -359,7 +360,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         MouseArea {
@@ -424,7 +425,7 @@ WidgetCard {
             height: 26
             radius: 13
             readonly property bool isSelected: launcherWidgetRoot.selectedCategory === modelData.name
-            color: catItemHover.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.06))
+            color: catItemHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.06))
             border.color: isSelected ? Qt.rgba(255, 255, 255, 0.25) : Qt.rgba(1, 1, 1, 0.08)
             border.width: 1
 
@@ -437,7 +438,7 @@ WidgetCard {
                 text: modelData.icon
                 font.family: Style.font.family
                 font.pixelSize: 10
-                color: isSelected ? Color.background : Color.accent
+                color: isSelected ? Commons.Color.background : Commons.Color.accent
               }
 
               Text {
@@ -445,7 +446,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 10
                 font.weight: isSelected ? Font.Bold : Font.Normal
-                color: isSelected ? Color.background : Color.foreground
+                color: isSelected ? Commons.Color.background : Commons.Color.foreground
               }
             }
 
@@ -480,7 +481,7 @@ WidgetCard {
           text: "\uf002"
           font.family: Style.font.family
           font.pixelSize: 32
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.25)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.25)
         }
 
         Text {
@@ -488,7 +489,7 @@ WidgetCard {
           text: launcherWidgetRoot.searchQuery !== "" ? "No applications found" : "No applications"
           font.family: Style.font.family
           font.pixelSize: 12
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         }
       }
 
@@ -516,7 +517,7 @@ WidgetCard {
             anchors.margins: 4
             radius: 12
             color: appMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.03)
-            border.color: appMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : "transparent"
+            border.color: appMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : "transparent"
             border.width: 1
             scale: appMouse.pressed ? 0.95 : (appMouse.containsMouse ? 1.04 : 1.0)
 
@@ -553,7 +554,7 @@ WidgetCard {
                   text: launcherWidgetRoot.getCategoryIcon(modelData.category)
                   font.family: Style.font.family
                   font.pixelSize: 22
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
               }
 
@@ -565,7 +566,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 11
                 font.weight: Font.DemiBold
-                color: appMouse.containsMouse ? Color.accent : Color.foreground
+                color: appMouse.containsMouse ? Commons.Color.accent : Commons.Color.foreground
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 maximumLineCount: 1

@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -52,8 +53,8 @@ Item {
     id: cardSurface
     anchors.fill: parent
     radius: (rootRef && rootRef.appearance && rootRef.appearance.corner_radius !== undefined) ? rootRef.appearance.corner_radius : 18
-    color: widgetCardRoot.frameless ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : "transparent") : (widgetCardRoot.transparentBg ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.35) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.20)) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85))
-    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Color.accent : (widgetCardRoot.frameless ? "transparent" : (widgetCardRoot.transparentBg ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.12)))
+    color: widgetCardRoot.frameless ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.35) : "transparent") : (widgetCardRoot.transparentBg ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.35) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.20)) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85))
+    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Commons.Color.accent : (widgetCardRoot.frameless ? "transparent" : (widgetCardRoot.transparentBg ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.12)))
     border.width: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? 2 : (widgetCardRoot.frameless ? 0 : 1)
 
     layer.enabled: !widgetCardRoot.frameless
@@ -85,7 +86,7 @@ Item {
           text: widgetCardRoot.icon
           font.family: Style.font.family
           font.pixelSize: 14
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -94,7 +95,7 @@ Item {
           font.family: Style.font.family
           font.pixelSize: 13
           font.weight: Font.Bold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         Item {
@@ -136,8 +137,8 @@ Item {
           height: 22
           radius: 11
           z: 130
-          color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+          color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+          border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
           border.width: 1
 
           Text {
@@ -145,7 +146,7 @@ Item {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.urgent
+            color: Commons.Color.urgent
           }
 
           MouseArea {
@@ -169,8 +170,8 @@ Item {
           height: 22
           radius: 11
           z: 130
-          color: gripArea.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+          color: gripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+          border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
           border.width: 1
 
           Text {
@@ -178,7 +179,7 @@ Item {
             text: "\uf0b2"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.accent
+            color: Commons.Color.accent
           }
 
           MouseArea {
@@ -275,8 +276,8 @@ Item {
     height: 18
     radius: 4
     z: 115
-    color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
-    border.color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3)
+    color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+    border.color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3)
     border.width: 1
 
     Text {
@@ -284,7 +285,7 @@ Item {
       text: "\uf424"
       font.family: Style.font.family
       font.pixelSize: 10
-      color: Color.accent
+      color: Commons.Color.accent
     }
   }
 
@@ -444,7 +445,7 @@ Item {
     implicitHeight: 22
     radius: 11
     color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
-    border.color: Color.accent
+    border.color: Commons.Color.accent
     border.width: 1
 
     Text {
@@ -454,7 +455,7 @@ Item {
       font.family: Style.font.family
       font.pixelSize: 10
       font.weight: Font.Bold
-      color: Color.accent
+      color: Commons.Color.accent
     }
   }
 
@@ -575,7 +576,7 @@ Item {
 
     radius: 14
     color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
-    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+    border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
     opacity: widgetCardRoot.contextMenuOpen ? 1.0 : 0.0
@@ -613,7 +614,7 @@ Item {
           text: "\uf085"
           font.family: Style.font.family
           font.pixelSize: 13
-          color: Color.accent
+          color: Commons.Color.accent
         }
 
         Text {
@@ -621,7 +622,7 @@ Item {
           font.family: Style.font.family
           font.pixelSize: 12
           font.weight: Font.Bold
-          color: Color.foreground
+          color: Commons.Color.foreground
         }
 
         Item { Layout.fillWidth: true }
@@ -637,7 +638,7 @@ Item {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           MouseArea {
@@ -689,7 +690,7 @@ Item {
           Layout.fillWidth: true
           implicitHeight: 28
           radius: 6
-          color: wcOptMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)) : "transparent"
+          color: wcOptMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)) : "transparent"
 
           RowLayout {
             anchors.fill: parent
@@ -707,7 +708,7 @@ Item {
                 text: modelData.icon
                 font.family: Style.font.family
                 font.pixelSize: 11
-                color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)) : Color.accent
+                color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)) : Commons.Color.accent
               }
             }
 
@@ -718,7 +719,7 @@ Item {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.Bold
-              color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Color.urgent : Color.foreground) : Color.accent
+              color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground) : Commons.Color.accent
               elide: Text.ElideRight
             }
           }
@@ -778,7 +779,7 @@ Item {
             Layout.fillWidth: true
             implicitHeight: 28
             radius: 6
-            color: moveMonMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : "transparent"
+            color: moveMonMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
 
             RowLayout {
               anchors.fill: parent
@@ -790,7 +791,7 @@ Item {
                 text: "\uf108"
                 font.family: Style.font.family
                 font.pixelSize: 11
-                color: Color.accent
+                color: Commons.Color.accent
               }
 
               Text {
@@ -799,7 +800,7 @@ Item {
                 font.family: Style.font.family
                 font.pixelSize: 11
                 font.weight: Font.Bold
-                color: Color.foreground
+                color: Commons.Color.foreground
                 elide: Text.ElideRight
               }
             }

@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -77,7 +78,7 @@ Item {
     height: Math.min(parent.height - Style.space(64), 540)
     radius: 22
     color: Qt.rgba(16/255, 16/255, 22/255, 0.96)
-    border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+    border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
     scale: prefsDialogRoot.isOpen ? 1.0 : 0.92
@@ -115,8 +116,8 @@ Item {
           width: 38
           height: 38
           radius: 19
-          color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
-          border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+          color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+          border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
           border.width: 1
 
           Text {
@@ -124,7 +125,7 @@ Item {
             text: "\uf013"
             font.family: Style.font.family
             font.pixelSize: 16
-            color: Color.accent
+            color: Commons.Color.accent
           }
         }
 
@@ -136,14 +137,14 @@ Item {
             font.family: Style.font.family
             font.pixelSize: 16
             font.weight: Font.Bold
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
 
           Text {
             text: "Global appearance, snapping & behavior controls"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.60)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.60)
           }
         }
 
@@ -155,8 +156,8 @@ Item {
           width: 32
           height: 32
           radius: 16
-          color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: closeMouse.containsMouse ? Color.urgent : Qt.rgba(1, 1, 1, 0.12)
+          color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+          border.color: closeMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(1, 1, 1, 0.12)
           border.width: 1
 
           Text {
@@ -164,7 +165,7 @@ Item {
             text: "\uf00d"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: closeMouse.containsMouse ? Color.urgent : Color.foreground
+            color: closeMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground
           }
 
           MouseArea {
@@ -198,8 +199,8 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: 8
-            color: prefsDialogRoot.activeTab === 0 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (tab0Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
-            border.color: prefsDialogRoot.activeTab === 0 ? Color.accent : "transparent"
+            color: prefsDialogRoot.activeTab === 0 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab0Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            border.color: prefsDialogRoot.activeTab === 0 ? Commons.Color.accent : "transparent"
             border.width: 1
 
             RowLayout {
@@ -209,14 +210,14 @@ Item {
                 text: "\uf53f"
                 font.family: Style.font.family
                 font.pixelSize: 12
-                color: prefsDialogRoot.activeTab === 0 ? Color.accent : Color.foreground
+                color: prefsDialogRoot.activeTab === 0 ? Commons.Color.accent : Commons.Color.foreground
               }
               Text {
                 text: "Appearance"
                 font.family: Style.font.family
                 font.pixelSize: 12
                 font.weight: prefsDialogRoot.activeTab === 0 ? Font.Bold : Font.Normal
-                color: prefsDialogRoot.activeTab === 0 ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                color: prefsDialogRoot.activeTab === 0 ? Commons.Color.foreground : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
               }
             }
 
@@ -234,8 +235,8 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: 8
-            color: prefsDialogRoot.activeTab === 1 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (tab1Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
-            border.color: prefsDialogRoot.activeTab === 1 ? Color.accent : "transparent"
+            color: prefsDialogRoot.activeTab === 1 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab1Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            border.color: prefsDialogRoot.activeTab === 1 ? Commons.Color.accent : "transparent"
             border.width: 1
 
             RowLayout {
@@ -245,14 +246,14 @@ Item {
                 text: "\uf00a"
                 font.family: Style.font.family
                 font.pixelSize: 12
-                color: prefsDialogRoot.activeTab === 1 ? Color.accent : Color.foreground
+                color: prefsDialogRoot.activeTab === 1 ? Commons.Color.accent : Commons.Color.foreground
               }
               Text {
                 text: "Grid & Snap"
                 font.family: Style.font.family
                 font.pixelSize: 12
                 font.weight: prefsDialogRoot.activeTab === 1 ? Font.Bold : Font.Normal
-                color: prefsDialogRoot.activeTab === 1 ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                color: prefsDialogRoot.activeTab === 1 ? Commons.Color.foreground : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
               }
             }
 
@@ -270,8 +271,8 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: 8
-            color: prefsDialogRoot.activeTab === 2 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (tab2Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
-            border.color: prefsDialogRoot.activeTab === 2 ? Color.accent : "transparent"
+            color: prefsDialogRoot.activeTab === 2 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab2Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            border.color: prefsDialogRoot.activeTab === 2 ? Commons.Color.accent : "transparent"
             border.width: 1
 
             RowLayout {
@@ -281,14 +282,14 @@ Item {
                 text: "\uf06e"
                 font.family: Style.font.family
                 font.pixelSize: 12
-                color: prefsDialogRoot.activeTab === 2 ? Color.accent : Color.foreground
+                color: prefsDialogRoot.activeTab === 2 ? Commons.Color.accent : Commons.Color.foreground
               }
               Text {
                 text: "Auto-Hide"
                 font.family: Style.font.family
                 font.pixelSize: 12
                 font.weight: prefsDialogRoot.activeTab === 2 ? Font.Bold : Font.Normal
-                color: prefsDialogRoot.activeTab === 2 ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                color: prefsDialogRoot.activeTab === 2 ? Commons.Color.foreground : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
               }
             }
 
@@ -306,8 +307,8 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: 8
-            color: prefsDialogRoot.activeTab === 3 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : (tab3Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
-            border.color: prefsDialogRoot.activeTab === 3 ? Color.accent : "transparent"
+            color: prefsDialogRoot.activeTab === 3 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab3Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            border.color: prefsDialogRoot.activeTab === 3 ? Commons.Color.accent : "transparent"
             border.width: 1
 
             RowLayout {
@@ -317,14 +318,14 @@ Item {
                 text: "\uf108"
                 font.family: Style.font.family
                 font.pixelSize: 12
-                color: prefsDialogRoot.activeTab === 3 ? Color.accent : Color.foreground
+                color: prefsDialogRoot.activeTab === 3 ? Commons.Color.accent : Commons.Color.foreground
               }
               Text {
                 text: "Screensaver"
                 font.family: Style.font.family
                 font.pixelSize: 12
                 font.weight: prefsDialogRoot.activeTab === 3 ? Font.Bold : Font.Normal
-                color: prefsDialogRoot.activeTab === 3 ? Color.foreground : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+                color: prefsDialogRoot.activeTab === 3 ? Commons.Color.foreground : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
               }
             }
 
@@ -376,7 +377,7 @@ Item {
                   font.family: Style.font.family
                   font.pixelSize: 12
                   font.weight: Font.DemiBold
-                  color: Color.foreground
+                  color: Commons.Color.foreground
                 }
                 Item { Layout.fillWidth: true }
                 Text {
@@ -384,7 +385,7 @@ Item {
                   font.family: Style.font.family
                   font.pixelSize: 12
                   font.weight: Font.Bold
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
               }
 
@@ -400,7 +401,7 @@ Item {
                   height: parent.height
                   width: Math.max(8, Math.min(parent.width, Math.max(0, (prefsDialogRoot.curOpacity - 0.15) / 0.85) * parent.width))
                   radius: 4
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
 
                 Rectangle {
@@ -409,7 +410,7 @@ Item {
                   width: 18
                   height: 18
                   radius: 9
-                  color: Color.accent
+                  color: Commons.Color.accent
                   border.color: "#ffffff"
                   border.width: 2
 
@@ -454,8 +455,8 @@ Item {
                     height: 26
                     radius: 6
                     readonly property bool isSelected: Math.abs(prefsDialogRoot.curOpacity - modelData.val) < 0.05
-                    color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.28) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.35))
-                    border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+                    color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.28) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.35))
+                    border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
                     border.width: isSelected ? 1.5 : 1
 
                     Text {
@@ -464,7 +465,7 @@ Item {
                       font.family: Style.font.family
                       font.pixelSize: 10
                       font.weight: isSelected ? Font.Bold : Font.Normal
-                      color: isSelected ? Color.accent : Color.foreground
+                      color: isSelected ? Commons.Color.accent : Commons.Color.foreground
                     }
 
                     MouseArea {
@@ -502,7 +503,7 @@ Item {
                   font.family: Style.font.family
                   font.pixelSize: 12
                   font.weight: Font.DemiBold
-                  color: Color.foreground
+                  color: Commons.Color.foreground
                 }
                 Item { Layout.fillWidth: true }
                 Text {
@@ -510,7 +511,7 @@ Item {
                   font.family: Style.font.family
                   font.pixelSize: 12
                   font.weight: Font.Bold
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
               }
 
@@ -525,7 +526,7 @@ Item {
                   height: parent.height
                   width: Math.max(8, Math.min(parent.width, prefsDialogRoot.curRadius / 32 * parent.width))
                   radius: 4
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
 
                 Rectangle {
@@ -534,7 +535,7 @@ Item {
                   width: 18
                   height: 18
                   radius: 9
-                  color: Color.accent
+                  color: Commons.Color.accent
                   border.color: "#ffffff"
                   border.width: 2
 
@@ -578,8 +579,8 @@ Item {
                     height: 26
                     radius: 6
                     readonly property bool isSelected: prefsDialogRoot.curRadius === modelData.val
-                    color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.28) : (radMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.35))
-                    border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+                    color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.28) : (radMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.35))
+                    border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
                     border.width: isSelected ? 1.5 : 1
 
                     Text {
@@ -588,7 +589,7 @@ Item {
                       font.family: Style.font.family
                       font.pixelSize: 10
                       font.weight: isSelected ? Font.Bold : Font.Normal
-                      color: isSelected ? Color.accent : Color.foreground
+                      color: isSelected ? Commons.Color.accent : Commons.Color.foreground
                     }
 
                     MouseArea {
@@ -631,14 +632,14 @@ Item {
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
-                    color: Color.foreground
+                    color: Commons.Color.foreground
                     elide: Text.ElideRight
                   }
                   Text {
                     text: "Depth shadows"
                     font.family: Style.font.family
                     font.pixelSize: 9
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                    color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
                     elide: Text.ElideRight
                   }
                 }
@@ -647,8 +648,8 @@ Item {
                   width: 38
                   height: 22
                   radius: 11
-                  color: prefsDialogRoot.curShadows ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
-                  border.color: prefsDialogRoot.curShadows ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  color: prefsDialogRoot.curShadows ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.45)
+                  border.color: prefsDialogRoot.curShadows ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.20)
                   border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -693,14 +694,14 @@ Item {
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
-                    color: Color.foreground
+                    color: Commons.Color.foreground
                     elide: Text.ElideRight
                   }
                   Text {
                     text: "Hyprland blur"
                     font.family: Style.font.family
                     font.pixelSize: 9
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                    color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
                     elide: Text.ElideRight
                   }
                 }
@@ -709,8 +710,8 @@ Item {
                   width: 38
                   height: 22
                   radius: 11
-                  color: prefsDialogRoot.curBlur ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
-                  border.color: prefsDialogRoot.curBlur ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  color: prefsDialogRoot.curBlur ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.45)
+                  border.color: prefsDialogRoot.curBlur ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.20)
                   border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -755,14 +756,14 @@ Item {
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
-                    color: Color.foreground
+                    color: Commons.Color.foreground
                     elide: Text.ElideRight
                   }
                   Text {
                     text: "Slide animation"
                     font.family: Style.font.family
                     font.pixelSize: 9
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                    color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
                     elide: Text.ElideRight
                   }
                 }
@@ -771,8 +772,8 @@ Item {
                   width: 38
                   height: 22
                   radius: 11
-                  color: prefsDialogRoot.curAnimations ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
-                  border.color: prefsDialogRoot.curAnimations ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  color: prefsDialogRoot.curAnimations ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.45)
+                  border.color: prefsDialogRoot.curAnimations ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.20)
                   border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -809,7 +810,7 @@ Item {
             text: "Select snapping precision when dragging and resizing widgets:"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
           }
 
           Repeater {
@@ -845,8 +846,8 @@ Item {
               height: 54
               radius: 12
               readonly property bool isSelected: prefsDialogRoot.curGridSnap === modelData.snap
-              color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (gridMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.28))
-              border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.08)
+              color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : (gridMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.28))
+              border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.08)
               border.width: isSelected ? 1.5 : 1
 
               RowLayout {
@@ -858,14 +859,14 @@ Item {
                   width: 32
                   height: 32
                   radius: 8
-                  color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
 
                   Text {
                     anchors.centerIn: parent
                     text: modelData.icon
                     font.family: Style.font.family
                     font.pixelSize: 14
-                    color: isSelected ? Color.accent : Color.foreground
+                    color: isSelected ? Commons.Color.accent : Commons.Color.foreground
                   }
                 }
 
@@ -878,14 +879,14 @@ Item {
                     font.family: Style.font.family
                     font.pixelSize: 12
                     font.weight: Font.DemiBold
-                    color: Color.foreground
+                    color: Commons.Color.foreground
                   }
                   Text {
                     Layout.fillWidth: true
                     text: modelData.desc
                     font.family: Style.font.family
                     font.pixelSize: 10
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                    color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
                     elide: Text.ElideRight
                   }
                 }
@@ -894,8 +895,8 @@ Item {
                   width: 20
                   height: 20
                   radius: 10
-                  color: isSelected ? Color.accent : "transparent"
-                  border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.3)
+                  color: isSelected ? Commons.Color.accent : "transparent"
+                  border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.3)
                   border.width: 1.5
 
                   Text {
@@ -932,7 +933,7 @@ Item {
             text: "Choose how widgets respond to application windows on the desktop:"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
           }
 
           Repeater {
@@ -968,8 +969,8 @@ Item {
               height: 54
               radius: 12
               readonly property bool isSelected: prefsDialogRoot.curAutoHide === modelData.idVal
-              color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (hideMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.28))
-              border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.08)
+              color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : (hideMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.28))
+              border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.08)
               border.width: isSelected ? 1.5 : 1
 
               RowLayout {
@@ -981,14 +982,14 @@ Item {
                   width: 32
                   height: 32
                   radius: 8
-                  color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
 
                   Text {
                     anchors.centerIn: parent
                     text: modelData.icon
                     font.family: Style.font.family
                     font.pixelSize: 14
-                    color: isSelected ? Color.accent : Color.foreground
+                    color: isSelected ? Commons.Color.accent : Commons.Color.foreground
                   }
                 }
 
@@ -1001,14 +1002,14 @@ Item {
                     font.family: Style.font.family
                     font.pixelSize: 12
                     font.weight: Font.DemiBold
-                    color: Color.foreground
+                    color: Commons.Color.foreground
                   }
                   Text {
                     Layout.fillWidth: true
                     text: modelData.desc
                     font.family: Style.font.family
                     font.pixelSize: 10
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                    color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
                     elide: Text.ElideRight
                   }
                 }
@@ -1017,8 +1018,8 @@ Item {
                   width: 20
                   height: 20
                   radius: 10
-                  color: isSelected ? Color.accent : "transparent"
-                  border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.3)
+                  color: isSelected ? Commons.Color.accent : "transparent"
+                  border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.3)
                   border.width: 1.5
 
                   Text {
@@ -1057,7 +1058,7 @@ Item {
             height: 60
             radius: 12
             color: Qt.rgba(0, 0, 0, 0.32)
-            border.color: prefsDialogRoot.curScreensaver ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5) : Qt.rgba(1, 1, 1, 0.08)
+            border.color: prefsDialogRoot.curScreensaver ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5) : Qt.rgba(1, 1, 1, 0.08)
             border.width: 1
 
             RowLayout {
@@ -1069,14 +1070,14 @@ Item {
                 width: 36
                 height: 36
                 radius: 10
-                color: prefsDialogRoot.curScreensaver ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+                color: prefsDialogRoot.curScreensaver ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
 
                 Text {
                   anchors.centerIn: parent
                   text: "\uf108"
                   font.family: Style.font.family
                   font.pixelSize: 16
-                  color: prefsDialogRoot.curScreensaver ? Color.accent : Color.foreground
+                  color: prefsDialogRoot.curScreensaver ? Commons.Color.accent : Commons.Color.foreground
                 }
               }
 
@@ -1088,13 +1089,13 @@ Item {
                   font.family: Style.font.family
                   font.pixelSize: 13
                   font.weight: Font.DemiBold
-                  color: Color.foreground
+                  color: Commons.Color.foreground
                 }
                 Text {
                   text: "Elevates desktop widgets over active windows during user inactivity"
                   font.family: Style.font.family
                   font.pixelSize: 10
-                  color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+                  color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
                 }
               }
 
@@ -1102,8 +1103,8 @@ Item {
                 width: 44
                 height: 24
                 radius: 12
-                color: prefsDialogRoot.curScreensaver ? Color.accent : Qt.rgba(0, 0, 0, 0.45)
-                border.color: prefsDialogRoot.curScreensaver ? Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                color: prefsDialogRoot.curScreensaver ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.45)
+                border.color: prefsDialogRoot.curScreensaver ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.20)
                 border.width: 1
                 Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -1139,7 +1140,7 @@ Item {
                 font.family: Style.font.family
                 font.pixelSize: 12
                 font.weight: Font.DemiBold
-                color: Color.foreground
+                color: Commons.Color.foreground
               }
               Item { Layout.fillWidth: true }
               Text {
@@ -1147,7 +1148,7 @@ Item {
                 font.family: Style.font.family
                 font.pixelSize: 11
                 font.bold: true
-                color: Color.accent
+                color: Commons.Color.accent
               }
             }
 
@@ -1170,8 +1171,8 @@ Item {
                   height: 30
                   radius: 8
                   readonly property bool isSelected: prefsDialogRoot.curScreensaverTimeout === modelData.val
-                  color: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.30) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25))
-                  border.color: isSelected ? Color.accent : Qt.rgba(1, 1, 1, 0.08)
+                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.30) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25))
+                  border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.08)
                   border.width: isSelected ? 1.5 : 1
 
                   Text {
@@ -1180,7 +1181,7 @@ Item {
                     font.family: Style.font.family
                     font.pixelSize: 10
                     font.weight: isSelected ? Font.Bold : Font.Normal
-                    color: isSelected ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.8)
+                    color: isSelected ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.8)
                   }
 
                   MouseArea {
@@ -1218,7 +1219,7 @@ Item {
                   text: "\uf001"
                   font.family: Style.font.family
                   font.pixelSize: 13
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
                 ColumnLayout {
                   Layout.fillWidth: true
@@ -1229,7 +1230,7 @@ Item {
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
-                    color: Color.foreground
+                    color: Commons.Color.foreground
                     elide: Text.ElideRight
                   }
                   Text {
@@ -1237,7 +1238,7 @@ Item {
                     text: "Suppressed during audio or video playback"
                     font.family: Style.font.family
                     font.pixelSize: 9
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.55)
+                    color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.55)
                     elide: Text.ElideRight
                   }
                 }
@@ -1262,7 +1263,7 @@ Item {
                   text: "\uf2d0"
                   font.family: Style.font.family
                   font.pixelSize: 13
-                  color: Color.accent
+                  color: Commons.Color.accent
                 }
                 ColumnLayout {
                   Layout.fillWidth: true
@@ -1273,7 +1274,7 @@ Item {
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
-                    color: Color.foreground
+                    color: Commons.Color.foreground
                     elide: Text.ElideRight
                   }
                   Text {
@@ -1281,7 +1282,7 @@ Item {
                     text: "Activates across any active workspace"
                     font.family: Style.font.family
                     font.pixelSize: 9
-                    color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.55)
+                    color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.55)
                     elide: Text.ElideRight
                   }
                 }
@@ -1294,8 +1295,8 @@ Item {
             Layout.fillWidth: true
             height: 48
             radius: 10
-            color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.08)
-            border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+            color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.08)
+            border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
             border.width: 1
 
             RowLayout {
@@ -1307,7 +1308,7 @@ Item {
                 text: "\uf05a"
                 font.family: Style.font.family
                 font.pixelSize: 13
-                color: Color.accent
+                color: Commons.Color.accent
               }
 
               Text {
@@ -1315,7 +1316,7 @@ Item {
                 text: "Dismiss screensaver by clicking the backdrop, pressing Esc, switching workspace, or pressing your toggle hotkey."
                 font.family: Style.font.family
                 font.pixelSize: 10
-                color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.85)
+                color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.85)
                 wrapMode: Text.WordWrap
               }
 
@@ -1324,8 +1325,8 @@ Item {
                 width: testScreensaverText.implicitWidth + 18
                 height: 26
                 radius: 6
-                color: testBtnMouse.containsMouse ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
-                border.color: Color.accent
+                color: testBtnMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
+                border.color: Commons.Color.accent
                 border.width: 1
 
                 Text {
@@ -1335,7 +1336,7 @@ Item {
                   font.family: Style.font.family
                   font.pixelSize: 10
                   font.bold: true
-                  color: testBtnMouse.containsMouse ? "#ffffff" : Color.accent
+                  color: testBtnMouse.containsMouse ? "#ffffff" : Commons.Color.accent
                 }
 
                 MouseArea {
@@ -1374,8 +1375,8 @@ Item {
           implicitWidth: resetText.implicitWidth + 20
           height: 32
           radius: 8
-          color: resetMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
-          border.color: resetMouse.containsMouse ? Color.urgent : Qt.rgba(1, 1, 1, 0.1)
+          color: resetMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+          border.color: resetMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(1, 1, 1, 0.1)
           border.width: 1
 
           RowLayout {
@@ -1386,14 +1387,14 @@ Item {
               text: "\uf0e2"
               font.family: Style.font.family
               font.pixelSize: 11
-              color: resetMouse.containsMouse ? Color.urgent : Color.foreground
+              color: resetMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground
             }
             Text {
               text: "Reset Defaults"
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.DemiBold
-              color: resetMouse.containsMouse ? Color.urgent : Color.foreground
+              color: resetMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground
             }
           }
 
@@ -1427,7 +1428,7 @@ Item {
           implicitWidth: doneText.implicitWidth + 28
           height: 32
           radius: 8
-          color: doneMouse.containsMouse ? Qt.lighter(Color.accent, 1.15) : Color.accent
+          color: doneMouse.containsMouse ? Qt.lighter(Commons.Color.accent, 1.15) : Commons.Color.accent
 
           Text {
             id: doneText

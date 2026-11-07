@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -33,8 +34,8 @@ Item {
     implicitHeight: Math.min(parent.height - 4, 28)
     implicitWidth: rowLayout.implicitWidth + 16
     radius: Style.cornerRadius || 8
-    color: bgMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : Qt.rgba(Color.bar.background.r, Color.bar.background.g, Color.bar.background.b, 0.65)
-    border.color: root.isPlaying ? Color.accent : Qt.rgba(1, 1, 1, 0.12)
+    color: bgMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.65)
+    border.color: root.isPlaying ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 150 } }
@@ -49,7 +50,7 @@ Item {
         text: "\uf001"
         font.family: Style.font.family
         font.pixelSize: 11
-        color: root.isPlaying ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+        color: root.isPlaying ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
 
         SequentialAnimation on opacity {
           running: root.isPlaying
@@ -64,7 +65,7 @@ Item {
         font.family: Style.font.family
         font.pixelSize: 11
         font.weight: root.isPlaying ? Font.Bold : Font.Normal
-        color: Color.foreground
+        color: Commons.Color.foreground
         elide: Text.ElideRight
         Layout.maximumWidth: 160
       }
@@ -74,14 +75,14 @@ Item {
         implicitWidth: 18
         implicitHeight: 18
         radius: 9
-        color: playMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : "transparent"
+        color: playMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : "transparent"
 
         Text {
           anchors.centerIn: parent
           text: root.isPlaying ? "\uf04c" : "\uf04b"
           font.family: Style.font.family
           font.pixelSize: 9
-          color: root.isPlaying ? Color.accent : Color.foreground
+          color: root.isPlaying ? Commons.Color.accent : Commons.Color.foreground
         }
 
         MouseArea {
@@ -110,7 +111,7 @@ Item {
           text: "\uf051"
           font.family: Style.font.family
           font.pixelSize: 9
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
         }
 
         MouseArea {

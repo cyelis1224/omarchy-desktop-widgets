@@ -7,7 +7,7 @@ import Quickshell.Io
 import qs.Commons
 // Qt 6.12 adds a QtQuick "Color" singleton that wins over qs.Commons.Color in
 // these subfolder widgets; reference the shell colours through an alias.
-import qs.Commons as Sh
+import qs.Commons as Commons
 import qs.Ui
 
 // Import base WidgetCard from the shared repository link or parent widgets directory
@@ -231,7 +231,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.45)
+        color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 2
       }
@@ -241,7 +241,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: tabTaskMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
+        color: tabTaskMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -253,14 +253,14 @@ WidgetCard {
             text: "\uf0ae"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.accent
+            color: Commons.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: "Switch to Tasks Tab"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.foreground
+            color: Commons.Color.foreground
           }
         }
         MouseArea {
@@ -280,7 +280,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: tabScratchMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
+        color: tabScratchMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -292,14 +292,14 @@ WidgetCard {
             text: "\uf044"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.accent
+            color: Commons.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: "Switch to Scratchpad"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.foreground
+            color: Commons.Color.foreground
           }
         }
         MouseArea {
@@ -319,7 +319,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: tabCmdMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
+        color: tabCmdMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -331,14 +331,14 @@ WidgetCard {
             text: "\uf120"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.accent
+            color: Commons.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: "Switch to Snippets Tab"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.foreground
+            color: Commons.Color.foreground
           }
         }
         MouseArea {
@@ -358,7 +358,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: addSnipOptMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
+        color: addSnipOptMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -370,14 +370,14 @@ WidgetCard {
             text: "\uf067"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.accent
+            color: Commons.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: "Add New Snippet"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.foreground
+            color: Commons.Color.foreground
           }
         }
         MouseArea {
@@ -399,7 +399,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: clearOptMouse.containsMouse ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.2) : "transparent"
+        color: clearOptMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -411,14 +411,14 @@ WidgetCard {
             text: "\uf1f8"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.urgent
+            color: Commons.Color.urgent
           }
           Text {
             Layout.fillWidth: true
             text: "Clear " + notesWidgetRoot.completedCount + " Completed Tasks"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.urgent
+            color: Commons.Color.urgent
           }
         }
         MouseArea {
@@ -438,7 +438,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: editMdMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
+        color: editMdMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -450,14 +450,14 @@ WidgetCard {
             text: "\uf15c"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.accent
+            color: Commons.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: "Open notes.md in Editor"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Sh.Color.foreground
+            color: Commons.Color.foreground
           }
         }
         MouseArea {
@@ -493,8 +493,8 @@ WidgetCard {
         width: 30
         height: 30
         radius: 15
-        color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2)
-        border.color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.4)
+        color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
         border.width: 1
 
         Text {
@@ -502,7 +502,7 @@ WidgetCard {
           text: "\uf044"
           font.family: Style.font.family
           font.pixelSize: 13
-          color: Sh.Color.accent
+          color: Commons.Color.accent
         }
       }
 
@@ -513,13 +513,13 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 13
           font.weight: Font.Bold
-          color: Sh.Color.foreground
+          color: Commons.Color.foreground
         }
         Text {
           text: notesWidgetRoot.pendingCount + " pending · " + notesWidgetRoot.completedCount + " done"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.6)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
         }
       }
 
@@ -531,8 +531,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMouse.containsMouse ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-        border.color: Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.5)
+        color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -540,7 +540,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Sh.Color.urgent
+          color: Commons.Color.urgent
         }
 
         MouseArea {
@@ -562,8 +562,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: customGripMouse.drag.active ? Sh.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
-        border.color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.5)
+        color: customGripMouse.drag.active ? Commons.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -571,7 +571,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: customGripMouse.drag.active ? Sh.Color.background : Sh.Color.accent
+          color: customGripMouse.drag.active ? Commons.Color.background : Commons.Color.accent
         }
 
         MouseArea {
@@ -616,7 +616,7 @@ WidgetCard {
           implicitHeight: 26
           radius: 13
           readonly property bool isSelected: notesWidgetRoot.currentTab === modelData.key
-          color: tabMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.25) : (isSelected ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.08))
+          color: tabMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.08))
 
           RowLayout {
             id: tabRow
@@ -627,14 +627,14 @@ WidgetCard {
               text: modelData.icon
               font.family: Style.font.family
               font.pixelSize: 10
-              color: isSelected ? Sh.Color.background : Sh.Color.accent
+              color: isSelected ? Commons.Color.background : Commons.Color.accent
             }
             Text {
               text: modelData.label
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: isSelected ? Font.Bold : Font.Normal
-              color: isSelected ? Sh.Color.background : Sh.Color.foreground
+              color: isSelected ? Commons.Color.background : Commons.Color.foreground
             }
           }
 
@@ -666,7 +666,7 @@ WidgetCard {
         height: 34
         radius: 17
         color: Qt.rgba(1, 1, 1, 0.06)
-        border.color: taskInput.activeFocus ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+        border.color: taskInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
         border.width: 1
 
         RowLayout {
@@ -685,7 +685,7 @@ WidgetCard {
               verticalAlignment: TextInput.AlignVCenter
               font.family: Style.font.family
               font.pixelSize: 12
-              color: Sh.Color.foreground
+              color: Commons.Color.foreground
               clip: true
               selectByMouse: true
               cursorVisible: activeFocus
@@ -696,7 +696,7 @@ WidgetCard {
                 text: "Add new task... press Enter"
                 font.family: Style.font.family
                 font.pixelSize: 12
-                color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.35)
+                color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35)
                 visible: !taskInput.text && !taskInput.activeFocus
               }
 
@@ -712,8 +712,8 @@ WidgetCard {
             implicitWidth: tagText.implicitWidth + 14
             implicitHeight: 22
             radius: 11
-            color: notesWidgetRoot.currentTag === "#bug" ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.25) : Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2)
-            border.color: notesWidgetRoot.currentTag === "#bug" ? Sh.Color.urgent : Sh.Color.accent
+            color: notesWidgetRoot.currentTag === "#bug" ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+            border.color: notesWidgetRoot.currentTag === "#bug" ? Commons.Color.urgent : Commons.Color.accent
             border.width: 1
 
             Text {
@@ -723,7 +723,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: Font.Bold
-              color: notesWidgetRoot.currentTag === "#bug" ? Sh.Color.urgent : Sh.Color.accent
+              color: notesWidgetRoot.currentTag === "#bug" ? Commons.Color.urgent : Commons.Color.accent
             }
 
             MouseArea {
@@ -742,14 +742,14 @@ WidgetCard {
             width: 24
             height: 24
             radius: 12
-            color: addBtnMouse.containsMouse ? Qt.lighter(Sh.Color.accent, 1.2) : Sh.Color.accent
+            color: addBtnMouse.containsMouse ? Qt.lighter(Commons.Color.accent, 1.2) : Commons.Color.accent
 
             Text {
               anchors.centerIn: parent
               text: "\uf067"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Sh.Color.background
+              color: Commons.Color.background
             }
 
             MouseArea {
@@ -795,8 +795,8 @@ WidgetCard {
               width: 18
               height: 18
               radius: 6
-              color: modelData.done ? Sh.Color.accent : "transparent"
-              border.color: modelData.done ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.35)
+              color: modelData.done ? Commons.Color.accent : "transparent"
+              border.color: modelData.done ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.35)
               border.width: 1.5
 
               Text {
@@ -806,7 +806,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 10
                 font.weight: Font.Bold
-                color: Sh.Color.background
+                color: Commons.Color.background
               }
 
               MouseArea {
@@ -823,7 +823,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 12
               font.strikeout: modelData.done
-              color: modelData.done ? Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4) : Sh.Color.foreground
+              color: modelData.done ? Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.4) : Commons.Color.foreground
               elide: Text.ElideRight
             }
 
@@ -834,8 +834,8 @@ WidgetCard {
               implicitHeight: 18
               radius: 9
               color: {
-                if (modelData.tag === "#bug") return Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.2)
-                if (modelData.tag === "#work") return Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2)
+                if (modelData.tag === "#bug") return Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.2)
+                if (modelData.tag === "#work") return Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
                 if (modelData.tag === "#idea") return Qt.rgba(1, 0.75, 0.2, 0.2)
                 return Qt.rgba(1, 1, 1, 0.1)
               }
@@ -848,10 +848,10 @@ WidgetCard {
                 font.pixelSize: 9
                 font.weight: Font.DemiBold
                 color: {
-                  if (modelData.tag === "#bug") return Sh.Color.urgent
-                  if (modelData.tag === "#work") return Sh.Color.accent
+                  if (modelData.tag === "#bug") return Commons.Color.urgent
+                  if (modelData.tag === "#work") return Commons.Color.accent
                   if (modelData.tag === "#idea") return Qt.rgba(1, 0.8, 0.25, 1.0)
-                  return Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.7)
+                  return Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
                 }
               }
             }
@@ -862,14 +862,14 @@ WidgetCard {
               height: 20
               radius: 10
               visible: taskItemMouse.containsMouse
-              color: delMouse.containsMouse ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.35) : "transparent"
+              color: delMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : "transparent"
 
               Text {
                 anchors.centerIn: parent
                 text: "\uf1f8"
                 font.family: Style.font.family
                 font.pixelSize: 10
-                color: Sh.Color.urgent
+                color: Commons.Color.urgent
               }
 
               MouseArea {
@@ -900,7 +900,7 @@ WidgetCard {
           text: notesWidgetRoot.completedCount + " completed"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.5)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
 
         Item { Layout.fillWidth: true }
@@ -910,8 +910,8 @@ WidgetCard {
           implicitWidth: clearRow.implicitWidth + 20
           implicitHeight: 22
           radius: 11
-          color: clearMouse.containsMouse ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.25) : Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.08)
-          border.color: clearMouse.containsMouse ? Sh.Color.urgent : Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.3)
+          color: clearMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.08)
+          border.color: clearMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.3)
           border.width: 1
 
           RowLayout {
@@ -922,7 +922,7 @@ WidgetCard {
               text: "\uf1f8"
               font.family: Style.font.family
               font.pixelSize: 9
-              color: Sh.Color.urgent
+              color: Commons.Color.urgent
             }
             Text {
               id: clearText
@@ -930,7 +930,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: Font.DemiBold
-              color: Sh.Color.urgent
+              color: Commons.Color.urgent
             }
           }
 
@@ -960,7 +960,7 @@ WidgetCard {
         Layout.fillHeight: true
         radius: 12
         color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: scratchpadEdit.activeFocus ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.1)
+        border.color: scratchpadEdit.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.1)
         border.width: 1
 
         MouseArea {
@@ -997,7 +997,7 @@ WidgetCard {
             width: scratchpadFlickable.width
             font.family: Style.font.family
             font.pixelSize: 12
-            color: Sh.Color.foreground
+            color: Commons.Color.foreground
             wrapMode: TextEdit.Wrap
             selectByMouse: true
             cursorVisible: activeFocus
@@ -1008,7 +1008,7 @@ WidgetCard {
               text: "Jot down anything here... auto-syncs to notes.md"
               font.family: Style.font.family
               font.pixelSize: 12
-              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.35)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35)
               visible: !scratchpadEdit.text && !scratchpadEdit.activeFocus
             }
 
@@ -1027,7 +1027,7 @@ WidgetCard {
           text: notesWidgetRoot.statusMessage
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Sh.Color.accent
+          color: Commons.Color.accent
         }
 
         Item { Layout.fillWidth: true }
@@ -1036,7 +1036,7 @@ WidgetCard {
           text: scratchpadEdit.text.length + " chars"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.5)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
       }
     }
@@ -1067,15 +1067,15 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: Font.Bold
-            color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.6)
+            color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
           }
 
           Rectangle {
             implicitWidth: countText.implicitWidth + 12
             implicitHeight: 18
             radius: 9
-            color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2)
-            border.color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.4)
+            color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+            border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
             border.width: 1
 
             Text {
@@ -1085,7 +1085,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 9
               font.weight: Font.Bold
-              color: Sh.Color.accent
+              color: Commons.Color.accent
             }
           }
 
@@ -1096,8 +1096,8 @@ WidgetCard {
             implicitWidth: addSnipRow.implicitWidth + 16
             implicitHeight: 24
             radius: 12
-            color: addSnipMouse.containsMouse ? Sh.Color.accent : Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2)
-            border.color: Sh.Color.accent
+            color: addSnipMouse.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+            border.color: Commons.Color.accent
             border.width: 1
 
             RowLayout {
@@ -1109,14 +1109,14 @@ WidgetCard {
                 text: "\uf067"
                 font.family: Style.font.family
                 font.pixelSize: 9
-                color: addSnipMouse.containsMouse ? Sh.Color.background : Sh.Color.accent
+                color: addSnipMouse.containsMouse ? Commons.Color.background : Commons.Color.accent
               }
               Text {
                 text: "New Snippet"
                 font.family: Style.font.family
                 font.pixelSize: 10
                 font.weight: Font.Bold
-                color: addSnipMouse.containsMouse ? Sh.Color.background : Sh.Color.accent
+                color: addSnipMouse.containsMouse ? Commons.Color.background : Commons.Color.accent
               }
             }
 
@@ -1146,7 +1146,7 @@ WidgetCard {
               text: "\uf120"
               font.family: Style.font.family
               font.pixelSize: 28
-              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.2)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.2)
             }
             Text {
               Layout.alignment: Qt.AlignHCenter
@@ -1154,14 +1154,14 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 12
               font.weight: Font.DemiBold
-              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.5)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
             }
             Text {
               Layout.alignment: Qt.AlignHCenter
               text: "Click '+ New Snippet' to add custom commands"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.35)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.35)
             }
           }
 
@@ -1178,7 +1178,7 @@ WidgetCard {
               height: 52
               radius: 10
               color: cmdMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
-              border.color: cmdMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+              border.color: cmdMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
               border.width: 1
 
               RowLayout {
@@ -1191,8 +1191,8 @@ WidgetCard {
                   width: 30
                   height: 30
                   radius: 8
-                  color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.15)
-                  border.color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.3)
+                  color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15)
+                  border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3)
                   border.width: 1
 
                   Text {
@@ -1200,7 +1200,7 @@ WidgetCard {
                     text: "\uf120"
                     font.family: Style.font.family
                     font.pixelSize: 11
-                    color: Sh.Color.accent
+                    color: Commons.Color.accent
                   }
                 }
 
@@ -1214,7 +1214,7 @@ WidgetCard {
                     font.family: Style.font.family
                     font.pixelSize: 11
                     font.weight: Font.Bold
-                    color: Sh.Color.foreground
+                    color: Commons.Color.foreground
                     elide: Text.ElideRight
                   }
                   Text {
@@ -1222,7 +1222,7 @@ WidgetCard {
                     text: modelData.cmd || ""
                     font.family: "Monospace"
                     font.pixelSize: 10
-                    color: Qt.lighter(Sh.Color.accent, 1.15)
+                    color: Qt.lighter(Commons.Color.accent, 1.15)
                     elide: Text.ElideRight
                   }
                 }
@@ -1236,8 +1236,8 @@ WidgetCard {
                     width: 24
                     height: 24
                     radius: 12
-                    color: runBtnMouse.containsMouse ? Qt.lighter(Sh.Color.accent, 1.2) : Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.25)
-                    border.color: Sh.Color.accent
+                    color: runBtnMouse.containsMouse ? Qt.lighter(Commons.Color.accent, 1.2) : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
+                    border.color: Commons.Color.accent
                     border.width: 1
 
                     Text {
@@ -1245,7 +1245,7 @@ WidgetCard {
                       text: "\uf04b"
                       font.family: Style.font.family
                       font.pixelSize: 8
-                      color: runBtnMouse.containsMouse ? Sh.Color.background : Sh.Color.accent
+                      color: runBtnMouse.containsMouse ? Commons.Color.background : Commons.Color.accent
                     }
 
                     MouseArea {
@@ -1264,8 +1264,8 @@ WidgetCard {
                     width: 24
                     height: 24
                     radius: 12
-                    color: editBtnMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-                    border.color: editBtnMouse.containsMouse ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.15)
+                    color: editBtnMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                    border.color: editBtnMouse.containsMouse ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.15)
                     border.width: 1
 
                     Text {
@@ -1273,7 +1273,7 @@ WidgetCard {
                       text: "\uf044"
                       font.family: Style.font.family
                       font.pixelSize: 10
-                      color: editBtnMouse.containsMouse ? Sh.Color.accent : Sh.Color.foreground
+                      color: editBtnMouse.containsMouse ? Commons.Color.accent : Commons.Color.foreground
                     }
 
                     MouseArea {
@@ -1290,8 +1290,8 @@ WidgetCard {
                     width: 24
                     height: 24
                     radius: 12
-                    color: delBtnMouse.containsMouse ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-                    border.color: delBtnMouse.containsMouse ? Sh.Color.urgent : Qt.rgba(1, 1, 1, 0.15)
+                    color: delBtnMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                    border.color: delBtnMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(1, 1, 1, 0.15)
                     border.width: 1
 
                     Text {
@@ -1299,7 +1299,7 @@ WidgetCard {
                       text: "\uf1f8"
                       font.family: Style.font.family
                       font.pixelSize: 10
-                      color: Sh.Color.urgent
+                      color: Commons.Color.urgent
                     }
 
                     MouseArea {
@@ -1336,7 +1336,7 @@ WidgetCard {
             Rectangle {
               width: parent.width
               radius: 2
-              color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.6)
+              color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.6)
               height: Math.max(16, (commandsListView.height / Math.max(1, commandsListView.contentHeight)) * commandsListView.height)
               y: Math.max(0, Math.min(commandsListView.height - height, (commandsListView.contentY / Math.max(1, commandsListView.contentHeight - commandsListView.height)) * (commandsListView.height - height)))
             }
@@ -1351,7 +1351,7 @@ WidgetCard {
         visible: notesWidgetRoot.snippetEditorOpen
         radius: 12
         color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.4)
+        border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
         border.width: 1
 
         ColumnLayout {
@@ -1368,8 +1368,8 @@ WidgetCard {
               width: 24
               height: 24
               radius: 12
-              color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2)
-              border.color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.4)
+              color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
+              border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
               border.width: 1
 
               Text {
@@ -1377,7 +1377,7 @@ WidgetCard {
                 text: notesWidgetRoot.editingSnippetId > 0 ? "\uf044" : "\uf067"
                 font.family: Style.font.family
                 font.pixelSize: 10
-                color: Sh.Color.accent
+                color: Commons.Color.accent
               }
             }
 
@@ -1386,7 +1386,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 12
               font.weight: Font.Bold
-              color: Sh.Color.foreground
+              color: Commons.Color.foreground
             }
 
             Item { Layout.fillWidth: true }
@@ -1403,7 +1403,7 @@ WidgetCard {
                 text: "\uf00d"
                 font.family: Style.font.family
                 font.pixelSize: 10
-                color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.7)
+                color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
               }
 
               MouseArea {
@@ -1433,7 +1433,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 9
               font.weight: Font.Bold
-              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.6)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
             }
 
             Rectangle {
@@ -1441,7 +1441,7 @@ WidgetCard {
               height: 32
               radius: 8
               color: Qt.rgba(1, 1, 1, 0.06)
-              border.color: snipNameInput.activeFocus ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              border.color: snipNameInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
               border.width: 1
 
               TextInput {
@@ -1452,7 +1452,7 @@ WidgetCard {
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Style.font.family
                 font.pixelSize: 11
-                color: Sh.Color.foreground
+                color: Commons.Color.foreground
                 clip: true
                 selectByMouse: true
                 onAccepted: snipCmdInput.forceActiveFocus()
@@ -1463,7 +1463,7 @@ WidgetCard {
                   text: "e.g. Restart Shell, Git Status..."
                   font.family: Style.font.family
                   font.pixelSize: 11
-                  color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.3)
+                  color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
                   visible: !snipNameInput.text && !snipNameInput.activeFocus
                 }
               }
@@ -1480,7 +1480,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 9
               font.weight: Font.Bold
-              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.6)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
             }
 
             Rectangle {
@@ -1488,7 +1488,7 @@ WidgetCard {
               height: 32
               radius: 8
               color: Qt.rgba(1, 1, 1, 0.06)
-              border.color: snipCmdInput.activeFocus ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              border.color: snipCmdInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
               border.width: 1
 
               TextInput {
@@ -1499,7 +1499,7 @@ WidgetCard {
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: "Monospace"
                 font.pixelSize: 11
-                color: Qt.lighter(Sh.Color.accent, 1.2)
+                color: Qt.lighter(Commons.Color.accent, 1.2)
                 clip: true
                 selectByMouse: true
                 onAccepted: snipDescInput.forceActiveFocus()
@@ -1510,7 +1510,7 @@ WidgetCard {
                   text: "e.g. omarchy-restart-shell, fastfetch..."
                   font.family: "Monospace"
                   font.pixelSize: 11
-                  color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.3)
+                  color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
                   visible: !snipCmdInput.text && !snipCmdInput.activeFocus
                 }
               }
@@ -1527,7 +1527,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 9
               font.weight: Font.Bold
-              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.6)
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.6)
             }
 
             Rectangle {
@@ -1535,7 +1535,7 @@ WidgetCard {
               height: 30
               radius: 8
               color: Qt.rgba(1, 1, 1, 0.06)
-              border.color: snipDescInput.activeFocus ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+              border.color: snipDescInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
               border.width: 1
 
               TextInput {
@@ -1546,7 +1546,7 @@ WidgetCard {
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Style.font.family
                 font.pixelSize: 11
-                color: Sh.Color.foreground
+                color: Commons.Color.foreground
                 clip: true
                 selectByMouse: true
                 onAccepted: saveSnippetBtn.triggerSave()
@@ -1557,7 +1557,7 @@ WidgetCard {
                   text: "Brief description of command"
                   font.family: Style.font.family
                   font.pixelSize: 11
-                  color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.3)
+                  color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.3)
                   visible: !snipDescInput.text && !snipDescInput.activeFocus
                 }
               }
@@ -1578,8 +1578,8 @@ WidgetCard {
               implicitWidth: delEditRow.implicitWidth + 16
               implicitHeight: 30
               radius: 15
-              color: delEditBtnMouse.containsMouse ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.3) : Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.12)
-              border.color: Sh.Color.urgent
+              color: delEditBtnMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.3) : Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.12)
+              border.color: Commons.Color.urgent
               border.width: 1
 
               RowLayout {
@@ -1590,14 +1590,14 @@ WidgetCard {
                   text: "\uf1f8"
                   font.family: Style.font.family
                   font.pixelSize: 10
-                  color: Sh.Color.urgent
+                  color: Commons.Color.urgent
                 }
                 Text {
                   text: "Delete"
                   font.family: Style.font.family
                   font.pixelSize: 11
                   font.weight: Font.DemiBold
-                  color: Sh.Color.urgent
+                  color: Commons.Color.urgent
                 }
               }
 
@@ -1630,7 +1630,7 @@ WidgetCard {
                 text: "Cancel"
                 font.family: Style.font.family
                 font.pixelSize: 11
-                color: Sh.Color.foreground
+                color: Commons.Color.foreground
               }
 
               MouseArea {
@@ -1650,7 +1650,7 @@ WidgetCard {
               radius: 15
               readonly property bool canSave: snipNameInput.text.trim().length > 0 && snipCmdInput.text.trim().length > 0
               opacity: canSave ? 1.0 : 0.5
-              color: canSave && saveBtnMouse.containsMouse ? Qt.lighter(Sh.Color.accent, 1.2) : Sh.Color.accent
+              color: canSave && saveBtnMouse.containsMouse ? Qt.lighter(Commons.Color.accent, 1.2) : Commons.Color.accent
 
               function triggerSave() {
                 var name = snipNameInput.text.trim()
@@ -1673,14 +1673,14 @@ WidgetCard {
                   text: "\uf00c"
                   font.family: Style.font.family
                   font.pixelSize: 10
-                  color: Sh.Color.background
+                  color: Commons.Color.background
                 }
                 Text {
                   text: notesWidgetRoot.editingSnippetId > 0 ? "Save Changes" : "Create Snippet"
                   font.family: Style.font.family
                   font.pixelSize: 11
                   font.weight: Font.Bold
-                  color: Sh.Color.background
+                  color: Commons.Color.background
                 }
               }
 

@@ -315,6 +315,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "../../shared"
 
@@ -356,7 +357,7 @@ WidgetCard {
       font.family: Style.font.family
       font.pixelSize: Style.font.titleSmall
       font.weight: Font.Bold
-      color: Color.foreground
+      color: Commons.Color.foreground
     }
 
     Text {
@@ -364,7 +365,7 @@ WidgetCard {
       text: "Detailed telemetry and metrics here..."
       font.family: Style.font.family
       font.pixelSize: Style.font.bodySmall
-      color: Color.muted
+      color: Commons.Color.muted
     }
 
     Item { Layout.fillHeight: true }
@@ -392,14 +393,14 @@ WidgetCard {
             text: myCustomWidget.showExtraDetails ? "\uf058" : "\uf10c"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: myCustomWidget.showExtraDetails ? Color.accent : Color.muted
+            color: myCustomWidget.showExtraDetails ? Commons.Color.accent : Commons.Color.muted
           }
 
           Text {
             text: "Show Extra Details"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Commons.Color.foreground
           }
         }
 
