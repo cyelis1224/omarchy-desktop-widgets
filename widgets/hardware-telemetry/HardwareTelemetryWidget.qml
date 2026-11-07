@@ -85,7 +85,10 @@ WidgetCard {
   }
 
   property real cpuTemp: 40.0
-  property int cpuCores: 20
+  property int cpuCores: 0
+  property int cpuThreads: 0
+  property string cpuModel: ""
+  property string gpuName: "Graphics Engine"
   property real cpuAvgGhz: 3.5
   property int gpuMhz: 0
   property int gpuMaxMhz: 1950
@@ -125,6 +128,9 @@ WidgetCard {
             cpuArc.requestPaint()
           }
           if (data.cpu_cores !== undefined) hwWidgetRoot.cpuCores = data.cpu_cores
+          if (data.cpu_threads !== undefined) hwWidgetRoot.cpuThreads = data.cpu_threads
+          if (data.cpu_model !== undefined) hwWidgetRoot.cpuModel = data.cpu_model
+          if (data.gpu_name) hwWidgetRoot.gpuName = data.gpu_name
           if (data.cpu_avg_ghz !== undefined) {
             hwWidgetRoot.cpuAvgGhz = data.cpu_avg_ghz
             clockArc.requestPaint()
@@ -506,7 +512,7 @@ WidgetCard {
           color: Color.foreground
         }
         Text {
-          text: hwWidgetRoot.cpuCores + " Cores · DDR5 · NVMe"
+          text: (hwWidgetRoot.cpuModel ? hwWidgetRoot.cpuModel + " · " : "") + hwWidgetRoot.cpuCores + "C / " + hwWidgetRoot.cpuThreads + "T"
           font.family: Style.font.family
           font.pixelSize: 10
           color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
@@ -917,7 +923,7 @@ WidgetCard {
 
         Text {
           Layout.fillWidth: true
-          text: "Graphics Engine (Intel Arrow Lake)"
+          text: hwWidgetRoot.gpuName
           font.family: Style.font.family
           font.pixelSize: 10
           color: Color.foreground
