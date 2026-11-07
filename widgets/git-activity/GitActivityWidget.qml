@@ -5,6 +5,9 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+// Qt 6.12 adds a QtQuick "Color" singleton that wins over qs.Commons.Color in
+// these subfolder widgets; reference the shell colours through an alias.
+import qs.Commons as Sh
 import qs.Ui
 
 // Import base WidgetCard from the shared repository link or parent widgets directory
@@ -179,7 +182,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 2
       }
@@ -191,7 +194,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 11
         font.italic: true
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+        color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4)
         Layout.leftMargin: 8
         Layout.topMargin: 2
         Layout.bottomMargin: 2
@@ -205,7 +208,7 @@ WidgetCard {
         implicitHeight: 28
         radius: 6
         readonly property bool isCurrent: gitWidgetRoot.activeRepoPath === "ALL"
-        color: allRepoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (allRepoItem.isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+        color: allRepoMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : (allRepoItem.isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
 
         RowLayout {
           anchors.fill: parent
@@ -235,7 +238,7 @@ WidgetCard {
             text: "\uf00c"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Color.accent
+            color: Sh.Color.accent
           }
         }
 
@@ -260,7 +263,7 @@ WidgetCard {
           implicitHeight: 28
           radius: 6
           readonly property bool isCurrent: gitWidgetRoot.activeRepoPath === modelData.path
-          color: rMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : (isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+          color: rMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : (isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
 
           RowLayout {
             anchors.fill: parent
@@ -290,7 +293,7 @@ WidgetCard {
               text: "\uf00c"
               font.family: Style.font.family
               font.pixelSize: 10
-              color: Color.accent
+              color: Sh.Color.accent
             }
 
             // Remove button for this repo
@@ -298,14 +301,14 @@ WidgetCard {
               width: 20
               height: 20
               radius: 4
-              color: delMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.3) : "transparent"
+              color: delMouse.containsMouse ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.3) : "transparent"
 
               Text {
                 anchors.centerIn: parent
                 text: "\uf1f8"
                 font.family: Style.font.family
                 font.pixelSize: 10
-                color: delMouse.containsMouse ? Color.urgent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+                color: delMouse.containsMouse ? Sh.Color.urgent : Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4)
               }
 
               MouseArea {
@@ -339,7 +342,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: customRepoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: customRepoMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -351,7 +354,7 @@ WidgetCard {
             text: "\uf07c"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Sh.Color.accent
           }
 
           Text {
@@ -359,7 +362,7 @@ WidgetCard {
             text: "Add Local Repository..."
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Sh.Color.foreground
             elide: Text.ElideRight
           }
 
@@ -367,7 +370,7 @@ WidgetCard {
             text: "\uf054"
             font.family: Style.font.family
             font.pixelSize: 9
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4)
           }
         }
 
@@ -388,7 +391,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: remoteRepoMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: remoteRepoMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -408,7 +411,7 @@ WidgetCard {
             text: "Add Remote Git URL..."
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Sh.Color.foreground
             elide: Text.ElideRight
           }
 
@@ -416,7 +419,7 @@ WidgetCard {
             text: "\uf054"
             font.family: Style.font.family
             font.pixelSize: 9
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4)
           }
         }
 
@@ -438,7 +441,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 4
       }
@@ -448,7 +451,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: comMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: comMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -460,7 +463,7 @@ WidgetCard {
             text: "\uf017"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: gitWidgetRoot.showRecentCommits ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+            color: gitWidgetRoot.showRecentCommits ? Sh.Color.accent : Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.5)
           }
 
           Text {
@@ -468,14 +471,14 @@ WidgetCard {
             text: "Show Activity Stream (Commits/PRs/Issues)"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Sh.Color.foreground
           }
 
           Text {
             text: gitWidgetRoot.showRecentCommits ? "\uf14a" : "\uf0c8"
             font.family: Style.font.family
             font.pixelSize: 12
-            color: gitWidgetRoot.showRecentCommits ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: gitWidgetRoot.showRecentCommits ? Sh.Color.accent : Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4)
           }
         }
 
@@ -494,7 +497,7 @@ WidgetCard {
         font.family: Style.font.family
         font.pixelSize: 9
         font.weight: Font.Bold
-        color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+        color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.45)
         Layout.leftMargin: 4
         Layout.topMargin: 4
       }
@@ -505,7 +508,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: edMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: edMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -517,7 +520,7 @@ WidgetCard {
             text: "\uf120"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Sh.Color.accent
           }
 
           Text {
@@ -525,14 +528,14 @@ WidgetCard {
             text: "Open Repo in Terminal"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Sh.Color.foreground
           }
 
           Text {
             text: "\uf08e"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4)
           }
         }
 
@@ -554,7 +557,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: openBrowserMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: openBrowserMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -574,14 +577,14 @@ WidgetCard {
             text: "Open Repo in Browser"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Sh.Color.foreground
           }
 
           Text {
             text: "\uf08e"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+            color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4)
           }
         }
 
@@ -611,7 +614,7 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 6
-        color: refGitMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : "transparent"
+        color: refGitMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : "transparent"
 
         RowLayout {
           anchors.fill: parent
@@ -623,7 +626,7 @@ WidgetCard {
             text: "\uf021"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.accent
+            color: Sh.Color.accent
           }
 
           Text {
@@ -631,7 +634,7 @@ WidgetCard {
             text: "Refresh Git Pulse"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Color.foreground
+            color: Sh.Color.foreground
           }
         }
 
@@ -703,14 +706,14 @@ WidgetCard {
             text: "\uf418"
             font.family: Style.font.family
             font.pixelSize: 9
-            color: Color.accent
+            color: Sh.Color.accent
           }
           Text {
             Layout.fillWidth: true
             text: gitWidgetRoot.branchName
             font.family: Style.font.family
             font.pixelSize: 10
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.6)
             elide: Text.ElideRight
           }
         }
@@ -724,8 +727,8 @@ WidgetCard {
         implicitWidth: uncomRow.implicitWidth + 12
         implicitHeight: 20
         radius: 10
-        color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.15) : (gitWidgetRoot.uncommittedCount > 0 ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.06))
-        border.color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.4) : (gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "transparent")
+        color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.15) : (gitWidgetRoot.uncommittedCount > 0 ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.06))
+        border.color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.4) : (gitWidgetRoot.uncommittedCount > 0 ? Sh.Color.accent : "transparent")
         border.width: 1
 
         RowLayout {
@@ -737,7 +740,7 @@ WidgetCard {
             text: gitWidgetRoot.isRemoteRepo ? "\uf0c1" : (gitWidgetRoot.uncommittedCount > 0 ? "\uf044" : "\uf00c")
             font.family: Style.font.family
             font.pixelSize: 8
-            color: gitWidgetRoot.isRemoteRepo ? "#38bdf8" : (gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "#10b981")
+            color: gitWidgetRoot.isRemoteRepo ? "#38bdf8" : (gitWidgetRoot.uncommittedCount > 0 ? Sh.Color.accent : "#10b981")
           }
 
           Text {
@@ -745,7 +748,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 9
             font.weight: Font.Bold
-            color: gitWidgetRoot.isRemoteRepo ? "#38bdf8" : (gitWidgetRoot.uncommittedCount > 0 ? Color.accent : "#10b981")
+            color: gitWidgetRoot.isRemoteRepo ? "#38bdf8" : (gitWidgetRoot.uncommittedCount > 0 ? Sh.Color.accent : "#10b981")
           }
         }
       }
@@ -756,8 +759,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMouse.containsMouse ? Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
-        border.color: Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.5)
+        color: closeMouse.containsMouse ? Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        border.color: Qt.rgba(Sh.Color.urgent.r, Sh.Color.urgent.g, Sh.Color.urgent.b, 0.5)
         border.width: 1
 
         Text {
@@ -765,7 +768,7 @@ WidgetCard {
           text: "\uf00d"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: Color.urgent
+          color: Sh.Color.urgent
         }
 
         MouseArea {
@@ -787,8 +790,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: customGripMouse.drag.active ? Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
-        border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5)
+        color: customGripMouse.drag.active ? Sh.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+        border.color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.5)
         border.width: 1
 
         Text {
@@ -796,7 +799,7 @@ WidgetCard {
           text: "\uf0b2"
           font.family: Style.font.family
           font.pixelSize: 10
-          color: customGripMouse.drag.active ? Color.background : Color.accent
+          color: customGripMouse.drag.active ? Sh.Color.background : Sh.Color.accent
         }
 
         MouseArea {
@@ -875,7 +878,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 14
             font.weight: Font.Bold
-            color: Color.foreground
+            color: Sh.Color.foreground
           }
 
           Text {
@@ -886,7 +889,7 @@ WidgetCard {
             text: "Track local git folders or remote Git URLs (GitHub, GitLab) to monitor commit streaks and radar activity."
             font.family: Style.font.family
             font.pixelSize: 11
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+            color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.6)
           }
         }
 
@@ -899,8 +902,8 @@ WidgetCard {
             implicitWidth: addBtnRow.implicitWidth + 20
             implicitHeight: 32
             radius: 16
-            color: addBtnMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.18)
-            border.color: Color.accent
+            color: addBtnMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.3) : Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.18)
+            border.color: Sh.Color.accent
             border.width: 1
 
             RowLayout {
@@ -912,7 +915,7 @@ WidgetCard {
                 text: "\uf07c"
                 font.family: Style.font.family
                 font.pixelSize: 10
-                color: Color.accent
+                color: Sh.Color.accent
               }
 
               Text {
@@ -920,7 +923,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 11
                 font.weight: Font.DemiBold
-                color: Color.foreground
+                color: Sh.Color.foreground
               }
             }
 
@@ -959,7 +962,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 11
                 font.weight: Font.DemiBold
-                color: Color.foreground
+                color: Sh.Color.foreground
               }
             }
 
@@ -999,7 +1002,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 9
             font.weight: Font.Bold
-            color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.45)
+            color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.45)
           }
           Item { Layout.fillWidth: true }
           Text {
@@ -1007,7 +1010,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 9
             font.weight: Font.DemiBold
-            color: Color.accent
+            color: Sh.Color.accent
           }
         }
 
@@ -1029,7 +1032,7 @@ WidgetCard {
               height: 9
               radius: 2
               color: gitWidgetRoot.getLevelColor(modelData.level)
-              border.color: modelData.is_today ? Color.accent : (cellMouse.containsMouse ? "#ffffff" : "transparent")
+              border.color: modelData.is_today ? Sh.Color.accent : (cellMouse.containsMouse ? "#ffffff" : "transparent")
               border.width: modelData.is_today || cellMouse.containsMouse ? 1 : 0
 
               MouseArea {
@@ -1093,7 +1096,7 @@ WidgetCard {
               text: "Current Streak"
               font.family: Style.font.family
               font.pixelSize: 8
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.5)
             }
           }
         }
@@ -1134,7 +1137,7 @@ WidgetCard {
               text: "Total Commits"
               font.family: Style.font.family
               font.pixelSize: 8
-              color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5)
+              color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.5)
             }
           }
         }
@@ -1156,8 +1159,8 @@ WidgetCard {
         implicitHeight: 28
         radius: 6
         readonly property bool isActive: gitWidgetRoot.activeTab === "commits"
-        color: comTabBtn.isActive ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
-        border.color: comTabBtn.isActive ? Color.accent : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        color: comTabBtn.isActive ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.22) : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+        border.color: comTabBtn.isActive ? Sh.Color.accent : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
         border.width: 1
 
         RowLayout {
@@ -1184,7 +1187,7 @@ WidgetCard {
             implicitWidth: comCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: comTabBtn.isActive ? Color.accent : Qt.rgba(1, 1, 1, 0.15)
+            color: comTabBtn.isActive ? Sh.Color.accent : Qt.rgba(1, 1, 1, 0.15)
 
             Text {
               id: comCountText
@@ -1356,7 +1359,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 11
           font.weight: Font.DemiBold
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
+          color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.6)
         }
 
         Text {
@@ -1368,7 +1371,7 @@ WidgetCard {
                 (gitWidgetRoot.activeTab === "issues" ? (gitWidgetRoot.hasGithub ? "All issues are closed or none have been opened yet." : "Connect a GitHub remote or URL to track issues.") : "No commits recorded in the selected period.")
           font.family: Style.font.family
           font.pixelSize: 9
-          color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+          color: Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.4)
         }
       }
 
@@ -1391,7 +1394,7 @@ WidgetCard {
           implicitHeight: 40
           radius: 8
           color: itemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.035)
-          border.color: itemMouse.containsMouse ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.05)
+          border.color: itemMouse.containsMouse ? Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.05)
           border.width: 1
 
           RowLayout {
@@ -1407,7 +1410,7 @@ WidgetCard {
               implicitWidth: hashText.implicitWidth + 8
               implicitHeight: 18
               radius: 4
-              color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.2)
+              color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.2)
 
               Text {
                 id: hashText
@@ -1416,7 +1419,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 9
                 font.weight: Font.DemiBold
-                color: Color.accent
+                color: Sh.Color.accent
               }
             }
 
@@ -1438,7 +1441,7 @@ WidgetCard {
                   text: gitWidgetRoot.activeTab === "prs" ? "\uf446" : (parent.parent.isOpen ? "\uf41c" : "\uf058")
                   font.family: Style.font.family
                   font.pixelSize: 8
-                  color: parent.parent.isOpen ? "#10b981" : (parent.parent.isMerged ? "#a855f7" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.5))
+                  color: parent.parent.isOpen ? "#10b981" : (parent.parent.isMerged ? "#a855f7" : Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.5))
                 }
 
                 Text {
@@ -1447,7 +1450,7 @@ WidgetCard {
                   font.family: Style.font.family
                   font.pixelSize: 9
                   font.weight: Font.DemiBold
-                  color: parent.parent.isOpen ? "#10b981" : (parent.parent.isMerged ? "#a855f7" : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.7))
+                  color: parent.parent.isOpen ? "#10b981" : (parent.parent.isMerged ? "#a855f7" : Qt.rgba(Sh.Color.foreground.r, Sh.Color.foreground.g, Sh.Color.foreground.b, 0.7))
                 }
               }
             }
@@ -1484,7 +1487,7 @@ WidgetCard {
               text: "\uf08e"
               font.family: Style.font.family
               font.pixelSize: 9
-              color: Color.accent
+              color: Sh.Color.accent
             }
           }
 
@@ -1515,7 +1518,7 @@ WidgetCard {
         Rectangle {
           width: 3
           radius: 1.5
-          color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.6)
+          color: Qt.rgba(Sh.Color.accent.r, Sh.Color.accent.g, Sh.Color.accent.b, 0.6)
           height: Math.max(16, (activityListView.height / activityListView.contentHeight) * activityListView.height)
           y: (activityListView.contentY / activityListView.contentHeight) * activityListView.height
         }

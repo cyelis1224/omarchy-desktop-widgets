@@ -147,6 +147,15 @@ QtObject {
       badge: "Live Feeds",
       description: "News and article reader with customizable RSS/Atom feeds, channel tabs, and browser integration.",
       componentUrl: Qt.resolvedUrl("rss-feed/RssFeedWidget.qml")
+    },
+    {
+      id: "agent_usage",
+      name: "Agent Usage",
+      category: "Dev",
+      icon: "\uee0d",
+      badge: "Multi-Account",
+      description: "Claude Code and Codex rate limits, 7-day tokens, and top models for every account, including a second login of the same tool.",
+      componentUrl: Qt.resolvedUrl("agent-usage/AgentUsageWidget.qml")
     }
   ]
 

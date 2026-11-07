@@ -71,16 +71,18 @@ WidgetCard {
   // Smooth sweep frame timer (60 FPS when smoothSweep is active)
   Timer {
     interval: 16
-    running: analogClockRoot.smoothSweep && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
+    running: analogClockRoot.visible && analogClockRoot.smoothSweep && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
     repeat: true
+    onRunningChanged: if (running) analogClockRoot.updateCurrentTime()
     onTriggered: analogClockRoot.updateCurrentTime()
   }
 
   // 1-second interval timer when stepping mode is active
   Timer {
     interval: 1000
-    running: !analogClockRoot.smoothSweep && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
+    running: analogClockRoot.visible && !analogClockRoot.smoothSweep && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
     repeat: true
+    onRunningChanged: if (running) analogClockRoot.updateCurrentTime()
     onTriggered: analogClockRoot.updateCurrentTime()
   }
 

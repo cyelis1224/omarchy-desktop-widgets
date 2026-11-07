@@ -84,6 +84,8 @@ BarWidget {
       color: Color.accent
 
       SequentialAnimation on opacity {
+        // Only animate while the update badge is actually shown.
+        running: root.updateAvailable && root.visible
         loops: Animation.Infinite
         NumberAnimation { to: 0.35; duration: 900; easing.type: Easing.InOutQuad }
         NumberAnimation { to: 1.0; duration: 900; easing.type: Easing.InOutQuad }

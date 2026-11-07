@@ -5,6 +5,9 @@ import json
 import shutil
 import subprocess
 import copy
+import fcntl
+import tempfile
+import time
 
 STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
@@ -161,6 +164,50 @@ def sync_blur_toggle(blur_enabled):
     except Exception:
         pass
 
+
+
+def adapt_positions_to_monitor(positions, monitor_width=0, monitor_height=0):
+    """Map built-in 1920x1080 preset coordinates to the target monitor.
+
+    Keeps left/top anchored widgets fixed, but preserves right/bottom margins for
+    widgets that were placed near those edges in the preset. This makes presets
+    land on the edge grid of wider/taller outputs instead of staying at eDP-1
+    sized coordinates.
+    """
+    try:
+        mw = int(monitor_width or 0)
+        mh = int(monitor_height or 0)
+    except Exception:
+        mw = 0
+        mh = 0
+    if mw <= 0 and mh <= 0:
+        return copy.deepcopy(positions)
+
+    base_w = 1920
+    base_h = 1080
+    adapted = {}
+    for wid, pos in (positions or {}).items():
+        if not isinstance(pos, dict):
+            adapted[wid] = copy.deepcopy(pos)
+            continue
+        entry = copy.deepcopy(pos)
+        x = entry.get('x')
+        y = entry.get('y')
+        w = entry.get('w')
+        h = entry.get('h')
+        try:
+            if mw > 0 and isinstance(x, (int, float)) and isinstance(w, (int, float)):
+                right_margin = base_w - x - w
+                if x >= base_w * 0.55 and right_margin >= 0:
+                    entry['x'] = max(10, int(round(mw - w - right_margin)))
+            if mh > 0 and isinstance(y, (int, float)) and isinstance(h, (int, float)):
+                bottom_margin = base_h - y - h
+                if y >= base_h * 0.55 and bottom_margin >= 0:
+                    entry['y'] = max(10, int(round(mh - h - bottom_margin)))
+        except Exception:
+            pass
+        adapted[wid] = entry
+    return adapted
 
 def pick_file_dialog(title="Select File", extensions="json", directory=False, save=False):
     # 1. omarchy-file-select (Standard Omarchy XDG Desktop Portal FileChooser)
@@ -322,14 +369,23 @@ def migrate_custom_builtins(data):
         save_settings(data)
     return data
 
+def read_state_file():
+    # A state file that exists but will not parse is never "no settings": it is
+    # being written, or damaged. Retry briefly, then refuse to continue rather
+    # than fall back to the defaults and save them over the real layout.
+    for attempt in range(20):
+        try:
+            with open(STATE_FILE, 'r') as f:
+                return json.load(f)
+        except Exception:
+            time.sleep(0.05)
+    sys.stderr.write("manage-positions: could not read %s; leaving it untouched\n" % STATE_FILE)
+    sys.exit(1)
+
 def load_settings():
     data = None
     if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, 'r') as f:
-                data = json.load(f)
-        except Exception:
-            pass
+        data = read_state_file()
     elif os.path.exists(LEGACY_CONFIG):
         try:
             with open(LEGACY_CONFIG, 'r') as f:
@@ -420,16 +476,38 @@ def sync_git_settings(data, backup_or_prof=None):
         git_ws['active_repo'] = act
 
 def save_settings(data):
+    # Write a temp file and rename it over the state file, so a concurrent
+    # reader sees either the old or the new settings, never a half-written file.
+    tmp_path = None
     try:
         os.makedirs(STATE_DIR, exist_ok=True)
-        with open(STATE_FILE, 'w') as f:
+        fd, tmp_path = tempfile.mkstemp(prefix='.dagyr.desktop-widgets.', suffix='.json', dir=STATE_DIR)
+        with os.fdopen(fd, 'w') as f:
             json.dump(data, f, indent=2)
+        os.replace(tmp_path, STATE_FILE)
+        tmp_path = None
     except Exception:
         pass
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+# Actions that wait on a file dialog must not hold the lock while the person
+# picks a file, or every widget save queues up behind them.
+DIALOG_ACTIONS = {'save_profile_dialog', 'export_profile', 'import_profile', 'pick_widget_dialog'}
+
+def lock_state():
+    # Every widget saves through this script, and a shell restart starts them
+    # all at once; serialize the read-modify-write so no update is lost.
+    os.makedirs(STATE_DIR, exist_ok=True)
+    lock_file = open(os.path.join(STATE_DIR, '.dagyr.desktop-widgets.lock'), 'w')
+    fcntl.flock(lock_file, fcntl.LOCK_EX)
+    return lock_file
 
 def main():
-    settings = load_settings()
     action = sys.argv[1] if len(sys.argv) > 1 else 'load'
+    state_lock = None if action in DIALOG_ACTIONS else lock_state()
+    settings = load_settings()
 
     if action == 'save_pos' and len(sys.argv) >= 5:
         widget_id = sys.argv[2]
@@ -616,6 +694,9 @@ def main():
         }))
     elif action == 'switch_profile' and len(sys.argv) >= 3:
         target_name = sys.argv[2]
+        target_monitor = sys.argv[3] if len(sys.argv) >= 4 else None
+        target_monitor_width = int(sys.argv[4]) if len(sys.argv) >= 5 and str(sys.argv[4]).lstrip('-').isdigit() else 0
+        target_monitor_height = int(sys.argv[5]) if len(sys.argv) >= 6 and str(sys.argv[5]).lstrip('-').isdigit() else 0
         profs = settings.get('layout_profiles', {})
         if target_name in profs:
             prof = profs[target_name]
@@ -623,8 +704,16 @@ def main():
             current_git_active = settings.get('git_active_repo', '')
 
             settings['active_profile'] = target_name
-            settings['positions'] = copy.deepcopy(prof.get('positions', {}))
-            settings['enabled_widgets'] = list(prof.get('enabled_widgets', DEFAULT_ENABLED))
+            if target_monitor:
+                if 'monitor_positions' not in settings or not isinstance(settings['monitor_positions'], dict):
+                    settings['monitor_positions'] = {}
+                if 'monitor_enabled_widgets' not in settings or not isinstance(settings['monitor_enabled_widgets'], dict):
+                    settings['monitor_enabled_widgets'] = {}
+                settings['monitor_positions'][target_monitor] = adapt_positions_to_monitor(prof.get('positions', {}), target_monitor_width, target_monitor_height)
+                settings['monitor_enabled_widgets'][target_monitor] = list(prof.get('enabled_widgets', DEFAULT_ENABLED))
+            else:
+                settings['positions'] = copy.deepcopy(prof.get('positions', {}))
+                settings['enabled_widgets'] = list(prof.get('enabled_widgets', DEFAULT_ENABLED))
             if 'widget_settings' in prof and isinstance(prof['widget_settings'], dict):
                 if 'widget_settings' not in settings or not isinstance(settings['widget_settings'], dict):
                     settings['widget_settings'] = {}
@@ -646,14 +735,15 @@ def main():
 
             sync_git_settings(settings, prof)
 
-            if 'monitor_enabled_widgets' in prof and isinstance(prof['monitor_enabled_widgets'], dict):
-                settings['monitor_enabled_widgets'] = copy.deepcopy(prof['monitor_enabled_widgets'])
-            else:
-                settings['monitor_enabled_widgets'] = {}
-            if 'monitor_positions' in prof and isinstance(prof['monitor_positions'], dict):
-                settings['monitor_positions'] = copy.deepcopy(prof['monitor_positions'])
-            else:
-                settings['monitor_positions'] = {}
+            if not target_monitor:
+                if 'monitor_enabled_widgets' in prof and isinstance(prof['monitor_enabled_widgets'], dict):
+                    settings['monitor_enabled_widgets'] = copy.deepcopy(prof['monitor_enabled_widgets'])
+                else:
+                    settings['monitor_enabled_widgets'] = {}
+                if 'monitor_positions' in prof and isinstance(prof['monitor_positions'], dict):
+                    settings['monitor_positions'] = copy.deepcopy(prof['monitor_positions'])
+                else:
+                    settings['monitor_positions'] = {}
             save_settings(settings)
             print(json.dumps({
                 "status": "profile_switched",
@@ -661,8 +751,11 @@ def main():
                 "positions": settings['positions'],
                 "enabled_widgets": settings['enabled_widgets'],
                 "widget_settings": settings.get('widget_settings', {}),
-                "monitor_positions": settings['monitor_positions'],
-                "monitor_enabled_widgets": settings['monitor_enabled_widgets']
+                "monitor_positions": settings.get('monitor_positions', {}),
+                "monitor_enabled_widgets": settings.get('monitor_enabled_widgets', {}),
+                "target_monitor": target_monitor,
+                "target_monitor_width": target_monitor_width,
+                "target_monitor_height": target_monitor_height
             }))
         else:
             print(json.dumps({"status": "error", "error": f"Profile '{target_name}' not found"}))
