@@ -81,8 +81,12 @@ Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GP
     - Default curated feeds (Hacker News, Ars Technica, Omarchy News) with interactive channel tabs.
     - Built-in **Add Custom Feed** dialog allowing users to input any custom RSS or Atom URL.
     - Click article headlines to launch directly in your default browser via `xdg-open`.
+17. **🤖 Agent Usage Monitor** (`widgets/agent-usage/AgentUsageWidget.qml`)
+    - Session (5h) and weekly (7d) rate-limit radial gauges with reset countdowns, 7-day token histogram, and top model breakdown.
+    - Multi-account support for Claude Code, Codex, and Fireworks (automatically discovering extra `~/.claude-*` / `~/.codex-*` profiles alongside Omarchy's stock collectors).
+    - Per-account visibility toggles and configurable refresh intervals (`5m` to `1h`).
 
-All 16 widgets are built-in and available right out of the box from the desktop **Add Widgets** drawer or right-click wallpaper menu.
+All 17 widgets are built-in and available right out of the box from the desktop **Add Widgets** drawer or right-click wallpaper menu.
 
 ---
 
@@ -473,6 +477,23 @@ omarchy-shell dagyr.desktop-widgets-update close
 ---
 
 ## 📜 Release History
+
+### 🌟 v1.2.9 — Agent Usage Widget, Network Timeline Upgrades, AMD Telemetry & Omarchy 4.0.6 Compatibility
+- **🤖 Agent Usage Widget (`widgets/agent-usage/AgentUsageWidget.qml` + `get-agent-usage.sh`)**:
+  - New Dev widget displaying session (5h) and weekly (7d) rate-limit radial gauges with live reset countdowns, 7-day token activity chart, and top models.
+  - Multi-account support for Claude Code, Codex, and Fireworks with isolated cache directories and bounded output collection.
+- **🌐 Network Traffic Timeline & Hover Inspector (`widgets/NetworkTrafficWidget.qml`)**:
+  - Configurable graph time scales (`30s`, `1m`, `2m`, `5m`, `15m`, `30m`, `1h`) and optional **Logarithmic Timeline** mode.
+  - Interactive hover crosshair with timestamp offset and RX/TX speed tooltip badge, adaptive layout clamping across small and wide sizes, and fixed persistent network interface switching.
+- **⚡ Hardware Telemetry Multi-Vendor Sysfs Detection (`widgets/hardware-telemetry/telemetry_collector.py`)**:
+  - Direct `/sys/class/hwmon` and `/sys/class/drm` collection supporting AMD (`k10temp`, `zenpower`, `amdgpu`) alongside Intel (`coretemp`, `i915`, `xe`), NVMe model names, RAM DIMMs, and multi-vendor Wi-Fi chipsets without spawning `sensors`.
+- **🖥️ Per-Monitor Presets, Dropdown Switcher & Atomic Layout Saves**:
+  - Move-mode top banner preset switcher redesigned as a compact dropdown menu.
+  - Layout presets now apply strictly to the target monitor where selected and adapt edge margins to the monitor's resolution.
+  - Serialized `manage-positions.sh` state writes with `flock` and atomic `os.replace` temp-file swaps so concurrent widget saves on shell restart never wipe layouts.
+- **🎨 Omarchy 4.0.6 / Qt 6.12 Theme Color Fix & Idle Animation Optimization**:
+  - Qualified `Commons.Color.*` via `import qs.Commons as Commons` across all 29 QML files to prevent Qt 6.12's `QtQuick.Color` singleton from shadowing theme colors.
+  - Paused continuous timers and animations when widgets are hidden or idle to eliminate unnecessary compositor repaints.
 
 ### 🌟 v1.2.8 — Analog Clock, Interactive Calendar, RSS Feed Radar & Reliability Fixes
 - **⏱️ Luxury & Bauhaus Analog Clock (`widgets/AnalogClockWidget.qml`)**:
