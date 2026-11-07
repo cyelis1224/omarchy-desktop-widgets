@@ -232,14 +232,10 @@ def main():
     # Handle argument to switch interface
     if len(sys.argv) > 1 and sys.argv[1].strip():
         new_selection = sys.argv[1].strip()
-        settings["network_iface"] = new_selection
-        save_settings(settings)
-        # Invalidate previous speed cache so it starts fresh without delta spikes
-        if os.path.exists(CACHE_FILE):
-            try:
-                os.remove(CACHE_FILE)
-            except Exception:
-                pass
+        # Only persist on actual change; the speed cache is keyed by iface, so no reset is needed
+        if new_selection != settings.get("network_iface", "AUTO"):
+            settings["network_iface"] = new_selection
+            save_settings(settings)
 
     selected_iface = settings.get("network_iface", "AUTO")
     current_stats = read_net_dev()
