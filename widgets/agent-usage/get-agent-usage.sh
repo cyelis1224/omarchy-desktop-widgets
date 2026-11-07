@@ -83,6 +83,7 @@ profiles() {
 collect_profile() {
   local kind="$1" id="$2" name="$3" dir="$4" record tmp collector var
   local flags=()
+  [[ $id =~ ^[a-zA-Z0-9._-]+$ && $id != .* && $id != *..* ]] || return 0
   [[ $mode == force ]] && flags+=(--force)
   dir="${dir/#\~/$HOME}"
   [[ -d $dir ]] || return 0
@@ -96,7 +97,7 @@ collect_profile() {
   # overwriting the default account's (the collectors key some caches by name).
   record=$(env -u CLAUDE_CONFIG_DIR -u CODEX_HOME \
     XDG_CACHE_HOME="$HOME/.cache/omarchy/agent-profiles/$id" "$var=$dir" \
-    "$collector" "${flags[@]}" 2>/dev/null) || return 0
+    "$collector" "${flags[@]}" 2>/dev/null | head -c 131072) || return 0
   jq -e . >/dev/null 2>&1 <<<"$record" || return 0
 
   tmp=$(mktemp "$USAGE_DIR/.$id.XXXXXX")
@@ -111,7 +112,7 @@ if [[ $mode == profiles ]]; then
 fi
 
 if [[ $mode == refresh || $mode == force ]]; then
-  mkdir -p "$USAGE_DIR"
+  mkdir -p -m 700 "$USAGE_DIR"
   update_flags=()
   [[ $mode == force ]] && update_flags+=(--force)
   # The stock collectors cover the default accounts; never let an inherited
@@ -129,38 +130,55 @@ python3 - "$USAGE_DIR" <<'PY'
 import base64, glob, json, os, sys
 
 home = os.path.expanduser("~")
+real_home = os.path.realpath(home)
+MAX_READ_BYTES = 262144
+
+def safe_home_dir(path):
+  if not path:
+    return ""
+  real = os.path.realpath(os.path.expanduser(path))
+  return real if (real == real_home or real.startswith(real_home + os.sep)) else ""
 
 def load(path):
   try:
+    if os.path.getsize(path) > MAX_READ_BYTES:
+      return None
     with open(path, encoding="utf-8") as f:
-      return json.load(f)
+      return json.loads(f.read(MAX_READ_BYTES))
   except Exception:
     return None
 
 def claude_account(config_dir):
   # Claude Code keeps the login in <dir>/.claude.json, or ~/.claude.json for
   # the default profile.
-  for path in ([os.path.join(config_dir, ".claude.json")] if config_dir else []) + [os.path.join(home, ".claude.json")]:
+  safe_dir = safe_home_dir(config_dir)
+  if config_dir and not safe_dir:
+    return ""
+  for path in ([os.path.join(safe_dir, ".claude.json")] if safe_dir else []) + [os.path.join(home, ".claude.json")]:
     data = load(path) or {}
     email = (data.get("oauthAccount") or {}).get("emailAddress")
     if email:
-      return email
-    if config_dir:
+      return str(email)[:128]
+    if safe_dir:
       break
   return ""
 
 def codex_account(config_dir):
-  data = load(os.path.join(config_dir or os.path.join(home, ".codex"), "auth.json")) or {}
+  safe_dir = safe_home_dir(config_dir)
+  if config_dir and not safe_dir:
+    return ""
+  data = load(os.path.join(safe_dir or os.path.join(home, ".codex"), "auth.json")) or {}
   token = (data.get("tokens") or {}).get("id_token") or ""
   try:
     payload = token.split(".")[1]
     payload += "=" * (-len(payload) % 4)
-    return json.loads(base64.urlsafe_b64decode(payload)).get("email", "")
+    email = json.loads(base64.urlsafe_b64decode(payload)).get("email", "")
+    return str(email)[:128]
   except Exception:
     return ""
 
 records = []
-for path in sorted(glob.glob(os.path.join(sys.argv[1], "*.json"))):
+for path in sorted(glob.glob(os.path.join(sys.argv[1], "*.json")))[:32]:
   rec = load(path)
   if not isinstance(rec, dict) or not rec.get("id"):
     continue

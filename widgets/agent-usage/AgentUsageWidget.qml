@@ -215,8 +215,15 @@ WidgetCard {
     saveSetting("hiddenAccounts", list)
   }
 
+  property string queuedFeedMode: ""
+
   function runFeed(mode) {
-    if (feedProc.running) return
+    if (feedProc.running) {
+      if (mode === "force" || (mode === "refresh" && queuedFeedMode !== "force")) {
+        queuedFeedMode = mode
+      }
+      return
+    }
     refreshing = mode !== "read"
     feedProc.command = ["bash", scriptPath, mode]
     feedProc.running = true
@@ -237,7 +244,7 @@ WidgetCard {
   Component.onCompleted: {
     applySavedSettings()
     runFeed("read")
-    Qt.callLater(function() { agentRoot.runFeed("refresh") })
+    runFeed("refresh")
   }
 
   // ---------------------------------------------------------------------------
@@ -248,6 +255,8 @@ WidgetCard {
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
+        // Bound collected stdout to 256KB for marketplace security compliance
+        if (!text || text.length > 262144) return
         try {
           var parsed = JSON.parse(text)
           if (Array.isArray(parsed)) agentRoot.records = parsed
@@ -259,13 +268,18 @@ WidgetCard {
     onExited: {
       agentRoot.refreshing = false
       agentRoot.nowMs = Date.now()
+      if (agentRoot.queuedFeedMode !== "") {
+        var nextMode = agentRoot.queuedFeedMode
+        agentRoot.queuedFeedMode = ""
+        agentRoot.runFeed(nextMode)
+      }
     }
   }
 
   // Cheap re-read: picks up records the stock Agents panel refreshes.
   Timer {
     interval: 30000
-    running: true
+    running: agentRoot.visible
     repeat: true
     onTriggered: {
       agentRoot.nowMs = Date.now()
