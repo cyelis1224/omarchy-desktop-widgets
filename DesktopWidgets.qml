@@ -947,11 +947,14 @@ Item {
           // 🎨 Top Floating Banner when Layout Edit / Move Mode is Active
           // -------------------------------------------------------------------
           Rectangle {
+            id: editBanner
+            property bool presetMenuOpen: false
             anchors.top: parent.top
             anchors.topMargin: Style.space(20)
             anchors.horizontalCenter: parent.horizontalCenter
             z: 300
             visible: root.layoutEditMode
+            onVisibleChanged: if (!visible) presetMenuOpen = false
             implicitWidth: editBannerRow.implicitWidth + Style.space(32)
             implicitHeight: 42
             radius: 21
@@ -993,8 +996,9 @@ Item {
                 color: Qt.rgba(1, 1, 1, 0.15)
               }
 
-              // Presets Pill Bar
+              // Presets Dropdown
               RowLayout {
+                id: presetsRow
                 spacing: Style.space(4)
 
                 Text {
@@ -1005,37 +1009,49 @@ Item {
                   color: Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.6)
                 }
 
-                Repeater {
-                  model: root.layoutProfiles.length > 0 ? root.layoutProfiles : [
-                    { name: "Default" }, { name: "Minimal" }, { name: "Productivity" }, { name: "Full Dashboard" }, { name: "Gaming" }
-                  ]
+                // Dropdown Trigger (list panel lives outside the banner so its layer doesn't clip it)
+                Rectangle {
+                  id: presetTrigger
+                  implicitWidth: Math.max(110, presetTriggerRow.implicitWidth + 20)
+                  implicitHeight: 26
+                  radius: 13
+                  color: editBanner.presetMenuOpen
+                    ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                    : (presetTriggerMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+                  border.color: editBanner.presetMenuOpen ? Color.accent : Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.4)
+                  border.width: 1
 
-                  Rectangle {
-                    required property var modelData
-                    implicitWidth: presetPillText.implicitWidth + 16
-                    implicitHeight: 26
-                    radius: 13
-                    color: (modelData.name === root.activeProfile)
-                      ? Color.accent
-                      : (presetMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+                  RowLayout {
+                    id: presetTriggerRow
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 6
 
                     Text {
-                      id: presetPillText
-                      anchors.centerIn: parent
-                      text: modelData.name
+                      Layout.fillWidth: true
+                      text: root.activeProfile
                       font.family: Style.font.family
                       font.pixelSize: 10
-                      font.weight: (modelData.name === root.activeProfile) ? Font.Bold : Font.Normal
-                      color: (modelData.name === root.activeProfile) ? Color.background : Color.foreground
+                      font.weight: Font.DemiBold
+                      color: Color.foreground
+                      elide: Text.ElideRight
                     }
 
-                    MouseArea {
-                      id: presetMouse
-                      anchors.fill: parent
-                      hoverEnabled: true
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: root.switchProfile(modelData.name)
+                    Text {
+                      text: editBanner.presetMenuOpen ? "" : ""
+                      font.family: Style.font.family
+                      font.pixelSize: 11
+                      color: Color.accent
                     }
+                  }
+
+                  MouseArea {
+                    id: presetTriggerMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: editBanner.presetMenuOpen = !editBanner.presetMenuOpen
                   }
                 }
 
@@ -1225,6 +1241,108 @@ Item {
                   hoverEnabled: true
                   cursorShape: Qt.PointingHandCursor
                   onClicked: root.layoutEditMode = false
+                }
+              }
+            }
+          }
+
+          // Presets Dropdown Panel (sibling of the banner so its shadow layer doesn't clip the list)
+          MouseArea {
+            anchors.fill: parent
+            z: 301
+            visible: editBanner.visible && editBanner.presetMenuOpen
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onClicked: editBanner.presetMenuOpen = false
+          }
+
+          Rectangle {
+            id: presetMenu
+            z: 302
+            visible: editBanner.visible && editBanner.presetMenuOpen
+            x: editBanner.x + editBannerRow.x + presetsRow.x + presetTrigger.x
+            y: editBanner.y + editBanner.height + 6
+            width: Math.max(presetTrigger.width, 180)
+            height: presetMenuFlick.height + Style.space(12)
+            radius: 12
+            color: Qt.rgba(18/255, 18/255, 24/255, 0.96)
+            border.color: Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.45)
+            border.width: 1.5
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+              shadowEnabled: true
+              shadowColor: Qt.rgba(0, 0, 0, 0.85)
+              shadowBlur: 0.9
+              shadowVerticalOffset: 6
+            }
+
+            Flickable {
+              id: presetMenuFlick
+              anchors.top: parent.top
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.margins: Style.space(6)
+              height: Math.min(contentHeight, 300)
+              contentHeight: presetMenuCol.implicitHeight
+              clip: true
+              boundsBehavior: Flickable.StopAtBounds
+
+              ColumnLayout {
+                id: presetMenuCol
+                width: presetMenuFlick.width
+                spacing: 2
+
+                Repeater {
+                  model: root.layoutProfiles.length > 0 ? root.layoutProfiles : [
+                    { name: "Default" }, { name: "Minimal" }, { name: "Productivity" }, { name: "Full Dashboard" }, { name: "Gaming" }
+                  ]
+
+                  Rectangle {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    height: 28
+                    radius: 6
+                    color: (modelData.name === root.activeProfile)
+                      ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.25)
+                      : (presetOptionMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+
+                    RowLayout {
+                      anchors.fill: parent
+                      anchors.leftMargin: 8
+                      anchors.rightMargin: 8
+                      spacing: 8
+
+                      Text {
+                        text: (modelData.name === root.activeProfile) ? "" : ""
+                        font.family: Style.font.family
+                        font.pixelSize: (modelData.name === root.activeProfile) ? 10 : 6
+                        color: (modelData.name === root.activeProfile) ? Color.accent : Qt.rgba(Color.foreground.r, Color.foreground.g, Color.foreground.b, 0.4)
+                        Layout.preferredWidth: 12
+                        horizontalAlignment: Text.AlignHCenter
+                      }
+
+                      Text {
+                        Layout.fillWidth: true
+                        text: modelData.name
+                        font.family: Style.font.family
+                        font.pixelSize: 11
+                        font.weight: (modelData.name === root.activeProfile) ? Font.Bold : Font.Normal
+                        color: (modelData.name === root.activeProfile) ? Color.accent : Color.foreground
+                        elide: Text.ElideRight
+                      }
+                    }
+
+                    MouseArea {
+                      id: presetOptionMouse
+                      anchors.fill: parent
+                      hoverEnabled: true
+                      cursorShape: Qt.PointingHandCursor
+                      onClicked: {
+                        editBanner.presetMenuOpen = false
+                        root.switchProfile(modelData.name)
+                      }
+                    }
+                  }
                 }
               }
             }
