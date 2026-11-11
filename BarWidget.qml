@@ -86,7 +86,8 @@ BarWidget {
 
       // Gated: an ungated infinite animation keeps every bar redrawing even while hidden
       SequentialAnimation on opacity {
-        running: root.visible
+        // Only animate while the update badge is actually shown.
+        running: root.updateAvailable && root.visible
         loops: Animation.Infinite
         NumberAnimation { to: 0.35; duration: 900; easing.type: Easing.InOutQuad }
         NumberAnimation { to: 1.0; duration: 900; easing.type: Easing.InOutQuad }

@@ -216,9 +216,8 @@ WidgetCard {
   // ---------------------------------------------------------------------------
   // 📊 Audio Spectrum Visualizer Data (24 dynamic frequency bars)
   // ---------------------------------------------------------------------------
-  property var visualizerHeights: [
-    8, 12, 18, 26, 32, 28, 22, 35, 42, 48, 38, 30, 24, 36, 44, 40, 32, 26, 18, 24, 20, 14, 10, 6
-  ]
+  // Flat bars until something plays (matches what the old idle tick produced).
+  property var visualizerHeights: Array(24).fill(4)
   property real animPhase: 0
   property bool visualizerFlat: false
 
@@ -228,6 +227,7 @@ WidgetCard {
     interval: 65
     running: mediaWidgetRoot.visible && mediaWidgetRoot.showVisualizer && (mediaWidgetRoot.isPlaying || !mediaWidgetRoot.visualizerFlat)
     repeat: true
+    onRunningChanged: if (!running) mediaWidgetRoot.visualizerHeights = Array(24).fill(4)
     onTriggered: {
       mediaWidgetRoot.animPhase += 0.25
       var heights = []

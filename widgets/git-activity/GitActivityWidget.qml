@@ -5,6 +5,8 @@ import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
 import qs.Commons
+// Qt 6.12 adds a QtQuick "Color" singleton that wins over qs.Commons.Color in
+// these subfolder widgets; reference the shell colours through an alias.
 import qs.Commons as Commons
 import qs.Ui
 

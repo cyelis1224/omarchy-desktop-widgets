@@ -1,141 +1,161 @@
 #!/usr/bin/env python3
-import subprocess
+import glob
 import json
-import re
 import os
+import re
 import sys
 import time
 
+WIFI_DRIVERS = ("iwlwifi", "mt7", "ath", "rtw", "brcm")
+
+
+def read(path, default=None):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return default
+
+
+def read_temp(path):
+    v = read(path)
+    return round(int(v) / 1000.0, 1) if v and v.lstrip("-").isdigit() else None
+
+
+def hwmons():
+    for h in sorted(glob.glob("/sys/class/hwmon/hwmon*"), key=lambda p: int(p.rsplit("hwmon", 1)[1])):
+        yield h, read(f"{h}/name", "")
+
+
+def labeled_temp(h, label):
+    for lp in glob.glob(f"{h}/temp*_label"):
+        if read(lp) == label:
+            return read_temp(lp.replace("_label", "_input"))
+    return None
+
+
+def sensor(sid, name, temp, high, icon):
+    return {"id": sid, "name": name, "temp": temp, "high": high, "icon": icon}
+
+
+def collect_cpu(result):
+    with open("/proc/cpuinfo") as f:
+        text = f.read()
+    freqs = [float(x) for x in re.findall(r"^cpu MHz\s*:\s*([0-9.]+)", text, re.M)]
+    cores = set()
+    for block in text.strip().split("\n\n"):
+        phys = re.search(r"^physical id\s*:\s*(\d+)", block, re.M)
+        core = re.search(r"^core id\s*:\s*(\d+)", block, re.M)
+        if core:
+            cores.add((phys.group(1) if phys else "0", core.group(1)))
+    model = re.search(r"^model name\s*:\s*(.+)$", text, re.M)
+
+    result["cpu_threads"] = len(freqs)
+    result["cpu_cores"] = len(cores) or len(freqs)
+    if model:
+        result["cpu_model"] = re.sub(r"\s+w/.*$", "", model.group(1)).strip()
+        igpu = re.search(r"w/\s+(.+?)(\s+Graphics)?$", model.group(1))
+        if igpu:
+            result["igpu_model"] = igpu.group(1).strip()
+    if freqs:
+        avg = sum(freqs) / len(freqs)
+        result["cpu_avg_mhz"] = round(avg)
+        result["cpu_avg_ghz"] = round(avg / 1000.0, 2)
+
+
+def collect_gpu(result):
+    for card in sorted(glob.glob("/sys/class/drm/card[0-9]")):
+        dev = f"{card}/device"
+        driver = os.path.basename(os.path.realpath(f"{dev}/driver"))
+        if driver == "amdgpu":
+            hw = next(iter(glob.glob(f"{dev}/hwmon/hwmon*")), None)
+            hz = read(f"{hw}/freq1_input") if hw else None
+            if hz:
+                result["gpu_mhz"] = int(hz) // 1_000_000
+            levels = re.findall(r"(\d+)Mhz", read(f"{dev}/pp_dpm_sclk", ""))
+            if levels:
+                result["gpu_max_mhz"] = max(int(x) for x in levels)
+            result["gpu_name"] = result.get("igpu_model") or "Radeon iGPU"
+            return
+        if driver in ("i915", "xe"):
+            result["gpu_mhz"] = int(read(f"{card}/gt_act_freq_mhz", "0"))
+            result["gpu_max_mhz"] = int(read(f"{card}/gt_max_freq_mhz", "0"))
+            result["gpu_name"] = "Intel Graphics"
+            return
+
+
+def collect_sensors(result):
+    s = result["sensors"]
+    nvme_idx = 0
+    spd = []
+    for h, name in hwmons():
+        if name in ("k10temp", "zenpower"):
+            t = labeled_temp(h, "Tctl") or labeled_temp(h, "Tdie") or read_temp(f"{h}/temp1_input")
+            if t is not None:
+                result["cpu_temp"] = t
+                result["cpu_high"] = 95.0
+        elif name == "coretemp":
+            t = labeled_temp(h, "Package id 0") or labeled_temp(h, "Core 0")
+            if t is not None:
+                result["cpu_temp"] = t
+                result["cpu_high"] = 85.0
+        elif name == "amdgpu":
+            t = labeled_temp(h, "edge")
+            if t is not None:
+                s.append(sensor("igpu", "Radeon iGPU", t, 90.0, "\uf108"))
+        elif name == "nvme":
+            t = labeled_temp(h, "Composite") or read_temp(f"{h}/temp1_input")
+            if t is not None:
+                nvme_idx += 1
+                model = read(f"{h}/device/model", "")
+                label = f"SSD {nvme_idx}" + (f" · {model.split()[0].capitalize()}" if model else "")
+                pci = os.path.basename(os.path.realpath(f"{h}/device/device"))
+                s.append(sensor(f"nvme_{pci}", label, t, 75.0, "\uf0a0"))
+        elif name in ("spd5118", "jc42"):
+            t = read_temp(f"{h}/temp1_input")
+            if t is not None:
+                spd.append(t)
+        elif name.startswith(WIFI_DRIVERS) or os.path.isdir(f"{h}/device/ieee80211"):
+            t = read_temp(f"{h}/temp1_input")
+            if t is not None:
+                s.append(sensor("wifi", f"Wi-Fi ({name.split('_')[0].upper()})", t, 80.0, "\uf1eb"))
+
+    if spd:
+        s.append(sensor("ram", f"RAM ({len(spd)} DIMMs)", round(sum(spd) / len(spd), 1), 55.0, "\uf538"))
+
+
 def collect_telemetry():
     result = {
-        "cpu_temp": 40.0,
+        "cpu_temp": 0.0,
+        "cpu_high": 95.0,
         "cpu_cores": 0,
+        "cpu_threads": 0,
+        "cpu_model": "",
         "cpu_avg_ghz": 0.0,
         "cpu_avg_mhz": 0,
+        "gpu_name": "Graphics Engine",
         "gpu_mhz": 0,
         "gpu_max_mhz": 0,
         "gpu_pct": 0.0,
-        "sensors": []
+        "sensors": [],
     }
 
-    # 1. CPU Frequencies and Core Count
-    try:
-        if os.path.exists('/proc/cpuinfo'):
-            with open('/proc/cpuinfo', 'r') as f:
-                lines = f.readlines()
-            freqs = [float(l.split(':')[1].strip()) for l in lines if l.startswith('cpu MHz')]
-            if freqs:
-                result["cpu_cores"] = len(freqs)
-                avg_mhz = sum(freqs) / len(freqs)
-                result["cpu_avg_mhz"] = round(avg_mhz)
-                result["cpu_avg_ghz"] = round(avg_mhz / 1000.0, 2)
-    except Exception:
-        pass
+    for step in (collect_cpu, collect_gpu, collect_sensors):
+        try:
+            step(result)
+        except Exception:
+            pass
 
-    # 2. GPU Frequency (Intel DRM or NVIDIA)
-    try:
-        if os.path.exists('/sys/class/drm/card1/gt_act_freq_mhz'):
-            with open('/sys/class/drm/card1/gt_act_freq_mhz', 'r') as f:
-                result["gpu_mhz"] = int(f.read().strip())
-        elif os.path.exists('/sys/class/drm/card0/gt_act_freq_mhz'):
-            with open('/sys/class/drm/card0/gt_act_freq_mhz', 'r') as f:
-                result["gpu_mhz"] = int(f.read().strip())
+    if result["gpu_max_mhz"] > 0:
+        result["gpu_pct"] = round(result["gpu_mhz"] / result["gpu_max_mhz"], 2)
 
-        if os.path.exists('/sys/class/drm/card1/gt_max_freq_mhz'):
-            with open('/sys/class/drm/card1/gt_max_freq_mhz', 'r') as f:
-                result["gpu_max_mhz"] = int(f.read().strip())
-        elif os.path.exists('/sys/class/drm/card0/gt_max_freq_mhz'):
-            with open('/sys/class/drm/card0/gt_max_freq_mhz', 'r') as f:
-                result["gpu_max_mhz"] = int(f.read().strip())
-
-        if result["gpu_max_mhz"] > 0:
-            result["gpu_pct"] = round(result["gpu_mhz"] / result["gpu_max_mhz"], 2)
-    except Exception:
-        pass
-
-    # 3. Hardware Sensors via `sensors`
-    try:
-        proc = subprocess.run(['sensors'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, timeout=2)
-        out = proc.stdout
-
-        # CPU Package
-        m_pkg = re.search(r'Package id 0:\s+\+([0-9\.]+)°C', out)
-        if m_pkg:
-            c_temp = float(m_pkg.group(1))
-            result["cpu_temp"] = c_temp
-            result["sensors"].append({
-                "id": "cpu",
-                "name": "CPU Package",
-                "temp": c_temp,
-                "high": 85.0,
-                "icon": "\uf2db"
-            })
-        else:
-            m_core = re.search(r'Core 0:\s+\+([0-9\.]+)°C', out)
-            if m_core:
-                c_temp = float(m_core.group(1))
-                result["cpu_temp"] = c_temp
-                result["sensors"].append({
-                    "id": "cpu",
-                    "name": "CPU Core 0",
-                    "temp": c_temp,
-                    "high": 85.0,
-                    "icon": "\uf2db"
-                })
-
-        # NVMe SSDs
-        nvme_matches = re.findall(r'nvme-pci-([0-9a-f]+)\s+Adapter:[^\n]+\s+Composite:\s+\+([0-9\.]+)°C', out)
-        for idx, (pci, temp_str) in enumerate(nvme_matches):
-            result["sensors"].append({
-                "id": f"nvme_{pci}",
-                "name": f"NVMe SSD #{idx + 1} ({pci})",
-                "temp": float(temp_str),
-                "high": 75.0,
-                "icon": "\uf0a0"
-            })
-
-        # DDR5 RAM SPD Sensors
-        spd_matches = re.findall(r'spd5118[^\n]+\s+Adapter:[^\n]+\s+temp1:\s+\+([0-9\.]+)°C', out)
-        if spd_matches:
-            avg_spd = sum(float(x) for x in spd_matches) / len(spd_matches)
-            result["sensors"].append({
-                "id": "ram",
-                "name": f"DDR5 RAM ({len(spd_matches)} DIMMs)",
-                "temp": round(avg_spd, 1),
-                "high": 55.0,
-                "icon": "\uf538"
-            })
-
-        # Wi-Fi Controller
-        wifi_m = re.search(r'iwlwifi[^\n]+\s+Adapter:[^\n]+\s+temp1:\s+\+([0-9\.]+)°C', out)
-        if wifi_m:
-            result["sensors"].append({
-                "id": "wifi",
-                "name": "Wi-Fi 7 Module",
-                "temp": float(wifi_m.group(1)),
-                "high": 80.0,
-                "icon": "\uf1eb"
-            })
-
-    except Exception:
-        pass
-
-    # Determine thermal status level
-    max_ratio = 0.0
-    for s in result["sensors"]:
-        ratio = s["temp"] / s["high"]
-        if ratio > max_ratio:
-            max_ratio = ratio
-
+    max_ratio = max([result["cpu_temp"] / result["cpu_high"]] + [x["temp"] / x["high"] for x in result["sensors"]])
     if max_ratio >= 0.95:
-        result["status_badge"] = "Critical"
-        result["status_color"] = "#ef4444"
+        result["status_badge"], result["status_color"] = "Critical", "#ef4444"
     elif max_ratio >= 0.80:
-        result["status_badge"] = "Warm"
-        result["status_color"] = "#f59e0b"
+        result["status_badge"], result["status_color"] = "Warm", "#f59e0b"
     else:
-        result["status_badge"] = "Optimal"
-        result["status_color"] = "#10b981"
+        result["status_badge"], result["status_color"] = "Optimal", "#10b981"
 
     return result
 
@@ -158,6 +178,7 @@ def main():
             time.sleep(interval)
     except (BrokenPipeError, KeyboardInterrupt):
         pass
+
 
 
 if __name__ == "__main__":
