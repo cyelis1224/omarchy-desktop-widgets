@@ -99,7 +99,7 @@ WidgetCard {
           implicitHeight: 28
           radius: 6
           readonly property bool isSelected: pomodoroWidgetRoot.activePreset === modelData.id
-          color: pMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (isSelected ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+          color: pMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (isSelected ? pomodoroWidgetRoot.fgTint(0.08) : "transparent")
 
           RowLayout {
             anchors.fill: parent
@@ -434,13 +434,22 @@ WidgetCard {
     onTriggered: {
       if (pomodoroWidgetRoot.secondsLeft > 1) {
         pomodoroWidgetRoot.secondsLeft--
-        progressArc.requestPaint()
+        if (pomodoroWidgetRoot.visible) progressArc.requestPaint()
       } else {
         pomodoroWidgetRoot.secondsLeft = 0
-        progressArc.requestPaint()
+        if (pomodoroWidgetRoot.visible) progressArc.requestPaint()
         pomodoroWidgetRoot.onSessionFinished()
       }
     }
+  }
+
+  // The ticker skips repaints while hidden; catch the arc up when shown again
+  onVisibleChanged: if (visible) progressArc.requestPaint()
+
+  // The ring track is painted once, so repaint it when the theme foreground changes
+  Connections {
+    target: Commons.Color
+    function onForegroundChanged() { trackCanvas.requestPaint() }
   }
 
   // ---------------------------------------------------------------------------
@@ -500,7 +509,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : pomodoroWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -531,7 +540,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: customGripMouse.drag.active ? Commons.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+        color: customGripMouse.drag.active ? Commons.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : pomodoroWidgetRoot.fgTint(0.08))
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -585,8 +594,8 @@ WidgetCard {
           height: 26
           radius: 13
           readonly property bool isSelected: pomodoroWidgetRoot.currentMode === modelData.mode
-          color: isSelected ? Qt.rgba(modelData.color.r, modelData.color.g, modelData.color.b, 0.28) : (modePillMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
-          border.color: isSelected ? modelData.color : Qt.rgba(1, 1, 1, 0.1)
+          color: isSelected ? Qt.rgba(modelData.color.r, modelData.color.g, modelData.color.b, 0.28) : (modePillMouse.containsMouse ? pomodoroWidgetRoot.fgTint(0.08) : pomodoroWidgetRoot.fgTint(0.03))
+          border.color: isSelected ? modelData.color : pomodoroWidgetRoot.fgTint(0.1)
           border.width: 1
 
           Text {
@@ -627,7 +636,7 @@ WidgetCard {
           var c = width / 2
           var r = c - 10
           ctx.lineWidth = 10
-          ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.08)
+          ctx.strokeStyle = pomodoroWidgetRoot.fgTint(0.08)
           ctx.beginPath()
           ctx.arc(c, c, r, 0, Math.PI * 2)
           ctx.stroke()
@@ -708,8 +717,8 @@ WidgetCard {
         width: 36
         height: 36
         radius: 18
-        color: resetMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06)
-        border.color: Qt.rgba(1, 1, 1, 0.12)
+        color: resetMouse.containsMouse ? pomodoroWidgetRoot.fgTint(0.15) : pomodoroWidgetRoot.fgTint(0.06)
+        border.color: pomodoroWidgetRoot.fgTint(0.12)
         border.width: 1
 
         Text {
@@ -779,8 +788,8 @@ WidgetCard {
         width: 36
         height: 36
         radius: 18
-        color: skipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06)
-        border.color: Qt.rgba(1, 1, 1, 0.12)
+        color: skipMouse.containsMouse ? pomodoroWidgetRoot.fgTint(0.15) : pomodoroWidgetRoot.fgTint(0.06)
+        border.color: pomodoroWidgetRoot.fgTint(0.12)
         border.width: 1
 
         Text {
@@ -821,7 +830,7 @@ WidgetCard {
             width: 8
             height: 8
             radius: 4
-            color: (index + 1) <= pomodoroWidgetRoot.cycleStep ? pomodoroWidgetRoot.modeColor : Qt.rgba(1, 1, 1, 0.15)
+            color: (index + 1) <= pomodoroWidgetRoot.cycleStep ? pomodoroWidgetRoot.modeColor : pomodoroWidgetRoot.fgTint(0.15)
             border.color: (index + 1) === pomodoroWidgetRoot.cycleStep ? Qt.lighter(pomodoroWidgetRoot.modeColor, 1.3) : "transparent"
             border.width: 1
           }

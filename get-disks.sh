@@ -2,16 +2,29 @@
 import os
 import json
 import subprocess
-import signal
 
 HOME = os.path.expanduser('~')
 CLOUD_BASE = os.path.join(HOME, 'Cloud')
 
-class StatTimeout(Exception):
-    pass
+def stat_mount(mount, remote):
+    """Returns (total_bytes, free_bytes), or None when the mount cannot be read.
 
-def _timeout_handler(signum, frame):
-    raise StatTimeout()
+    A stalled FUSE/network mount blocks statfs in the kernel where only SIGKILL
+    reaches it, so an in-process alarm never fires. Remote mounts are therefore
+    stat'ed in a child process that can be killed on timeout.
+    """
+    try:
+        if not remote:
+            st = os.statvfs(mount)
+            return st.f_blocks * st.f_frsize, st.f_bavail * st.f_frsize
+        out = subprocess.run(['stat', '-f', '-c', '%b %a %S', '--', mount],
+                             capture_output=True, text=True, timeout=2)
+        if out.returncode != 0:
+            return None
+        blocks, avail, frsize = (int(v) for v in out.stdout.split())
+        return blocks * frsize, avail * frsize
+    except Exception:
+        return None
 
 def format_bytes(n):
     for unit in ['B', 'K', 'M', 'G', 'T']:
@@ -91,22 +104,15 @@ def get_disks():
                         if not cloud and fs in seen_devs and mount != '/':
                             continue
 
-                        # Timeout-protected statvfs against hung FUSE/network endpoints
-                        try:
-                            signal.signal(signal.SIGALRM, _timeout_handler)
-                            signal.alarm(2)
-                            st = os.statvfs(mount)
-                            signal.alarm(0)
-                        except Exception:
-                            signal.alarm(0)
+                        sizes = stat_mount(mount, cloud)
+                        if sizes is None:
                             continue
+                        total, free = sizes
 
                         seen_mounts.add(mount)
                         if not cloud:
                             seen_devs.add(fs)
 
-                        total = st.f_blocks * st.f_frsize
-                        free = st.f_bavail * st.f_frsize
                         used = total - free
                         pct = (used / total) if total > 0 else 0.0
 

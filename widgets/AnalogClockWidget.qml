@@ -52,6 +52,20 @@ WidgetCard {
   onSettingsLoaded: applySavedSettings()
   Component.onCompleted: applySavedSettings()
 
+  function snapAndSavePosition() {
+    var maxX = Math.max(10, screenWidth - width - 10)
+    var maxY = Math.max(10, screenHeight - height - 10)
+    var snappedX = snapVal(targetItem.x)
+    var snappedY = snapVal(targetItem.y)
+    snappedX = Math.max(10, Math.min(maxX, snappedX))
+    snappedY = Math.max(10, Math.min(maxY, snappedY))
+    targetItem.x = snappedX
+    targetItem.y = snappedY
+    if (rootRef && rootRef.saveWidgetPos) {
+      rootRef.saveWidgetPos(widgetId, snappedX, snappedY, snapVal(width), snapVal(height), monitorName)
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // ⏰ Precise Time Engine
   property var now: new Date()
@@ -69,21 +83,25 @@ WidgetCard {
 
   onSmoothSweepChanged: updateCurrentTime()
 
-  // Smooth sweep frame timer (60 FPS when smoothSweep is active)
+  // Smooth sweep frame timer (10 FPS when smoothSweep is active). Every tick
+  // repaints the whole desktop-widgets layer, so 60 FPS cost real GPU time for
+  // sub-pixel hand movement. Both timers pause while the card is off screen
+  // (auto-hidden behind windows, manually hidden) -- visible is effective
+  // visibility, so it follows the widget container.
   Timer {
-    interval: 16
-    running: analogClockRoot.visible && analogClockRoot.smoothSweep && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
+    interval: 100
+    running: analogClockRoot.smoothSweep && analogClockRoot.visible && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
     repeat: true
-    onRunningChanged: if (running) analogClockRoot.updateCurrentTime()
+    triggeredOnStart: true
     onTriggered: analogClockRoot.updateCurrentTime()
   }
 
   // 1-second interval timer when stepping mode is active
   Timer {
     interval: 1000
-    running: analogClockRoot.visible && !analogClockRoot.smoothSweep && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
+    running: !analogClockRoot.smoothSweep && analogClockRoot.visible && (!analogClockRoot.rootRef || !analogClockRoot.rootRef.manualHide)
     repeat: true
-    onRunningChanged: if (running) analogClockRoot.updateCurrentTime()
+    triggeredOnStart: true
     onTriggered: analogClockRoot.updateCurrentTime()
   }
 
@@ -105,6 +123,14 @@ WidgetCard {
   readonly property real centerX: width / 2.0
   readonly property real centerY: height / 2.0
 
+  // Light themes get a light dial so the foreground-colored hands stay visible;
+  // each style keeps a little character by tinting the theme background.
+  function dialFace(darkFace, tint, amount) {
+    if (!lightTheme) return darkFace
+    var c = Qt.tint(Commons.Color.background, Qt.rgba(tint.r, tint.g, tint.b, amount))
+    return Qt.rgba(c.r, c.g, c.b, darkFace.a)
+  }
+
   // ---------------------------------------------------------------------------
   // 🎨 Dial Surface
   // ---------------------------------------------------------------------------
@@ -119,16 +145,16 @@ WidgetCard {
       anchors.fill: parent
       radius: width / 2
       color: {
-        if (clockStyle === "cyber") return Qt.rgba(10/255, 15/255, 24/255, 0.92)
-        if (clockStyle === "bauhaus") return Qt.rgba(18/255, 20/255, 26/255, 0.90)
-        if (clockStyle === "flieger") return Qt.rgba(8/255, 10/255, 14/255, 0.95)
-        return Qt.rgba(14/255, 16/255, 22/255, 0.94) // chronograph
+        if (clockStyle === "cyber") return analogClockRoot.dialFace(Qt.rgba(10/255, 15/255, 24/255, 0.92), Commons.Color.accent, 0.08)
+        if (clockStyle === "bauhaus") return analogClockRoot.dialFace(Qt.rgba(18/255, 20/255, 26/255, 0.90), Commons.Color.foreground, 0.06)
+        if (clockStyle === "flieger") return analogClockRoot.dialFace(Qt.rgba(8/255, 10/255, 14/255, 0.95), Commons.Color.foreground, 0)
+        return analogClockRoot.dialFace(Qt.rgba(14/255, 16/255, 22/255, 0.94), Commons.Color.foreground, 0.03) // chronograph
       }
       border.width: clockStyle === "cyber" ? 1.5 : 1
       border.color: {
         if (clockStyle === "cyber") return Commons.Color.accent
         if (clockStyle === "chronograph") return Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
-        return Qt.rgba(1, 1, 1, 0.12)
+        return analogClockRoot.fgTint(0.12)
       }
 
       // Inner Concentric Texture (Chronograph)
@@ -139,7 +165,7 @@ WidgetCard {
         visible: clockStyle === "chronograph" || clockStyle === "cyber"
         color: "transparent"
         border.width: 1
-        border.color: clockStyle === "cyber" ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.05)
+        border.color: clockStyle === "cyber" ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : analogClockRoot.fgTint(0.05)
       }
     }
 
@@ -246,9 +272,9 @@ WidgetCard {
       Rectangle {
         anchors.fill: parent
         radius: width / 2
-        color: Qt.rgba(0, 0, 0, 0.35)
+        color: analogClockRoot.wellColor
         border.width: 1
-        border.color: clockStyle === "cyber" ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+        border.color: clockStyle === "cyber" ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : analogClockRoot.fgTint(0.08)
 
         Text {
           anchors.top: parent.top
@@ -304,9 +330,9 @@ WidgetCard {
       Rectangle {
         anchors.fill: parent
         radius: width / 2
-        color: Qt.rgba(0, 0, 0, 0.35)
+        color: analogClockRoot.wellColor
         border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        border.color: analogClockRoot.fgTint(0.08)
 
         Text {
           anchors.top: parent.top
@@ -361,7 +387,7 @@ WidgetCard {
       width: (clockStyle === "bauhaus") ? 26 : 46
       height: 20
       radius: 4
-      color: Qt.rgba(0, 0, 0, 0.45)
+      color: analogClockRoot.wellColor
       border.width: 1
       border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3)
 
@@ -386,7 +412,7 @@ WidgetCard {
           Layout.fillHeight: true
           Layout.topMargin: 2
           Layout.bottomMargin: 2
-          color: Qt.rgba(1, 1, 1, 0.1)
+          color: analogClockRoot.fgTint(0.1)
         }
 
         Text {
@@ -503,6 +529,111 @@ WidgetCard {
   }
 
   // ---------------------------------------------------------------------------
+  // ✋ Move Mode Controls
+  // ---------------------------------------------------------------------------
+  // WidgetCard's full-body drag area starts 56px down to leave room for its
+  // header buttons; with no header here, this covers that top strip so the
+  // whole face drags. WidgetCard's own area and resize edges still sit above it.
+  MouseArea {
+    id: clockDragArea
+    anchors.fill: parent
+    z: 30
+    visible: rootRef && rootRef.layoutEditMode
+    cursorShape: Qt.SizeAllCursor
+    drag.target: analogClockRoot.targetItem
+    drag.axis: Drag.XAndYAxis
+    drag.minimumX: 10
+    drag.maximumX: Math.max(10, analogClockRoot.screenWidth - analogClockRoot.width - 10)
+    drag.minimumY: 10
+    drag.maximumY: Math.max(10, analogClockRoot.screenHeight - analogClockRoot.height - 10)
+
+    onPressed: analogClockRoot.customGripDragging = true
+    onReleased: function() {
+      analogClockRoot.customGripDragging = false
+      analogClockRoot.snapAndSavePosition()
+    }
+    onCanceled: analogClockRoot.customGripDragging = false
+  }
+
+  Row {
+    anchors.top: parent.top
+    anchors.right: parent.right
+    anchors.topMargin: 10
+    anchors.rightMargin: 10
+    spacing: Style.space(8)
+    z: 40
+    visible: rootRef && rootRef.layoutEditMode
+
+    // Close / Hide Button
+    Rectangle {
+      width: 22
+      height: 22
+      radius: 11
+      color: closeClockMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : analogClockRoot.bgTint(0.6)
+      border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
+      border.width: 1
+
+      Text {
+        anchors.centerIn: parent
+        text: ""
+        font.family: Style.font.family
+        font.pixelSize: 10
+        color: Commons.Color.urgent
+      }
+
+      MouseArea {
+        id: closeClockMouse
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: {
+          if (rootRef && rootRef.toggleWidgetEnabled) {
+            rootRef.toggleWidgetEnabled(analogClockRoot.widgetId, false, analogClockRoot.monitorName)
+          }
+        }
+      }
+    }
+
+    // Move Grip Button
+    Rectangle {
+      width: 22
+      height: 22
+      radius: 11
+      color: clockGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : analogClockRoot.bgTint(0.6)
+      border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
+      border.width: 1
+
+      Text {
+        anchors.centerIn: parent
+        text: ""
+        font.family: Style.font.family
+        font.pixelSize: 10
+        color: Commons.Color.accent
+      }
+
+      MouseArea {
+        id: clockGripArea
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.SizeAllCursor
+        drag.target: analogClockRoot.targetItem
+        drag.axis: Drag.XAndYAxis
+        drag.minimumX: 10
+        drag.maximumX: Math.max(10, analogClockRoot.screenWidth - analogClockRoot.width - 10)
+        drag.minimumY: 10
+        drag.maximumY: Math.max(10, analogClockRoot.screenHeight - analogClockRoot.height - 10)
+
+        onPressed: analogClockRoot.customGripDragging = true
+        onReleased: function() {
+          analogClockRoot.customGripDragging = false
+          analogClockRoot.snapAndSavePosition()
+        }
+        onCanceled: analogClockRoot.customGripDragging = false
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // ⚙️ Custom Context Menu Settings
   // ---------------------------------------------------------------------------
   customMenuContent: Component {
@@ -537,7 +668,7 @@ WidgetCard {
             Layout.fillWidth: true
             height: 24
             radius: 4
-            color: (analogClockRoot.clockStyle === modelData.id) ? Commons.Color.accent : (styleBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05))
+            color: (analogClockRoot.clockStyle === modelData.id) ? Commons.Color.accent : (styleBtnMouse.containsMouse ? analogClockRoot.fgTint(0.1) : analogClockRoot.fgTint(0.05))
 
             Text {
               anchors.centerIn: parent
@@ -545,7 +676,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 10
               font.weight: (analogClockRoot.clockStyle === modelData.id) ? Font.Bold : Font.Normal
-              color: (analogClockRoot.clockStyle === modelData.id) ? "#0a0a0f" : Commons.Color.foreground
+              color: (analogClockRoot.clockStyle === modelData.id) ? Commons.Color.background : Commons.Color.foreground
             }
 
             MouseArea {
@@ -565,7 +696,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: analogClockRoot.fgTint(0.06)
       }
 
       // Smooth Sweep Toggle

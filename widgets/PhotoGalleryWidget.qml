@@ -7,6 +7,7 @@ import Quickshell.Io
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
+import "../shared"
 
 Item {
   id: galleryWidgetRoot
@@ -21,6 +22,13 @@ Item {
   readonly property real screenWidth: (monitorWidth > 0) ? monitorWidth : ((rootRef && rootRef.screenWidth > 0) ? rootRef.screenWidth : 1920)
   readonly property real screenHeight: (monitorHeight > 0) ? monitorHeight : ((rootRef && rootRef.screenHeight > 0) ? rootRef.screenHeight : 1080)
 
+  // Light themes pair a light card with a dark foreground, so fixed black scrims and
+  // white hairlines lose contrast there; these derive from the theme instead
+  // (same helpers as WidgetCard, which this widget doesn't extend).
+  readonly property bool lightTheme: Commons.Color.background.hslLightness >= 0.5
+  function fgTint(a) { return Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, a) }
+  function bgTint(a) { return Qt.rgba(Commons.Color.background.r, Commons.Color.background.g, Commons.Color.background.b, a) }
+
   property real defaultWidth: 360
   property real defaultHeight: 228
   property real minWidth: 260
@@ -28,7 +36,7 @@ Item {
   property real maxWidth: Math.min(1200, screenWidth - 40)
   property real maxHeight: Math.min(900, screenHeight - 80)
   property bool resizable: true
-  readonly property bool isResizing: (resizeCornerArea && resizeCornerArea.isResizingNow) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
+  readonly property bool isResizing: (cornerGrips && cornerGrips.resizing) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
 
   width: 360
   height: 228
@@ -54,6 +62,8 @@ Item {
   readonly property string currentPhotoRawPath: currentPhotoObj ? currentPhotoObj.raw_path : ""
   readonly property string currentPhotoTitle: currentPhotoObj ? currentPhotoObj.title : "Photo Gallery"
   property bool folderMenuOpen: false
+  property bool layoutSubmenuOpen: false
+  onFolderMenuOpenChanged: if (!folderMenuOpen) layoutSubmenuOpen = false
 
   // Multi-layer photo stack sources
   property var layer3PhotoObj: (photoList && photoList.length > 3) ? photoList[(photoIndex + 1) % photoList.length] : null
@@ -167,7 +177,10 @@ Item {
 
   onSettingsLoaded: applySavedSettings()
   onRootRefChanged: applySavedSettings()
-  Component.onCompleted: applySavedSettings()
+  Component.onCompleted: {
+    applySavedSettings()
+    syncDecodeSize()
+  }
 
   function shufflePhotos() {
     if (!photoList || photoList.length <= 1) return
@@ -188,10 +201,30 @@ Item {
     Quickshell.execDetached(["bash", "-c", "xdg-open \"${1/#~/$HOME}\"", "_", target])
   }
 
-  // Auto-cycle photo timer
+  // Decode photos at display size rather than full resolution (a 24 MP photo is
+  // ~96 MB decoded, and the deck shows four). Every deck image shares the front
+  // card's size, so a photo moving up the deck reuses its decoded pixmap. The
+  // size is held during resize drags; each change reloads (and blanks) photos.
+  readonly property size liveDecodeSize: {
+    var step = 128
+    var dpr = Screen.devicePixelRatio || 1
+    return Qt.size(Math.max(1, Math.ceil(photoCardMain.width * dpr / step)) * step,
+                   Math.max(1, Math.ceil(photoCardMain.height * dpr / step)) * step)
+  }
+  // Initial binding so Images that complete before the root decode at display
+  // size right away; syncDecodeSize() replaces it with held values from then on
+  property size photoDecodeSize: liveDecodeSize
+  function syncDecodeSize() {
+    if (!isResizing) photoDecodeSize = liveDecodeSize
+  }
+  onLiveDecodeSizeChanged: syncDecodeSize()
+  onIsResizingChanged: syncDecodeSize()
+
+  // Auto-cycle photo timer (paused while the widget is off screen, since each
+  // step swaps and decodes all four deck photos)
   Timer {
     interval: galleryWidgetRoot.cycleIntervalMs
-    running: galleryWidgetRoot.autoCycleEnabled && !galleryWidgetRoot.folderMenuOpen && galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 1
+    running: galleryWidgetRoot.visible && galleryWidgetRoot.autoCycleEnabled && !galleryWidgetRoot.folderMenuOpen && galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 1
     repeat: true
     onTriggered: galleryWidgetRoot.nextPhoto()
   }
@@ -223,7 +256,7 @@ Item {
     Rectangle {
       anchors.fill: parent
       radius: 16
-      color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+      color: galleryWidgetRoot.bgTint(0.95)
       layer.enabled: true
       layer.effect: MultiEffect {
         shadowEnabled: true
@@ -243,6 +276,7 @@ Item {
       Image {
         anchors.fill: parent
         source: galleryWidgetRoot.layer1PhotoPath
+        sourceSize: galleryWidgetRoot.photoDecodeSize
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         smooth: true
@@ -250,10 +284,11 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 300 } }
       }
 
-      // Dark depth shadow overlay (simulating upper cards blocking light)
+      // Depth overlay (simulating upper cards blocking light); fades toward the
+      // theme background so back cards recede in light themes too
       Rectangle {
         anchors.fill: parent
-        color: "black"
+        color: Commons.Color.background
         opacity: 0.36
       }
 
@@ -313,7 +348,7 @@ Item {
     Rectangle {
       anchors.fill: parent
       radius: 16
-      color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+      color: galleryWidgetRoot.bgTint(0.95)
       layer.enabled: true
       layer.effect: MultiEffect {
         shadowEnabled: true
@@ -333,6 +368,7 @@ Item {
       Image {
         anchors.fill: parent
         source: galleryWidgetRoot.layer2PhotoPath
+        sourceSize: galleryWidgetRoot.photoDecodeSize
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         smooth: true
@@ -340,10 +376,10 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 300 } }
       }
 
-      // Slightly lighter depth shadow
+      // Slightly lighter depth overlay
       Rectangle {
         anchors.fill: parent
-        color: "black"
+        color: Commons.Color.background
         opacity: 0.22
       }
 
@@ -403,7 +439,7 @@ Item {
     Rectangle {
       anchors.fill: parent
       radius: 16
-      color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+      color: galleryWidgetRoot.bgTint(0.95)
       layer.enabled: true
       layer.effect: MultiEffect {
         shadowEnabled: true
@@ -423,6 +459,7 @@ Item {
       Image {
         anchors.fill: parent
         source: galleryWidgetRoot.layer3PhotoPath
+        sourceSize: galleryWidgetRoot.photoDecodeSize
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         smooth: true
@@ -430,10 +467,10 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 300 } }
       }
 
-      // Subtle depth shadow
+      // Subtle depth overlay
       Rectangle {
         anchors.fill: parent
-        color: "black"
+        color: Commons.Color.background
         opacity: 0.12
       }
 
@@ -474,7 +511,7 @@ Item {
   Rectangle {
     anchors.fill: photoCardMain
     radius: 16
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    color: galleryWidgetRoot.bgTint(0.95)
     layer.enabled: true
     layer.effect: MultiEffect {
       shadowEnabled: true
@@ -491,7 +528,7 @@ Item {
     width: parent.width - 24
     height: parent.height - 18
     radius: 16
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    color: galleryWidgetRoot.bgTint(0.95)
     border.color: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? Commons.Color.accent : "transparent"
     border.width: (galleryGripArea.drag.active || galleryFullDragArea.drag.active || (rootRef && rootRef.layoutEditMode)) ? 2 : 0
 
@@ -515,6 +552,7 @@ Item {
       visible: !galleryWidgetRoot.isGif
       anchors.fill: parent
       source: !galleryWidgetRoot.isGif ? galleryWidgetRoot.currentPhotoPath : ""
+      sourceSize: galleryWidgetRoot.photoDecodeSize
       fillMode: Image.PreserveAspectCrop
       asynchronous: true
       smooth: true
@@ -557,7 +595,9 @@ Item {
       asynchronous: false
       smooth: true
       playing: galleryWidgetRoot.isGif
-      paused: false
+      // Frames keep decoding while hidden otherwise; the handlers below only
+      // touch playing, so this binding stays intact
+      paused: !galleryWidgetRoot.visible
       cache: false
       opacity: status === AnimatedImage.Ready ? 1.0 : 0.0
 
@@ -568,13 +608,11 @@ Item {
 
       onSourceChanged: {
         playing = true
-        paused = false
       }
 
       onStatusChanged: {
         if (status === AnimatedImage.Ready) {
           playing = true
-          paused = false
         }
       }
 
@@ -632,9 +670,11 @@ Item {
         NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
       }
       gradient: Gradient {
-        GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.72) }
-        GradientStop { position: 0.7; color: Qt.rgba(0, 0, 0, 0.25) }
-        GradientStop { position: 1.0; color: "transparent" }
+        // Light themes hold the scrim through the title line: dark text needs a
+        // solid light backing, where light text on a dark fade only needs a hint
+        GradientStop { position: 0.0; color: galleryWidgetRoot.bgTint(galleryWidgetRoot.lightTheme ? 0.85 : 0.72) }
+        GradientStop { position: 0.7; color: galleryWidgetRoot.bgTint(galleryWidgetRoot.lightTheme ? 0.85 : 0.25) }
+        GradientStop { position: 1.0; color: galleryWidgetRoot.bgTint(0) }
       }
 
       RowLayout {
@@ -660,7 +700,7 @@ Item {
           color: Commons.Color.foreground
           elide: Text.ElideRight
           style: Text.Outline
-          styleColor: Qt.rgba(0, 0, 0, 0.85)
+          styleColor: galleryWidgetRoot.bgTint(0.85)
         }
 
         // Close / Hide Button (when in edit mode)
@@ -669,7 +709,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: closePhotoMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.12)
+          color: closePhotoMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : galleryWidgetRoot.fgTint(0.12)
           border.color: closePhotoMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.6)
           border.width: 1
           z: 120
@@ -704,7 +744,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: galleryGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.12)
+          color: galleryGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : galleryWidgetRoot.fgTint(0.12)
           border.color: galleryGripArea.containsMouse ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.6)
           border.width: 1
           z: 120
@@ -752,8 +792,8 @@ Item {
         Rectangle {
           visible: galleryWidgetRoot.photoList && galleryWidgetRoot.photoList.length > 0
           radius: 8
-          color: Qt.rgba(0, 0, 0, 0.6)
-          border.color: Qt.rgba(255, 255, 255, 0.15)
+          color: galleryWidgetRoot.bgTint(0.6)
+          border.color: galleryWidgetRoot.fgTint(0.15)
           border.width: 1
           implicitWidth: badgeText.implicitWidth + 12
           implicitHeight: 18
@@ -782,9 +822,9 @@ Item {
       z: 50
       opacity: galleryWidgetRoot.isHovered ? 1.0 : 0.0
       gradient: Gradient {
-        GradientStop { position: 0.0; color: "transparent" }
-        GradientStop { position: 0.3; color: Qt.rgba(0, 0, 0, 0.35) }
-        GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.85) }
+        GradientStop { position: 0.0; color: galleryWidgetRoot.bgTint(0) }
+        GradientStop { position: 0.3; color: galleryWidgetRoot.bgTint(0.35) }
+        GradientStop { position: 1.0; color: galleryWidgetRoot.bgTint(0.85) }
       }
 
       Behavior on opacity {
@@ -800,8 +840,8 @@ Item {
           width: 28
           height: 28
           radius: 14
-          color: prevPhotoMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.3) : Qt.rgba(0, 0, 0, 0.65)
-          border.color: Qt.rgba(255, 255, 255, 0.25)
+          color: prevPhotoMouse.containsMouse ? galleryWidgetRoot.fgTint(0.3) : galleryWidgetRoot.bgTint(0.65)
+          border.color: galleryWidgetRoot.fgTint(0.25)
           border.width: 1
 
           Text {
@@ -826,8 +866,8 @@ Item {
           width: 28
           height: 28
           radius: 14
-          color: shuffleMouse.containsMouse ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.65)
-          border.color: Qt.rgba(255, 255, 255, 0.25)
+          color: shuffleMouse.containsMouse ? Commons.Color.accent : galleryWidgetRoot.bgTint(0.65)
+          border.color: galleryWidgetRoot.fgTint(0.25)
           border.width: 1
 
           Text {
@@ -852,8 +892,8 @@ Item {
           width: 28
           height: 28
           radius: 14
-          color: nextPhotoMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.3) : Qt.rgba(0, 0, 0, 0.65)
-          border.color: Qt.rgba(255, 255, 255, 0.25)
+          color: nextPhotoMouse.containsMouse ? galleryWidgetRoot.fgTint(0.3) : galleryWidgetRoot.bgTint(0.65)
+          border.color: galleryWidgetRoot.fgTint(0.25)
           border.width: 1
 
           Text {
@@ -881,13 +921,14 @@ Item {
     }
 
     // Interactive Click Area (Left-click to cycle, right-click for folder menu)
+    // Edit mode keeps only the right button so the menu still opens while
+    // left-drags fall through to the drag areas.
     MouseArea {
       id: photoHoverArea
       anchors.fill: parent
       z: 20
-      acceptedButtons: Qt.LeftButton | Qt.RightButton
-      cursorShape: galleryWidgetRoot.folderMenuOpen ? Qt.ArrowCursor : Qt.PointingHandCursor
-      visible: !(rootRef && rootRef.layoutEditMode)
+      acceptedButtons: (rootRef && rootRef.layoutEditMode) ? Qt.RightButton : (Qt.LeftButton | Qt.RightButton)
+      cursorShape: (galleryWidgetRoot.folderMenuOpen || (rootRef && rootRef.layoutEditMode)) ? Qt.ArrowCursor : Qt.PointingHandCursor
 
       onClicked: function(mouse) {
         if (mouse.button === Qt.RightButton) {
@@ -951,79 +992,20 @@ Item {
   // 📐 Interactive Resizing Handles & Live Dimensions Pill
   // ---------------------------------------------------------------------------
 
-  // Visual Grip Icon in Bottom-Right Corner
-  Rectangle {
-    id: cornerResizeVisual
-    visible: rootRef && rootRef.layoutEditMode && galleryWidgetRoot.resizable
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
-    anchors.margins: 6
-    width: 18
-    height: 18
-    radius: 4
-    z: 115
-    color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
-    border.color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3)
-    border.width: 1
-
-    Text {
-      anchors.centerIn: parent
-      text: "\uf424"
-      font.family: Style.font.family
-      font.pixelSize: 10
-      color: Commons.Color.accent
-    }
-  }
-
-  // Interactive Bottom-Right Corner Resize Area (Width & Height)
-  MouseArea {
-    id: resizeCornerArea
-    width: 24
-    height: 24
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
+  // Corner resize grips on all four corners, traced on the inset photo card
+  CornerResizeGrips {
+    id: cornerGrips
     z: 125
     visible: rootRef && rootRef.layoutEditMode && galleryWidgetRoot.resizable
-    cursorShape: Qt.SizeFDiagCursor
-    hoverEnabled: true
+    card: galleryWidgetRoot
+    target: galleryWidgetRoot.targetItem
+    radius: photoCardMain.radius
+    insetX: (galleryWidgetRoot.width - photoCardMain.width) / 2
+    insetY: (galleryWidgetRoot.height - photoCardMain.height) / 2
 
-    property real startScreenX: 0
-    property real startScreenY: 0
-    property real startWidth: 0
-    property real startHeight: 0
-    property bool isResizingNow: false
-
-    onPressed: function(mouse) {
-      var p = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
-      startScreenX = p.x
-      startScreenY = p.y
-      startWidth = galleryWidgetRoot.width
-      startHeight = galleryWidgetRoot.height
-      isResizingNow = true
-    }
-
-    onPositionChanged: function(mouse) {
-      if (isResizingNow) {
-        var cur = mapToItem(galleryWidgetRoot.parent, mouse.x, mouse.y)
-        var newW = Math.max(galleryWidgetRoot.minWidth, Math.min(galleryWidgetRoot.maxWidth, startWidth + (cur.x - startScreenX)))
-        var newH = Math.max(galleryWidgetRoot.minHeight, Math.min(galleryWidgetRoot.maxHeight, startHeight + (cur.y - startScreenY)))
-        galleryWidgetRoot.width = newW
-        galleryWidgetRoot.height = newH
-      }
-    }
-
-    onReleased: function() {
-      if (isResizingNow) {
-        isResizingNow = false
-        var snappedW = Math.round(galleryWidgetRoot.width / 20) * 20
-        var snappedH = Math.round(galleryWidgetRoot.height / 20) * 20
-        snappedW = Math.max(galleryWidgetRoot.minWidth, Math.min(galleryWidgetRoot.maxWidth, snappedW))
-        snappedH = Math.max(galleryWidgetRoot.minHeight, Math.min(galleryWidgetRoot.maxHeight, snappedH))
-        galleryWidgetRoot.width = snappedW
-        galleryWidgetRoot.height = snappedH
-        if (rootRef && rootRef.saveWidgetPos) {
-          rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, galleryWidgetRoot.targetItem.x, galleryWidgetRoot.targetItem.y, snappedW, snappedH, galleryWidgetRoot.monitorName)
-        }
+    onResized: {
+      if (rootRef && rootRef.saveWidgetPos) {
+        rootRef.saveWidgetPos(galleryWidgetRoot.widgetId, galleryWidgetRoot.targetItem.x, galleryWidgetRoot.targetItem.y, galleryWidgetRoot.width, galleryWidgetRoot.height, galleryWidgetRoot.monitorName)
       }
     }
   }
@@ -1130,7 +1112,7 @@ Item {
     implicitWidth: dimPillText.implicitWidth + Style.space(16)
     implicitHeight: 22
     radius: 11
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    color: galleryWidgetRoot.bgTint(0.95)
     border.color: Commons.Color.accent
     border.width: 1
 
@@ -1192,7 +1174,7 @@ Item {
     height: menuHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
+    color: Qt.rgba(Commons.Color.menu.background.r, Commons.Color.menu.background.g, Commons.Color.menu.background.b, 0.96)
     border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
@@ -1249,7 +1231,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: closeMenuMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: closeMenuMouse.containsMouse ? galleryWidgetRoot.fgTint(0.22) : galleryWidgetRoot.fgTint(0.08)
 
           Text {
             anchors.centerIn: parent
@@ -1298,7 +1280,7 @@ Item {
             implicitHeight: 24
             radius: 6
             readonly property bool isSelected: modelData.active ? (galleryWidgetRoot.autoCycleEnabled && galleryWidgetRoot.cycleIntervalMs === modelData.ms) : (!galleryWidgetRoot.autoCycleEnabled)
-            color: spdMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.06))
+            color: spdMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : galleryWidgetRoot.fgTint(0.06))
             border.color: isSelected ? Commons.Color.accent : "transparent"
             border.width: 1
 
@@ -1348,7 +1330,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: openPhotoMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+        color: openPhotoMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35)
         border.width: 1
 
@@ -1400,7 +1382,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: shufPhotoMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+        color: shufPhotoMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
 
         RowLayout {
           anchors.fill: parent
@@ -1441,7 +1423,7 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 26
         radius: 6
-        color: openFldrMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+        color: openFldrMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : galleryWidgetRoot.fgTint(0.06)
 
         RowLayout {
           anchors.fill: parent
@@ -1482,7 +1464,7 @@ Item {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: galleryWidgetRoot.fgTint(0.08)
         Layout.topMargin: 3
         Layout.bottomMargin: 3
       }
@@ -1508,22 +1490,24 @@ Item {
           { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
           { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
           { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
-          { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
-          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
+          { label: "Layout", icon: "\uf0c9", value: "TOGGLE_LAYOUT_MENU" },
+          { label: "Save to '" + ((rootRef && rootRef.activeProfile) ? rootRef.activeProfile : "Default") + "'", icon: "\uf0c7", value: "SAVE_LAYOUT", sub: true },
+          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT", sub: true }
         ]
 
         Rectangle {
           required property var modelData
+          visible: !modelData.sub || galleryWidgetRoot.layoutSubmenuOpen
           Layout.fillWidth: true
           implicitHeight: 26
           radius: 6
-          readonly property bool isActionBtn: modelData.value === "RESET_LAYOUT" || modelData.value === "SAVE_LAYOUT" || modelData.value === "TOGGLE_EDIT_MODE" || modelData.value === "OPEN_SELECTOR" || modelData.value === "OPEN_PREFERENCES"
+          readonly property bool isActionBtn: modelData.value === "TOGGLE_LAYOUT_MENU" || modelData.value === "RESET_LAYOUT" || modelData.value === "SAVE_LAYOUT" || modelData.value === "TOGGLE_EDIT_MODE" || modelData.value === "OPEN_SELECTOR" || modelData.value === "OPEN_PREFERENCES"
           readonly property bool isSelected: !isActionBtn && (galleryWidgetRoot.photoFolder === modelData.value || (modelData.value === "pick_dialog" && galleryWidgetRoot.photoFolder !== "ALL" && !galleryWidgetRoot.photoFolder.startsWith("~/.config") && !galleryWidgetRoot.photoFolder.startsWith("~/Wallpapers") && !galleryWidgetRoot.photoFolder.startsWith("~/Pictures")))
           color: optMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.12) : "transparent")
 
           RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: Style.space(10)
+            anchors.leftMargin: Style.space(modelData.sub ? 22 : 10)
             anchors.rightMargin: Style.space(10)
             spacing: Style.space(8)
 
@@ -1553,6 +1537,26 @@ Item {
             }
 
             Text {
+              visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+              Layout.alignment: Qt.AlignVCenter
+              Layout.maximumWidth: 110
+              text: (rootRef && rootRef.activeProfile) ? rootRef.activeProfile : ""
+              font.family: Style.font.family
+              font.pixelSize: 10
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
+              elide: Text.ElideRight
+            }
+
+            Text {
+              visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+              Layout.alignment: Qt.AlignVCenter
+              text: galleryWidgetRoot.layoutSubmenuOpen ? "\uf107" : "\uf105"
+              font.family: Style.font.family
+              font.pixelSize: 11
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
+            }
+
+            Text {
               visible: isSelected
               text: "\uf00c"
               font.family: Style.font.family
@@ -1567,6 +1571,10 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
+              if (modelData.value === "TOGGLE_LAYOUT_MENU") {
+                galleryWidgetRoot.layoutSubmenuOpen = !galleryWidgetRoot.layoutSubmenuOpen
+                return
+              }
               galleryWidgetRoot.folderMenuOpen = false
               if (modelData.value === "TOGGLE_EDIT_MODE") {
                 if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode

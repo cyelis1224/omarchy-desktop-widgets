@@ -146,20 +146,45 @@ def fetch_feed(url, force=False):
     else:
         # Check for Atom (<feed><entry>)
         ns = {'atom': 'http://www.w3.org/2005/Atom'}
-        title_el = root.find('atom:title', ns) or root.find('title')
+
+        # An Element with no children is falsy, so "find(a) or find(b)" would
+        # throw away every match; compare against None instead.
+        def first(node, *paths):
+            for path in paths:
+                el = node.find(path, ns)
+                if el is not None:
+                    return el
+            return None
+
+        # An entry can carry several links (self, edit, replies, alternate).
+        # The article is the alternate one, ideally HTML; rel defaults to
+        # "alternate" when absent.
+        def pick_link(entry):
+            links = entry.findall('atom:link', ns) or entry.findall('link')
+            alternate = ""
+            fallback = ""
+            for l_el in links:
+                href = (l_el.attrib.get('href') or l_el.text or "").strip()
+                if not href:
+                    continue
+                if l_el.attrib.get('rel', 'alternate') == 'alternate':
+                    if l_el.attrib.get('type', 'text/html') in ('text/html', 'application/xhtml+xml'):
+                        return href
+                    alternate = alternate or href
+                fallback = fallback or href
+            return alternate or fallback
+
+        title_el = first(root, 'atom:title', 'title')
         if title_el is not None and title_el.text:
             feed_title = clean_html(title_el.text)
 
         entries = root.findall('atom:entry', ns) or root.findall('entry')
         for entry in entries[:25]:
-            t_el = entry.find('atom:title', ns) or entry.find('title')
-            l_el = entry.find('atom:link', ns) or entry.find('link')
-            link = ""
-            if l_el is not None:
-                link = l_el.attrib.get('href', l_el.text or "").strip()
+            t_el = first(entry, 'atom:title', 'title')
+            link = pick_link(entry)
 
-            s_el = entry.find('atom:summary', ns) or entry.find('summary') or entry.find('atom:content', ns) or entry.find('content')
-            pub_el = entry.find('atom:published', ns) or entry.find('published') or entry.find('atom:updated', ns) or entry.find('updated')
+            s_el = first(entry, 'atom:summary', 'summary', 'atom:content', 'content')
+            pub_el = first(entry, 'atom:published', 'published', 'atom:updated', 'updated')
             a_el = entry.find('atom:author/atom:name', ns)
 
             title = clean_html(t_el.text) if t_el is not None and t_el.text else "Untitled"

@@ -84,6 +84,7 @@ BarWidget {
       radius: Style.space(3)
       color: Commons.Color.accent
 
+      // Gated: an ungated infinite animation keeps every bar redrawing even while hidden
       SequentialAnimation on opacity {
         // Only animate while the update badge is actually shown.
         running: root.updateAvailable && root.visible

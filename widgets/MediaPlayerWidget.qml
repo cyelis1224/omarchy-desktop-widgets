@@ -90,7 +90,7 @@ WidgetCard {
           implicitHeight: 28
           radius: 6
           readonly property bool isCurrent: mediaWidgetRoot.activePlayer === modelData
-          color: playerMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+          color: playerMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (isCurrent ? mediaWidgetRoot.fgTint(0.08) : "transparent")
 
           RowLayout {
             anchors.fill: parent
@@ -219,11 +219,13 @@ WidgetCard {
   // Flat bars until something plays (matches what the old idle tick produced).
   property var visualizerHeights: Array(24).fill(4)
   property real animPhase: 0
+  property bool visualizerFlat: false
 
+  // Only tick while bars can be seen and are moving: keep going while
+  // playing, and once more after playback stops to flatten them, then idle.
   Timer {
     interval: 65
-    // Only tick while playing and on screen; an always-on 65ms timer kept the shell repainting.
-    running: mediaWidgetRoot.visible && mediaWidgetRoot.isPlaying
+    running: mediaWidgetRoot.visible && mediaWidgetRoot.showVisualizer && (mediaWidgetRoot.isPlaying || !mediaWidgetRoot.visualizerFlat)
     repeat: true
     onRunningChanged: if (!running) mediaWidgetRoot.visualizerHeights = Array(24).fill(4)
     onTriggered: {
@@ -245,6 +247,7 @@ WidgetCard {
         }
       }
       mediaWidgetRoot.visualizerHeights = heights
+      mediaWidgetRoot.visualizerFlat = !playing
     }
   }
 
@@ -267,9 +270,9 @@ WidgetCard {
         width: 48
         height: 48
         radius: 10
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: mediaWidgetRoot.fgTint(0.08)
         clip: true
-        border.color: Qt.rgba(1, 1, 1, 0.14)
+        border.color: mediaWidgetRoot.fgTint(0.14)
         border.width: 1
 
         Image {
@@ -322,7 +325,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMediaMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeMediaMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : mediaWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -353,7 +356,7 @@ WidgetCard {
         width: 24
         height: 24
         radius: 12
-        color: mediaGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: mediaGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : mediaWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -406,8 +409,8 @@ WidgetCard {
           width: 28
           height: 28
           radius: 14
-          color: prevMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: Qt.rgba(1, 1, 1, 0.1)
+          color: prevMouse.containsMouse ? mediaWidgetRoot.fgTint(0.16) : mediaWidgetRoot.fgTint(0.08)
+          border.color: mediaWidgetRoot.fgTint(0.1)
           border.width: 1
 
           Text {
@@ -458,8 +461,8 @@ WidgetCard {
           width: 28
           height: 28
           radius: 14
-          color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: Qt.rgba(1, 1, 1, 0.1)
+          color: nextMouse.containsMouse ? mediaWidgetRoot.fgTint(0.16) : mediaWidgetRoot.fgTint(0.08)
+          border.color: mediaWidgetRoot.fgTint(0.1)
           border.width: 1
 
           Text {
@@ -491,22 +494,20 @@ WidgetCard {
         anchors.centerIn: parent
         spacing: Style.space(4)
 
+        // A fixed count, with each bar reading its own height: binding the
+        // array itself as the model would rebuild all 24 bars on every tick.
         Repeater {
-          model: mediaWidgetRoot.visualizerHeights
+          model: mediaWidgetRoot.visualizerHeights.length
 
           Rectangle {
-            required property int modelData
             required property int index
 
             width: 7
-            height: Math.max(3, Math.round(modelData * 0.55))
+            height: Math.max(3, Math.round(mediaWidgetRoot.visualizerHeights[index] * 0.55))
             radius: 3.5
             color: Commons.Color.accent
             opacity: mediaWidgetRoot.isPlaying ? 0.95 : 0.40
 
-            Behavior on height {
-              NumberAnimation { duration: 75; easing.type: Easing.OutQuad }
-            }
             Behavior on opacity {
               NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
             }

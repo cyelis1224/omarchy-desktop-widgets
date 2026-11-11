@@ -110,7 +110,7 @@ WidgetCard {
     if (level === 3) return "#10b981" // Emerald
     if (level === 2) return Qt.rgba(16/255, 185/255, 129/255, 0.65)
     if (level === 1) return Qt.rgba(16/255, 185/255, 129/255, 0.35)
-    return Qt.rgba(1, 1, 1, 0.06)      // Blank cell
+    return gitWidgetRoot.fgTint(0.06)      // Blank cell
   }
 
   function refreshGitPulse() {
@@ -119,15 +119,53 @@ WidgetCard {
     }
   }
 
+  // Manual refresh bypasses git_pulse.py's NETWORK_TTL caches. If a poll is
+  // already running the request is queued for its exit instead of dropped.
+  property bool pendingForceRefresh: false
+  function forceRefreshGitPulse() {
+    if (gitPulseProc.running || gitActionProc.running) {
+      pendingForceRefresh = true
+      return
+    }
+    gitPulseProc.command = [gitWidgetRoot.scriptPath, "--refresh"]
+    gitPulseProc.running = true
+  }
+
+  // settingsLoaded fires whenever any widget saves a setting; only re-poll when
+  // this widget's own settings changed (e.g. a layout profile switched repos)
+  property string lastSettingsJson: ""
   onSettingsLoaded: {
+    var s = (rootRef && rootRef.widgetSettings) ? rootRef.widgetSettings[widgetId] : null
+    var json = JSON.stringify(s || {})
+    if (json === lastSettingsJson) return
+    lastSettingsJson = json
     refreshGitPulse()
   }
 
-  // 1. Regular background polling process (never mutated, runs with no arguments)
+  // Polling pauses while the card is off screen; when it comes back, poll right
+  // away only if the last poll is already older than the interval
+  property real lastPollMs: 0
+  onVisibleChanged: {
+    if (visible && hasRepos && Date.now() - lastPollMs >= gitPollTimer.interval && !gitActionProc.running) {
+      refreshGitPulse()
+    }
+  }
+
+  // 1. Regular background polling process (runs with no arguments; --refresh is a one-shot)
   Process {
     id: gitPulseProc
     command: [gitWidgetRoot.scriptPath]
     running: true
+    onStarted: {
+      gitWidgetRoot.lastPollMs = Date.now()
+      command = [gitWidgetRoot.scriptPath]
+    }
+    onExited: {
+      if (gitWidgetRoot.pendingForceRefresh) {
+        gitWidgetRoot.pendingForceRefresh = false
+        gitWidgetRoot.forceRefreshGitPulse()
+      }
+    }
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -152,13 +190,23 @@ WidgetCard {
       // Clear command immediately so it can never linger or re-run
       gitActionProc.command = []
       // Trigger background poll to sync up data
-      if (!gitPulseProc.running) gitPulseProc.running = true
+      if (gitWidgetRoot.pendingForceRefresh) {
+        gitWidgetRoot.pendingForceRefresh = false
+        gitWidgetRoot.forceRefreshGitPulse()
+      } else if (!gitPulseProc.running) {
+        gitPulseProc.running = true
+      }
     }
   }
 
+  // Local git data every 15s; git_pulse.py throttles its own GitHub and remote
+  // fetch calls to every NETWORK_TTL seconds. With nothing tracked there is
+  // nothing to poll: the first run at creation already reported the empty list,
+  // and adding a repository goes through gitActionProc, which polls on exit.
   Timer {
-    interval: 15000 // Poll git pulse every 15s
-    running: true
+    id: gitPollTimer
+    interval: 15000
+    running: gitWidgetRoot.visible && gitWidgetRoot.hasRepos
     repeat: true
     onTriggered: {
       // Never poll while an interactive user action (like Zenity picker) is active
@@ -208,7 +256,7 @@ WidgetCard {
         implicitHeight: 28
         radius: 6
         readonly property bool isCurrent: gitWidgetRoot.activeRepoPath === "ALL"
-        color: allRepoMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (allRepoItem.isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+        color: allRepoMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (allRepoItem.isCurrent ? gitWidgetRoot.fgTint(0.08) : "transparent")
 
         RowLayout {
           anchors.fill: parent
@@ -220,7 +268,7 @@ WidgetCard {
             text: "\uf005"
             font.family: Style.font.family
             font.pixelSize: 11
-            color: "#ffffff"
+            color: Commons.Color.foreground
           }
 
           Text {
@@ -229,7 +277,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 11
             font.weight: allRepoItem.isCurrent ? Font.Bold : Font.Normal
-            color: "#ffffff"
+            color: Commons.Color.foreground
             elide: Text.ElideRight
           }
 
@@ -263,7 +311,7 @@ WidgetCard {
           implicitHeight: 28
           radius: 6
           readonly property bool isCurrent: gitWidgetRoot.activeRepoPath === modelData.path
-          color: rMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (isCurrent ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+          color: rMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : (isCurrent ? gitWidgetRoot.fgTint(0.08) : "transparent")
 
           RowLayout {
             anchors.fill: parent
@@ -275,7 +323,7 @@ WidgetCard {
               text: modelData.is_remote ? "\uf0ac" : "\uf126"
               font.family: Style.font.family
               font.pixelSize: 11
-              color: "#ffffff"
+              color: Commons.Color.foreground
             }
 
             Text {
@@ -284,7 +332,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: isCurrent ? Font.Bold : Font.Normal
-              color: "#ffffff"
+              color: Commons.Color.foreground
               elide: Text.ElideRight
             }
 
@@ -645,7 +693,7 @@ WidgetCard {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             gitWidgetRoot.contextMenuOpen = false
-            if (!gitPulseProc.running && !gitActionProc.running) gitPulseProc.running = true
+            gitWidgetRoot.forceRefreshGitPulse()
           }
         }
       }
@@ -680,7 +728,7 @@ WidgetCard {
           text: gitWidgetRoot.isRemoteRepo ? "\uf0ac" : (gitWidgetRoot.activeRepoPath === "ALL" ? "\uf005" : "\uf126")
           font.family: Style.font.family
           font.pixelSize: 13
-          color: "#ffffff"
+          color: Commons.Color.foreground
         }
       }
 
@@ -695,7 +743,7 @@ WidgetCard {
           font.family: Style.font.family
           font.pixelSize: 13
           font.weight: Font.Bold
-          color: "#ffffff"
+          color: Commons.Color.foreground
           elide: Text.ElideRight
         }
         RowLayout {
@@ -727,7 +775,7 @@ WidgetCard {
         implicitWidth: uncomRow.implicitWidth + 12
         implicitHeight: 20
         radius: 10
-        color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.15) : (gitWidgetRoot.uncommittedCount > 0 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : Qt.rgba(1, 1, 1, 0.06))
+        color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.15) : (gitWidgetRoot.uncommittedCount > 0 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2) : gitWidgetRoot.fgTint(0.06))
         border.color: gitWidgetRoot.isRemoteRepo ? Qt.rgba(56/255, 189/255, 248/255, 0.4) : (gitWidgetRoot.uncommittedCount > 0 ? Commons.Color.accent : "transparent")
         border.width: 1
 
@@ -759,7 +807,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : gitWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -790,7 +838,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: customGripMouse.drag.active ? Commons.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+        color: customGripMouse.drag.active ? Commons.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : gitWidgetRoot.fgTint(0.08))
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -842,8 +890,8 @@ WidgetCard {
       Layout.fillWidth: true
       Layout.fillHeight: true
       radius: 12
-      color: Qt.rgba(1, 1, 1, 0.03)
-      border.color: Qt.rgba(1, 1, 1, 0.07)
+      color: gitWidgetRoot.fgTint(0.03)
+      border.color: gitWidgetRoot.fgTint(0.07)
       border.width: 1
 
       ColumnLayout {
@@ -986,8 +1034,8 @@ WidgetCard {
       Layout.fillWidth: true
       implicitHeight: 124
       radius: 12
-      color: Qt.rgba(1, 1, 1, 0.04)
-      border.color: Qt.rgba(1, 1, 1, 0.08)
+      color: gitWidgetRoot.fgTint(0.04)
+      border.color: gitWidgetRoot.fgTint(0.08)
       border.width: 1
 
       ColumnLayout {
@@ -1032,7 +1080,7 @@ WidgetCard {
               height: 9
               radius: 2
               color: gitWidgetRoot.getLevelColor(modelData.level)
-              border.color: modelData.is_today ? Commons.Color.accent : (cellMouse.containsMouse ? "#ffffff" : "transparent")
+              border.color: modelData.is_today ? Commons.Color.accent : (cellMouse.containsMouse ? Commons.Color.foreground : "transparent")
               border.width: modelData.is_today || cellMouse.containsMouse ? 1 : 0
 
               MouseArea {
@@ -1066,8 +1114,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 40
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.07)
+        color: gitWidgetRoot.fgTint(0.04)
+        border.color: gitWidgetRoot.fgTint(0.07)
         border.width: 1
 
         RowLayout {
@@ -1090,7 +1138,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.Bold
-              color: "#ffffff"
+              color: Commons.Color.foreground
             }
             Text {
               text: "Current Streak"
@@ -1107,8 +1155,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 40
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.07)
+        color: gitWidgetRoot.fgTint(0.04)
+        border.color: gitWidgetRoot.fgTint(0.07)
         border.width: 1
 
         RowLayout {
@@ -1131,7 +1179,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 11
               font.weight: Font.Bold
-              color: "#ffffff"
+              color: Commons.Color.foreground
             }
             Text {
               text: "Total Commits"
@@ -1159,8 +1207,8 @@ WidgetCard {
         implicitHeight: 28
         radius: 6
         readonly property bool isActive: gitWidgetRoot.activeTab === "commits"
-        color: comTabBtn.isActive ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
-        border.color: comTabBtn.isActive ? Commons.Color.accent : (comTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        color: comTabBtn.isActive ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : (comTabMouse.containsMouse ? gitWidgetRoot.fgTint(0.08) : gitWidgetRoot.fgTint(0.03))
+        border.color: comTabBtn.isActive ? Commons.Color.accent : (comTabMouse.containsMouse ? gitWidgetRoot.fgTint(0.15) : gitWidgetRoot.fgTint(0.06))
         border.width: 1
 
         RowLayout {
@@ -1171,7 +1219,7 @@ WidgetCard {
             text: "\uf126"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: "#ffffff"
+            color: Commons.Color.foreground
           }
 
           Text {
@@ -1179,7 +1227,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: comTabBtn.isActive ? Font.Bold : Font.Normal
-            color: "#ffffff"
+            color: Commons.Color.foreground
           }
 
           Rectangle {
@@ -1187,7 +1235,7 @@ WidgetCard {
             implicitWidth: comCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: comTabBtn.isActive ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.15)
+            color: comTabBtn.isActive ? Commons.Color.accent : gitWidgetRoot.fgTint(0.15)
 
             Text {
               id: comCountText
@@ -1196,7 +1244,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 8
               font.weight: Font.Bold
-              color: "#ffffff"
+              color: comTabBtn.isActive ? Commons.Color.background : Commons.Color.foreground
             }
           }
         }
@@ -1217,8 +1265,8 @@ WidgetCard {
         implicitHeight: 28
         radius: 6
         readonly property bool isActive: gitWidgetRoot.activeTab === "prs"
-        color: prsTabBtn.isActive ? Qt.rgba(168/255, 85/255, 247/255, 0.22) : (prsTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
-        border.color: prsTabBtn.isActive ? "#a855f7" : (prsTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        color: prsTabBtn.isActive ? Qt.rgba(168/255, 85/255, 247/255, 0.22) : (prsTabMouse.containsMouse ? gitWidgetRoot.fgTint(0.08) : gitWidgetRoot.fgTint(0.03))
+        border.color: prsTabBtn.isActive ? "#a855f7" : (prsTabMouse.containsMouse ? gitWidgetRoot.fgTint(0.15) : gitWidgetRoot.fgTint(0.06))
         border.width: 1
 
         RowLayout {
@@ -1229,7 +1277,7 @@ WidgetCard {
             text: "\uf446"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: "#ffffff"
+            color: Commons.Color.foreground
           }
 
           Text {
@@ -1237,7 +1285,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: prsTabBtn.isActive ? Font.Bold : Font.Normal
-            color: "#ffffff"
+            color: Commons.Color.foreground
           }
 
           Rectangle {
@@ -1245,7 +1293,7 @@ WidgetCard {
             implicitWidth: prCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: prsTabBtn.isActive ? "#a855f7" : Qt.rgba(1, 1, 1, 0.15)
+            color: prsTabBtn.isActive ? "#a855f7" : gitWidgetRoot.fgTint(0.15)
 
             Text {
               id: prCountText
@@ -1254,7 +1302,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 8
               font.weight: Font.Bold
-              color: "#ffffff"
+              color: prsTabBtn.isActive ? "#ffffff" : Commons.Color.foreground
             }
           }
         }
@@ -1275,8 +1323,8 @@ WidgetCard {
         implicitHeight: 28
         radius: 6
         readonly property bool isActive: gitWidgetRoot.activeTab === "issues"
-        color: issTabBtn.isActive ? Qt.rgba(16/255, 185/255, 129/255, 0.22) : (issTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
-        border.color: issTabBtn.isActive ? "#10b981" : (issTabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06))
+        color: issTabBtn.isActive ? Qt.rgba(16/255, 185/255, 129/255, 0.22) : (issTabMouse.containsMouse ? gitWidgetRoot.fgTint(0.08) : gitWidgetRoot.fgTint(0.03))
+        border.color: issTabBtn.isActive ? "#10b981" : (issTabMouse.containsMouse ? gitWidgetRoot.fgTint(0.15) : gitWidgetRoot.fgTint(0.06))
         border.width: 1
 
         RowLayout {
@@ -1287,7 +1335,7 @@ WidgetCard {
             text: "\uf41c"
             font.family: Style.font.family
             font.pixelSize: 10
-            color: "#ffffff"
+            color: Commons.Color.foreground
           }
 
           Text {
@@ -1295,7 +1343,7 @@ WidgetCard {
             font.family: Style.font.family
             font.pixelSize: 10
             font.weight: issTabBtn.isActive ? Font.Bold : Font.Normal
-            color: "#ffffff"
+            color: Commons.Color.foreground
           }
 
           Rectangle {
@@ -1303,7 +1351,7 @@ WidgetCard {
             implicitWidth: issCountText.implicitWidth + 8
             implicitHeight: 14
             radius: 7
-            color: issTabBtn.isActive ? "#10b981" : Qt.rgba(1, 1, 1, 0.15)
+            color: issTabBtn.isActive ? "#10b981" : gitWidgetRoot.fgTint(0.15)
 
             Text {
               id: issCountText
@@ -1312,7 +1360,7 @@ WidgetCard {
               font.family: Style.font.family
               font.pixelSize: 8
               font.weight: Font.Bold
-              color: "#ffffff"
+              color: issTabBtn.isActive ? "#ffffff" : Commons.Color.foreground
             }
           }
         }
@@ -1349,7 +1397,7 @@ WidgetCard {
           text: gitWidgetRoot.activeTab === "prs" ? "\uf446" : (gitWidgetRoot.activeTab === "issues" ? "\uf41c" : "\uf126")
           font.family: Style.font.family
           font.pixelSize: 20
-          color: "#ffffff"
+          color: gitWidgetRoot.fgTint(0.4)
         }
 
         Text {
@@ -1393,8 +1441,8 @@ WidgetCard {
           width: activityListView.width
           implicitHeight: 40
           radius: 8
-          color: itemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.035)
-          border.color: itemMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.05)
+          color: itemMouse.containsMouse ? gitWidgetRoot.fgTint(0.08) : gitWidgetRoot.fgTint(0.035)
+          border.color: itemMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : gitWidgetRoot.fgTint(0.05)
           border.width: 1
 
           RowLayout {
@@ -1431,7 +1479,7 @@ WidgetCard {
               radius: 4
               readonly property bool isOpen: (modelData.state || "").toLowerCase() === "open"
               readonly property bool isMerged: (modelData.state || "").toLowerCase() === "merged"
-              color: isOpen ? Qt.rgba(16/255, 185/255, 129/255, 0.2) : (isMerged ? Qt.rgba(168/255, 85/255, 247/255, 0.2) : Qt.rgba(1, 1, 1, 0.1))
+              color: isOpen ? Qt.rgba(16/255, 185/255, 129/255, 0.2) : (isMerged ? Qt.rgba(168/255, 85/255, 247/255, 0.2) : gitWidgetRoot.fgTint(0.1))
 
               RowLayout {
                 anchors.centerIn: parent
@@ -1466,7 +1514,7 @@ WidgetCard {
                 font.family: Style.font.family
                 font.pixelSize: 10
                 font.weight: Font.Normal
-                color: "#ffffff"
+                color: Commons.Color.foreground
                 elide: Text.ElideRight
               }
 
@@ -1476,7 +1524,7 @@ WidgetCard {
                       ("by @" + modelData.author + " • " + modelData.date)
                 font.family: Style.font.family
                 font.pixelSize: 8
-                color: Qt.rgba(1, 1, 1, 0.65)
+                color: gitWidgetRoot.fgTint(0.65)
                 elide: Text.ElideRight
               }
             }
@@ -1512,7 +1560,7 @@ WidgetCard {
         anchors.bottom: parent.bottom
         width: 3
         radius: 1.5
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: gitWidgetRoot.fgTint(0.08)
         visible: activityListView.contentHeight > activityListView.height
 
         Rectangle {

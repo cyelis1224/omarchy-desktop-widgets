@@ -66,9 +66,16 @@ WidgetCard {
     return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
-  function fetchWeather() {
-    if (weatherProc.running) return
+  // force (manual refresh) bypasses the script's shared 5-minute cache. A forced
+  // request that arrives mid-poll is queued for that poll's exit, not dropped.
+  property bool pendingForce: false
+  function fetchWeather(force) {
+    if (weatherProc.running) {
+      if (force) pendingForce = true
+      return
+    }
     isLoading = true
+    if (force) weatherProc.command = [weatherWidgetRoot.weatherScriptPath, "--refresh"]
     weatherProc.running = true
   }
 
@@ -76,6 +83,8 @@ WidgetCard {
     id: weatherProc
     command: [weatherWidgetRoot.weatherScriptPath]
     running: false
+    // --refresh is a one-shot request; later polls must run without it
+    onStarted: command = [weatherWidgetRoot.weatherScriptPath]
     stdout: SplitParser {
       onRead: function(line) {
         var str = String(line).trim()
@@ -104,6 +113,10 @@ WidgetCard {
     }
     onExited: {
       weatherWidgetRoot.isLoading = false
+      if (weatherWidgetRoot.pendingForce) {
+        weatherWidgetRoot.pendingForce = false
+        weatherWidgetRoot.fetchWeather(true)
+      }
     }
   }
 
@@ -211,7 +224,7 @@ WidgetCard {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             weatherWidgetRoot.contextMenuOpen = false
-            weatherWidgetRoot.fetchWeather()
+            weatherWidgetRoot.fetchWeather(true)
           }
         }
       }
@@ -294,8 +307,8 @@ WidgetCard {
         width: 26
         height: 26
         radius: 13
-        color: refreshHover.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.1)
+        color: refreshHover.containsMouse ? weatherWidgetRoot.fgTint(0.12) : weatherWidgetRoot.fgTint(0.05)
+        border.color: weatherWidgetRoot.fgTint(0.1)
         border.width: 1
 
         Text {
@@ -307,7 +320,7 @@ WidgetCard {
           color: weatherWidgetRoot.isLoading ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)
 
           RotationAnimation on rotation {
-            running: weatherWidgetRoot.isLoading
+            running: weatherWidgetRoot.isLoading && weatherWidgetRoot.visible
             from: 0
             to: 360
             loops: Animation.Infinite
@@ -320,7 +333,7 @@ WidgetCard {
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
-          onClicked: weatherWidgetRoot.fetchWeather()
+          onClicked: weatherWidgetRoot.fetchWeather(true)
         }
       }
 
@@ -329,7 +342,7 @@ WidgetCard {
         width: 48
         height: 24
         radius: 12
-        color: unitHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+        color: unitHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : weatherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
         border.width: 1
 
@@ -376,7 +389,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeWeatherMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeWeatherMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : weatherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -408,7 +421,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: weatherGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: weatherGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : weatherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -524,8 +537,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: weatherWidgetRoot.fgTint(0.05)
+        border.color: weatherWidgetRoot.fgTint(0.08)
         border.width: 1
 
         RowLayout {
@@ -552,8 +565,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: weatherWidgetRoot.fgTint(0.05)
+        border.color: weatherWidgetRoot.fgTint(0.08)
         border.width: 1
 
         RowLayout {
@@ -580,8 +593,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 28
         radius: 8
-        color: Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: weatherWidgetRoot.fgTint(0.05)
+        border.color: weatherWidgetRoot.fgTint(0.08)
         border.width: 1
 
         RowLayout {
@@ -619,8 +632,8 @@ WidgetCard {
           Layout.fillWidth: true
           Layout.fillHeight: true
           radius: 10
-          color: Qt.rgba(1, 1, 1, 0.04)
-          border.color: Qt.rgba(1, 1, 1, 0.06)
+          color: weatherWidgetRoot.fgTint(0.04)
+          border.color: weatherWidgetRoot.fgTint(0.06)
           border.width: 1
 
           ColumnLayout {

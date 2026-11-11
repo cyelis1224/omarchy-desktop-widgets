@@ -3,6 +3,8 @@ import glob
 import json
 import os
 import re
+import sys
+import time
 
 WIFI_DRIVERS = ("iwlwifi", "mt7", "ath", "rtw", "brcm")
 
@@ -155,8 +157,29 @@ def collect_telemetry():
     else:
         result["status_badge"], result["status_color"] = "Optimal", "#10b981"
 
-    print(json.dumps(result))
+    return result
+
+
+def main():
+    # With an interval argument (seconds) this streams one JSON line per cycle
+    # until the reader goes away, so the widget pays one interpreter start
+    # instead of one per poll. Without it, one sample and exit (old behaviour).
+    interval = 0.0
+    if len(sys.argv) > 1:
+        try:
+            interval = float(sys.argv[1])
+        except ValueError:
+            interval = 0.0
+    try:
+        while True:
+            print(json.dumps(collect_telemetry()), flush=True)
+            if interval <= 0:
+                break
+            time.sleep(interval)
+    except (BrokenPipeError, KeyboardInterrupt):
+        pass
+
 
 
 if __name__ == "__main__":
-    collect_telemetry()
+    main()

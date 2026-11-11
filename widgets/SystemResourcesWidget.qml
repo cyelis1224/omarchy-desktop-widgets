@@ -33,7 +33,6 @@ WidgetCard {
   FileView {
     id: memInfoFile
     path: "/proc/meminfo"
-    watchChanges: true
     onLoaded: {
       var lines = text().split("\n")
       var total = 0
@@ -55,10 +54,12 @@ WidgetCard {
     }
   }
 
+  // /proc emits no change events, so memory is polled, and only while on screen
   Timer {
     interval: 3000
-    running: true
+    running: systemWidgetRoot.visible
     repeat: true
+    triggeredOnStart: true
     onTriggered: memInfoFile.reload()
   }
 
@@ -332,6 +333,7 @@ WidgetCard {
     id: disksProc
     command: [systemWidgetRoot.disksScriptPath]
     running: true
+    onStarted: systemWidgetRoot.lastDisksMs = Date.now()
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -344,9 +346,17 @@ WidgetCard {
     }
   }
 
+  // Disk polling pauses while the card is off screen; coming back refreshes
+  // right away only if the last check is already older than the interval
+  property real lastDisksMs: 0
+  onVisibleChanged: {
+    if (visible && Date.now() - lastDisksMs >= disksTimer.interval && !disksProc.running) disksProc.running = true
+  }
+
   Timer {
-    interval: 10000
-    running: true
+    id: disksTimer
+    interval: 30000 // mounts and free space move slowly; each check is bash + python + df
+    running: systemWidgetRoot.visible
     repeat: true
     onTriggered: {
       if (!disksProc.running) disksProc.running = true
@@ -404,7 +414,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeSysMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeSysMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : systemWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -435,7 +445,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: sysGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: sysGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : systemWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -483,7 +493,7 @@ WidgetCard {
     Rectangle {
       Layout.fillWidth: true
       height: 1
-      color: Qt.rgba(1, 1, 1, 0.08)
+      color: systemWidgetRoot.fgTint(0.08)
     }
 
     // 🧠 RAM Usage Item
@@ -518,7 +528,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 6
         radius: 3
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: systemWidgetRoot.fgTint(0.08)
 
         Rectangle {
           width: Math.max(6, parent.width * Math.min(1.0, systemWidgetRoot.memUsedPct))
@@ -592,7 +602,7 @@ WidgetCard {
             Layout.fillWidth: true
             height: 6
             radius: 3
-            color: Qt.rgba(1, 1, 1, 0.08)
+            color: systemWidgetRoot.fgTint(0.08)
 
             Rectangle {
               width: Math.max(6, parent.width * Math.min(1.0, modelData.pct))

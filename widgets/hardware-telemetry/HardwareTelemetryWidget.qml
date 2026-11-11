@@ -115,11 +115,13 @@ WidgetCard {
 
   readonly property string telemetryScriptPath: Qt.resolvedUrl("telemetry_collector.py").toString().replace(/^file:\/\//, "")
 
-  // Backend Process calling telemetry_collector.py
+  // telemetry_collector.py streams one JSON line per poll interval for as long
+  // as the card is on screen; hiding the card ends the process and showing it
+  // starts a fresh one, whose first line arrives at once.
   Process {
     id: telemetryProc
-    command: [hwWidgetRoot.telemetryScriptPath]
-    running: true
+    command: [hwWidgetRoot.telemetryScriptPath, String(hwWidgetRoot.pollIntervalMs / 1000)]
+    running: hwWidgetRoot.visible
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -146,13 +148,16 @@ WidgetCard {
     }
   }
 
-  Timer {
-    interval: hwWidgetRoot.pollIntervalMs
-    running: true
-    repeat: true
-    onTriggered: {
-      if (!telemetryProc.running) telemetryProc.running = true
-    }
+  // A changed interval only reaches the collector through its argument, so
+  // restart it; the new process reports immediately.
+  onPollIntervalMsChanged: {
+    if (!telemetryProc.running) return
+    telemetryProc.running = false
+    // Assigning running drops its binding to visible; bind it again so the
+    // collector keeps following the widget's visibility.
+    Qt.callLater(function() {
+      telemetryProc.running = Qt.binding(function() { return hwWidgetRoot.visible })
+    })
   }
 
   // ---------------------------------------------------------------------------
@@ -190,7 +195,7 @@ WidgetCard {
             implicitHeight: 28
             radius: 6
             readonly property bool isSelected: hwWidgetRoot.useFahrenheit === modelData.isFahr
-            color: unitMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.06))
+            color: unitMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.18) : hwWidgetRoot.fgTint(0.06))
             border.color: isSelected ? Commons.Color.accent : "transparent"
             border.width: 1
 
@@ -335,7 +340,7 @@ WidgetCard {
             implicitHeight: 24
             radius: 6
             readonly property bool isSelected: Math.abs(hwWidgetRoot.alertThresholdDeg - modelData.val) < 1.0
-            color: thMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.18) : Qt.rgba(1, 1, 1, 0.06))
+            color: thMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.18) : hwWidgetRoot.fgTint(0.06))
             border.color: isSelected ? Commons.Color.accent : "transparent"
             border.width: 1
 
@@ -503,9 +508,14 @@ WidgetCard {
         }
       }
 
+      // Fills the row and elides: a long CPU model name must not widen the layout past the card
       ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
         spacing: 0
         Text {
+          Layout.fillWidth: true
+          elide: Text.ElideRight
           text: "Hardware Thermals"
           font.family: Style.font.family
           font.pixelSize: 13
@@ -513,14 +523,14 @@ WidgetCard {
           color: Commons.Color.foreground
         }
         Text {
+          Layout.fillWidth: true
+          elide: Text.ElideRight
           text: (hwWidgetRoot.cpuModel ? hwWidgetRoot.cpuModel + " · " : "") + hwWidgetRoot.cpuCores + "C / " + hwWidgetRoot.cpuThreads + "T"
           font.family: Style.font.family
           font.pixelSize: 10
           color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
       }
-
-      Item { Layout.fillWidth: true }
 
       // Live Status Badge
       Rectangle {
@@ -557,7 +567,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : hwWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -588,7 +598,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: customGripMouse.drag.active ? Commons.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+        color: customGripMouse.drag.active ? Commons.Color.accent : (customGripMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : hwWidgetRoot.fgTint(0.08))
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -644,8 +654,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 130
         radius: 14
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: hwWidgetRoot.fgTint(0.04)
+        border.color: hwWidgetRoot.fgTint(0.08)
         border.width: 1
 
         ColumnLayout {
@@ -672,7 +682,7 @@ WidgetCard {
                 // Track
                 ctx.beginPath()
                 ctx.arc(cx, cy, radius, startAngle, endAngle)
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.08)"
+                ctx.strokeStyle = hwWidgetRoot.fgTint(0.08)
                 ctx.lineWidth = 6
                 ctx.lineCap = "round"
                 ctx.stroke()
@@ -735,8 +745,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 130
         radius: 14
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: hwWidgetRoot.fgTint(0.04)
+        border.color: hwWidgetRoot.fgTint(0.08)
         border.width: 1
 
         ColumnLayout {
@@ -763,7 +773,7 @@ WidgetCard {
                 // Track
                 ctx.beginPath()
                 ctx.arc(cx, cy, radius, startAngle, endAngle)
-                ctx.strokeStyle = "rgba(255, 255, 255, 0.08)"
+                ctx.strokeStyle = hwWidgetRoot.fgTint(0.08)
                 ctx.lineWidth = 6
                 ctx.lineCap = "round"
                 ctx.stroke()
@@ -841,8 +851,8 @@ WidgetCard {
           Layout.fillWidth: true
           implicitHeight: 34
           radius: 8
-          color: Qt.rgba(1, 1, 1, 0.04)
-          border.color: Qt.rgba(1, 1, 1, 0.07)
+          color: hwWidgetRoot.fgTint(0.04)
+          border.color: hwWidgetRoot.fgTint(0.07)
           border.width: 1
 
           RowLayout {
@@ -872,7 +882,7 @@ WidgetCard {
               Layout.fillWidth: true
               height: 6
               radius: 3
-              color: Qt.rgba(1, 1, 1, 0.08)
+              color: hwWidgetRoot.fgTint(0.08)
 
               Rectangle {
                 width: Math.max(4, parent.width * Math.min(1.0, (modelData.temp / modelData.high)))

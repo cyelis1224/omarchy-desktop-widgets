@@ -232,7 +232,7 @@ Item {
     implicitWidth: hudRow.implicitWidth + Style.space(20)
     implicitHeight: 26
     radius: 13
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.85)
+    color: Util.alpha(Commons.Color.menu.background, 0.85)
     border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
     border.width: 1
 

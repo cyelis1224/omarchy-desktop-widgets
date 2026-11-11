@@ -40,10 +40,12 @@ Item {
   // ⏰ Real-time Clock, Date, Greeting, and Weather State
   // ---------------------------------------------------------------------------
   property var currentDate: new Date()
+  // Pauses while the clock is off screen and catches up the moment it returns
   Timer {
     interval: 1000
-    running: true
+    running: clockWidgetRoot.visible
     repeat: true
+    triggeredOnStart: true
     onTriggered: clockWidgetRoot.currentDate = new Date()
   }
 
@@ -120,10 +122,30 @@ Item {
     return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
+  // Manual refresh bypasses the script's shared cache; if a poll is already
+  // running the request is queued for its exit instead of dropped
+  property bool pendingWeatherForce: false
+  function forceRefreshWeather() {
+    if (weatherProc.running) {
+      pendingWeatherForce = true
+      return
+    }
+    weatherProc.command = [clockWidgetRoot.weatherScriptPath, "--refresh"]
+    weatherProc.running = true
+  }
+
   Process {
     id: weatherProc
     command: [clockWidgetRoot.weatherScriptPath]
     running: true
+    // --refresh (manual refresh) is a one-shot request; later polls use the shared cache
+    onStarted: command = [clockWidgetRoot.weatherScriptPath]
+    onExited: {
+      if (clockWidgetRoot.pendingWeatherForce) {
+        clockWidgetRoot.pendingWeatherForce = false
+        clockWidgetRoot.forceRefreshWeather()
+      }
+    }
     stdout: SplitParser {
       onRead: function(line) {
         try {
@@ -166,10 +188,10 @@ Item {
       ctx.scale(1.0, ry / rx)
 
       var grad = ctx.createRadialGradient(0, 0, 0, 0, 0, rx)
-      grad.addColorStop(0.0, "rgba(0, 0, 0, 0.20)")
-      grad.addColorStop(0.35, "rgba(0, 0, 0, 0.12)")
-      grad.addColorStop(0.70, "rgba(0, 0, 0, 0.05)")
-      grad.addColorStop(1.0, "rgba(0, 0, 0, 0.0)")
+      grad.addColorStop(0.0, Util.alpha(Commons.Color.background, 0.20))
+      grad.addColorStop(0.35, Util.alpha(Commons.Color.background, 0.12))
+      grad.addColorStop(0.70, Util.alpha(Commons.Color.background, 0.05))
+      grad.addColorStop(1.0, Util.alpha(Commons.Color.background, 0.0))
 
       ctx.fillStyle = grad
       ctx.beginPath()
@@ -180,6 +202,12 @@ Item {
 
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
+
+    // Gradient stops derive from the theme background; repaint when it changes
+    Connections {
+      target: Commons.Color
+      function onBackgroundChanged() { centralShadowBackdrop.requestPaint() }
+    }
   }
 
   // Hover / Move Handle on top of clock
@@ -191,7 +219,7 @@ Item {
     width: 22
     height: 22
     radius: 11
-    color: clockGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+    color: clockGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Util.alpha(Commons.Color.background, 0.6)
     border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
     border.width: 1
     opacity: clockGripArea.containsMouse || clockGripArea.drag.active || (rootRef && rootRef.layoutEditMode) ? 1.0 : 0.0
@@ -248,7 +276,7 @@ Item {
     width: 22
     height: 22
     radius: 11
-    color: closeClockMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(14/255, 14/255, 20/255, 0.6)
+    color: closeClockMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Util.alpha(Commons.Color.background, 0.6)
     border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
     border.width: 1
     opacity: clockGripArea.containsMouse || clockGripArea.drag.active || (rootRef && rootRef.layoutEditMode) ? 1.0 : 0.0
@@ -307,7 +335,7 @@ Item {
       color: Commons.Color.accent
       opacity: 0.95
       style: Text.Outline
-      styleColor: Qt.rgba(0, 0, 0, 0.75)
+      styleColor: Util.alpha(Commons.Color.background, 0.75)
     }
 
     // ⛅ Weather Status Line (Below greeting, click to toggle °F / °C)
@@ -340,7 +368,7 @@ Item {
           color: Commons.Color.accent
           opacity: 0.9
           style: Text.Outline
-          styleColor: Qt.rgba(0, 0, 0, 0.75)
+          styleColor: Util.alpha(Commons.Color.background, 0.75)
         }
 
         Text {
@@ -350,7 +378,7 @@ Item {
           color: Commons.Color.foreground
           opacity: 0.85
           style: Text.Outline
-          styleColor: Qt.rgba(0, 0, 0, 0.75)
+          styleColor: Util.alpha(Commons.Color.background, 0.75)
         }
       }
 
@@ -375,7 +403,7 @@ Item {
       font.letterSpacing: 2
       color: Commons.Color.foreground
       style: Text.Raised
-      styleColor: Qt.rgba(0, 0, 0, 0.85)
+      styleColor: Util.alpha(Commons.Color.background, 0.85)
     }
 
     Text {
@@ -386,7 +414,7 @@ Item {
       font.weight: Font.Medium
       color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.85)
       style: Text.Outline
-      styleColor: Qt.rgba(0, 0, 0, 0.75)
+      styleColor: Util.alpha(Commons.Color.background, 0.75)
     }
   }
 
@@ -434,12 +462,14 @@ Item {
   // 📂 Standard Right-Click Context Menu
   // ---------------------------------------------------------------------------
   property bool contextMenuOpen: false
+  property bool layoutSubmenuOpen: false
+  onContextMenuOpenChanged: if (!contextMenuOpen) layoutSubmenuOpen = false
 
-  // Right-click handler on the clock body (only when NOT in edit mode)
+  // Right-click handler on the clock body. Also live in edit mode: the drag
+  // areas only take the left button, so right-clicks fall through to here.
   MouseArea {
     anchors.fill: parent
     z: 50
-    visible: !(rootRef && rootRef.layoutEditMode)
     acceptedButtons: Qt.RightButton
     onClicked: function(mouse) {
       if (mouse.button === Qt.RightButton) {
@@ -488,7 +518,7 @@ Item {
     height: menuHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
+    color: Util.alpha(Commons.Color.menu.background, 0.96)
     border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
@@ -544,7 +574,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: clockCloseMenuMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: clockCloseMenuMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.22) : Util.alpha(Commons.Color.foreground, 0.08)
 
           Text {
             anchors.centerIn: parent
@@ -568,7 +598,7 @@ Item {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: Util.alpha(Commons.Color.foreground, 0.08)
         Layout.bottomMargin: 3
       }
 
@@ -911,7 +941,7 @@ Item {
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: {
-            if (!weatherProc.running) weatherProc.running = true
+            clockWidgetRoot.forceRefreshWeather()
             clockWidgetRoot.contextMenuOpen = false
           }
         }
@@ -921,7 +951,7 @@ Item {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: Util.alpha(Commons.Color.foreground, 0.08)
         Layout.topMargin: 3
         Layout.bottomMargin: 3
       }
@@ -932,12 +962,14 @@ Item {
           { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
           { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
           { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
-          { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
-          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
+          { label: "Layout", icon: "\uf0c9", value: "TOGGLE_LAYOUT_MENU" },
+          { label: "Save to '" + ((rootRef && rootRef.activeProfile) ? rootRef.activeProfile : "Default") + "'", icon: "\uf0c7", value: "SAVE_LAYOUT", sub: true },
+          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT", sub: true }
         ]
 
         Rectangle {
           required property var modelData
+          visible: !modelData.sub || clockWidgetRoot.layoutSubmenuOpen
           Layout.fillWidth: true
           implicitHeight: 28
           radius: 6
@@ -945,7 +977,7 @@ Item {
 
           RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: Style.space(10)
+            anchors.leftMargin: Style.space(modelData.sub ? 22 : 10)
             anchors.rightMargin: Style.space(10)
             spacing: Style.space(8)
 
@@ -973,6 +1005,26 @@ Item {
               color: modelData.value === "RESET_LAYOUT" ? (clockOptMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground) : Commons.Color.accent
               elide: Text.ElideRight
             }
+
+            Text {
+              visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+              Layout.alignment: Qt.AlignVCenter
+              Layout.maximumWidth: 110
+              text: (rootRef && rootRef.activeProfile) ? rootRef.activeProfile : ""
+              font.family: Style.font.family
+              font.pixelSize: 10
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
+              elide: Text.ElideRight
+            }
+
+            Text {
+              visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+              Layout.alignment: Qt.AlignVCenter
+              text: clockWidgetRoot.layoutSubmenuOpen ? "\uf107" : "\uf105"
+              font.family: Style.font.family
+              font.pixelSize: 11
+              color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
+            }
           }
 
           MouseArea {
@@ -981,6 +1033,10 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
+              if (modelData.value === "TOGGLE_LAYOUT_MENU") {
+                clockWidgetRoot.layoutSubmenuOpen = !clockWidgetRoot.layoutSubmenuOpen
+                return
+              }
               clockWidgetRoot.contextMenuOpen = false
               if (modelData.value === "TOGGLE_EDIT_MODE") {
                 if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode

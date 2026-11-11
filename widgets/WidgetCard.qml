@@ -6,6 +6,7 @@ import Quickshell.Widgets
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
+import "../shared"
 
 Item {
   id: widgetCardRoot
@@ -30,7 +31,7 @@ Item {
   property real minHeight: 120
   property real maxWidth: Math.min(1400, screenWidth - 40)
   property real maxHeight: Math.min(1000, screenHeight - 80)
-  readonly property bool isResizing: (resizeCornerArea && resizeCornerArea.isResizingNow) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
+  readonly property bool isResizing: (cornerGrips && cornerGrips.resizing) || (resizeRightArea && resizeRightArea.isResizingNow) || (resizeBottomArea && resizeBottomArea.isResizingNow)
 
   property bool customGripDragging: false
   readonly property bool isDragging: gripArea.drag.active || (fullDragArea && fullDragArea.drag.active) || customGripDragging
@@ -48,22 +49,34 @@ Item {
     return gridSnap > 1 ? (Math.round(val / gridSnap) * gridSnap) : Math.round(val)
   }
 
+  // Light themes pair a light card with a dark foreground, so fixed black wells and
+  // white hairlines lose contrast there; these derive from the theme instead.
+  readonly property bool lightTheme: Commons.Color.background.hslLightness >= 0.5
+  function fgTint(a) { return Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, a) }
+  function bgTint(a) { return Qt.rgba(Commons.Color.background.r, Commons.Color.background.g, Commons.Color.background.b, a) }
+  // Recessed panel (graph wells, clock sub-dials): darker than the card in either theme
+  readonly property color wellColor: lightTheme ? fgTint(0.06) : Qt.rgba(0, 0, 0, 0.35)
+
+  // Drop shadow, drawn analytically behind the card. A layer effect on
+  // cardSurface would re-render the whole card offscreen and re-blur it every
+  // time anything inside changes (a clock tick, a graph repaint).
+  RectangularShadow {
+    anchors.fill: cardSurface
+    visible: !widgetCardRoot.frameless && ((rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true) && (!widgetCardRoot.transparentBg || widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode))
+    radius: cardSurface.radius
+    color: Qt.rgba(0, 0, 0, widgetCardRoot.isDragging ? 0.28 : 0.22)
+    blur: widgetCardRoot.isDragging ? 26 : 18
+    offset.y: widgetCardRoot.isDragging ? 5 : 3
+  }
+
   // Visual container
   Rectangle {
     id: cardSurface
     anchors.fill: parent
     radius: (rootRef && rootRef.appearance && rootRef.appearance.corner_radius !== undefined) ? rootRef.appearance.corner_radius : 18
     color: widgetCardRoot.frameless ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.35) : "transparent") : (widgetCardRoot.transparentBg ? (rootRef && rootRef.layoutEditMode ? Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.35) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.20)) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, (rootRef && rootRef.appearance && rootRef.appearance.bg_opacity !== undefined) ? rootRef.appearance.bg_opacity : 0.85))
-    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Commons.Color.accent : (widgetCardRoot.frameless ? "transparent" : (widgetCardRoot.transparentBg ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.12)))
+    border.color: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? Commons.Color.accent : (widgetCardRoot.frameless ? "transparent" : (widgetCardRoot.transparentBg ? widgetCardRoot.fgTint(0.10) : widgetCardRoot.fgTint(0.12)))
     border.width: (widgetCardRoot.isDragging || widgetCardRoot.isResizing || (rootRef && rootRef.layoutEditMode)) ? 2 : (widgetCardRoot.frameless ? 0 : 1)
-
-    layer.enabled: !widgetCardRoot.frameless
-    layer.effect: MultiEffect {
-      shadowEnabled: ((rootRef && rootRef.appearance && rootRef.appearance.shadows_enabled !== undefined) ? rootRef.appearance.shadows_enabled : true) && (!widgetCardRoot.transparentBg || widgetCardRoot.isDragging || (rootRef && rootRef.layoutEditMode))
-      shadowColor: Qt.rgba(0, 0, 0, widgetCardRoot.isDragging ? 0.28 : 0.22)
-      shadowBlur: widgetCardRoot.isDragging ? 0.65 : 0.45
-      shadowVerticalOffset: widgetCardRoot.isDragging ? 5 : 3
-    }
 
     ColumnLayout {
       anchors.fill: parent
@@ -137,7 +150,7 @@ Item {
           height: 22
           radius: 11
           z: 130
-          color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+          color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : widgetCardRoot.fgTint(0.08)
           border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
           border.width: 1
 
@@ -170,7 +183,7 @@ Item {
           height: 22
           radius: 11
           z: 130
-          color: gripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+          color: gripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : widgetCardRoot.fgTint(0.08)
           border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
           border.width: 1
 
@@ -265,79 +278,19 @@ Item {
   // 📐 Interactive Resizing Handles & Live Dimensions Pill
   // ---------------------------------------------------------------------------
 
-  // Visual Grip Icon in Bottom-Right Corner
-  Rectangle {
-    id: cornerResizeVisual
-    visible: rootRef && rootRef.layoutEditMode && widgetCardRoot.resizable
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
-    anchors.margins: 6
-    width: 18
-    height: 18
-    radius: 4
-    z: 115
-    color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
-    border.color: (resizeCornerArea.containsMouse || resizeCornerArea.isResizingNow) ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3)
-    border.width: 1
-
-    Text {
-      anchors.centerIn: parent
-      text: "\uf424"
-      font.family: Style.font.family
-      font.pixelSize: 10
-      color: Commons.Color.accent
-    }
-  }
-
-  // Interactive Bottom-Right Corner Resize Area (Width & Height)
-  MouseArea {
-    id: resizeCornerArea
-    width: 24
-    height: 24
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
+  // Corner resize grips on all four corners (shared/CornerResizeGrips.qml)
+  CornerResizeGrips {
+    id: cornerGrips
     z: 125
     visible: rootRef && rootRef.layoutEditMode && widgetCardRoot.resizable
-    cursorShape: Qt.SizeFDiagCursor
-    hoverEnabled: true
+    card: widgetCardRoot
+    target: widgetCardRoot.targetItem
+    radius: cardSurface.radius
+    gridSnap: widgetCardRoot.gridSnap
 
-    property real startScreenX: 0
-    property real startScreenY: 0
-    property real startWidth: 0
-    property real startHeight: 0
-    property bool isResizingNow: false
-
-    onPressed: function(mouse) {
-      var p = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
-      startScreenX = p.x
-      startScreenY = p.y
-      startWidth = widgetCardRoot.width
-      startHeight = widgetCardRoot.height
-      isResizingNow = true
-    }
-
-    onPositionChanged: function(mouse) {
-      if (isResizingNow) {
-        var cur = mapToItem(widgetCardRoot.parent, mouse.x, mouse.y)
-        var newW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, startWidth + (cur.x - startScreenX)))
-        var newH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, startHeight + (cur.y - startScreenY)))
-        widgetCardRoot.width = newW
-        widgetCardRoot.height = newH
-      }
-    }
-
-    onReleased: function() {
-      if (isResizingNow) {
-        isResizingNow = false
-        var snappedW = widgetCardRoot.snapVal(widgetCardRoot.width)
-        var snappedH = widgetCardRoot.snapVal(widgetCardRoot.height)
-        snappedW = Math.max(widgetCardRoot.minWidth, Math.min(widgetCardRoot.maxWidth, snappedW))
-        snappedH = Math.max(widgetCardRoot.minHeight, Math.min(widgetCardRoot.maxHeight, snappedH))
-        widgetCardRoot.width = snappedW
-        widgetCardRoot.height = snappedH
-        if (rootRef && rootRef.saveWidgetPos) {
-          rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, snappedW, snappedH, widgetCardRoot.monitorName)
-        }
+    onResized: {
+      if (rootRef && rootRef.saveWidgetPos) {
+        rootRef.saveWidgetPos(widgetCardRoot.widgetId, widgetCardRoot.targetItem.x, widgetCardRoot.targetItem.y, widgetCardRoot.width, widgetCardRoot.height, widgetCardRoot.monitorName)
       }
     }
   }
@@ -444,7 +397,7 @@ Item {
     implicitWidth: dimPillText.implicitWidth + Style.space(16)
     implicitHeight: 22
     radius: 11
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+    color: widgetCardRoot.bgTint(0.95)
     border.color: Commons.Color.accent
     border.width: 1
 
@@ -463,12 +416,14 @@ Item {
   // 📂 Standard Right-Click Context Menu
   // ---------------------------------------------------------------------------
   property bool contextMenuOpen: false
+  property bool layoutSubmenuOpen: false
+  onContextMenuOpenChanged: if (!contextMenuOpen) layoutSubmenuOpen = false
 
-  // Right-click handler on the widget body (only when NOT in edit mode)
+  // Right-click handler on the widget body. Also live in edit mode: the drag
+  // areas only take the left button, so right-clicks fall through to here.
   MouseArea {
     anchors.fill: parent
     z: 50
-    visible: !(rootRef && rootRef.layoutEditMode)
     acceptedButtons: Qt.RightButton
     onClicked: function(mouse) {
       if (mouse.button === Qt.RightButton) {
@@ -563,6 +518,12 @@ Item {
     readonly property real menuWidth: widgetCardRoot.menuWidth
     readonly property real menuHeight: wcMenuLayout.implicitHeight + 20
 
+    // Each menu section sits in its own tinted panel so the sections read as
+    // separate groups, distinct from the hairlines used inside widget content.
+    // Tinted with the foreground so panels lift off the menu in dark and light themes.
+    readonly property color sectionFill: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.10)
+    readonly property color sectionBorder: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.18)
+
     x: Math.max(10, Math.min(widgetTarget.x, widgetCardRoot.screenWidth - menuWidth - 10))
     y: {
       var desiredY = widgetTarget.y + 36
@@ -575,7 +536,7 @@ Item {
     height: menuHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.96)
+    color: Qt.rgba(Commons.Color.menu.background.r, Commons.Color.menu.background.g, Commons.Color.menu.background.b, 0.96)
     border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
@@ -603,12 +564,11 @@ Item {
       id: wcMenuLayout
       anchors.fill: parent
       anchors.margins: Style.space(10)
-      spacing: Style.space(3)
+      spacing: Style.space(8)
 
       // Menu Header
       RowLayout {
         Layout.fillWidth: true
-        Layout.bottomMargin: Style.space(4)
 
         Text {
           text: "\uf085"
@@ -631,7 +591,7 @@ Item {
           width: 22
           height: 22
           radius: 11
-          color: wcCloseMenuMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, wcCloseMenuMouse.containsMouse ? 0.22 : 0.08)
 
           Text {
             anchors.centerIn: parent
@@ -651,172 +611,165 @@ Item {
         }
       }
 
-      // Divider
-      Rectangle {
-        Layout.fillWidth: true
-        height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
-        Layout.bottomMargin: 3
-      }
-
       // 🧩 Custom Widget Settings (Injected by derived widget)
-      Loader {
-        Layout.fillWidth: true
-        active: widgetCardRoot.customMenuContent !== null
-        sourceComponent: widgetCardRoot.customMenuContent
-      }
-
       Rectangle {
         Layout.fillWidth: true
-        height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
-        Layout.topMargin: 3
-        Layout.bottomMargin: 3
         visible: widgetCardRoot.customMenuContent !== null
+        implicitHeight: wcCustomSection.implicitHeight + Style.space(8)
+        radius: 10
+        color: wcContextMenu.sectionFill
+        border.color: wcContextMenu.sectionBorder
+        border.width: 1
+
+        ColumnLayout {
+          id: wcCustomSection
+          anchors.fill: parent
+          anchors.margins: Style.space(4)
+          spacing: 0
+
+          Loader {
+            Layout.fillWidth: true
+            active: widgetCardRoot.customMenuContent !== null
+            sourceComponent: widgetCardRoot.customMenuContent
+          }
+        }
       }
 
       // Options List
-      Repeater {
-        model: [
-          { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
-          { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
-          { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
-          { label: "Save Current Layout", icon: "\uf0c7", value: "SAVE_LAYOUT" },
-          { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT" }
-        ]
+      Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: wcOptionsSection.implicitHeight + Style.space(8)
+        radius: 10
+        color: wcContextMenu.sectionFill
+        border.color: wcContextMenu.sectionBorder
+        border.width: 1
 
-        Rectangle {
-          required property var modelData
-          Layout.fillWidth: true
-          implicitHeight: 28
-          radius: 6
-          color: wcOptMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)) : "transparent"
+        ColumnLayout {
+          id: wcOptionsSection
+          anchors.fill: parent
+          anchors.margins: Style.space(4)
+          spacing: Style.space(3)
 
-          RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: Style.space(10)
-            anchors.rightMargin: Style.space(10)
-            spacing: Style.space(8)
+          Repeater {
+            model: [
+              { label: (rootRef && rootRef.layoutEditMode) ? "Lock Layout" : "Unlock Layout", icon: (rootRef && rootRef.layoutEditMode) ? "\uf023" : "\uf0b2", value: "TOGGLE_EDIT_MODE" },
+              { label: "Add / Browse Widgets", icon: "\uf067", value: "OPEN_SELECTOR" },
+              { label: "Widget Preferences...", icon: "\uf013", value: "OPEN_PREFERENCES" },
+              { label: "Layout", icon: "\uf0c9", value: "TOGGLE_LAYOUT_MENU" },
+              { label: "Save to '" + ((rootRef && rootRef.activeProfile) ? rootRef.activeProfile : "Default") + "'", icon: "\uf0c7", value: "SAVE_LAYOUT", sub: true },
+              { label: (rootRef && rootRef.hasSavedLayout) ? "Revert to Saved Layout" : "Reset Widget Layout", icon: "\uf0e2", value: "RESET_LAYOUT", sub: true }
+            ]
 
-            Item {
-              Layout.preferredWidth: 16
-              Layout.preferredHeight: 16
-              Layout.alignment: Qt.AlignVCenter
-
-              Text {
-                anchors.centerIn: parent
-                text: modelData.icon
-                font.family: Style.font.family
-                font.pixelSize: 11
-                color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)) : Commons.Color.accent
-              }
-            }
-
-            Text {
+            Rectangle {
+              required property var modelData
+              visible: !modelData.sub || widgetCardRoot.layoutSubmenuOpen
               Layout.fillWidth: true
-              Layout.alignment: Qt.AlignVCenter
-              text: modelData.label
-              font.family: Style.font.family
-              font.pixelSize: 11
-              font.weight: Font.Bold
-              color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground) : Commons.Color.accent
-              elide: Text.ElideRight
-            }
-          }
+              implicitHeight: 28
+              radius: 6
+              color: wcOptMouse.containsMouse ? (modelData.value === "RESET_LAYOUT" ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)) : "transparent"
 
-          MouseArea {
-            id: wcOptMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-              widgetCardRoot.contextMenuOpen = false
-              if (modelData.value === "TOGGLE_EDIT_MODE") {
-                if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode
-              } else if (modelData.value === "OPEN_SELECTOR") {
-                if (rootRef) rootRef.selectorOpen = true
-              } else if (modelData.value === "OPEN_PREFERENCES") {
-                if (rootRef) rootRef.preferencesOpen = true
-              } else if (modelData.value === "SAVE_LAYOUT") {
-                if (rootRef && rootRef.saveCurrentLayout) rootRef.saveCurrentLayout()
-              } else if (modelData.value === "RESET_LAYOUT") {
-                if (rootRef) rootRef.resetWidgetPositions()
+              RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Style.space(modelData.sub ? 22 : 10)
+                anchors.rightMargin: Style.space(10)
+                spacing: Style.space(8)
+
+                Item {
+                  Layout.preferredWidth: 16
+                  Layout.preferredHeight: 16
+                  Layout.alignment: Qt.AlignVCenter
+
+                  Text {
+                    anchors.centerIn: parent
+                    text: modelData.icon
+                    font.family: Style.font.family
+                    font.pixelSize: 11
+                    color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.7)) : Commons.Color.accent
+                  }
+                }
+
+                Text {
+                  Layout.fillWidth: true
+                  Layout.alignment: Qt.AlignVCenter
+                  text: modelData.label
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  font.weight: Font.Bold
+                  color: modelData.value === "RESET_LAYOUT" ? (wcOptMouse.containsMouse ? Commons.Color.urgent : Commons.Color.foreground) : Commons.Color.accent
+                  elide: Text.ElideRight
+                }
+
+                Text {
+                  visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+                  Layout.alignment: Qt.AlignVCenter
+                  Layout.maximumWidth: 110
+                  text: (rootRef && rootRef.activeProfile) ? rootRef.activeProfile : ""
+                  font.family: Style.font.family
+                  font.pixelSize: 10
+                  color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
+                  elide: Text.ElideRight
+                }
+
+                Text {
+                  visible: modelData.value === "TOGGLE_LAYOUT_MENU"
+                  Layout.alignment: Qt.AlignVCenter
+                  text: widgetCardRoot.layoutSubmenuOpen ? "\uf107" : "\uf105"
+                  font.family: Style.font.family
+                  font.pixelSize: 11
+                  color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
+                }
+              }
+
+              MouseArea {
+                id: wcOptMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                  if (modelData.value === "TOGGLE_LAYOUT_MENU") {
+                    widgetCardRoot.layoutSubmenuOpen = !widgetCardRoot.layoutSubmenuOpen
+                    return
+                  }
+                  widgetCardRoot.contextMenuOpen = false
+                  if (modelData.value === "TOGGLE_EDIT_MODE") {
+                    if (rootRef) rootRef.layoutEditMode = !rootRef.layoutEditMode
+                  } else if (modelData.value === "OPEN_SELECTOR") {
+                    if (rootRef) rootRef.selectorOpen = true
+                  } else if (modelData.value === "OPEN_PREFERENCES") {
+                    if (rootRef) rootRef.preferencesOpen = true
+                  } else if (modelData.value === "SAVE_LAYOUT") {
+                    if (rootRef && rootRef.saveCurrentLayout) rootRef.saveCurrentLayout()
+                  } else if (modelData.value === "RESET_LAYOUT") {
+                    if (rootRef) rootRef.resetWidgetPositions()
+                  }
+                }
               }
             }
           }
         }
       }
 
-      // Multi-Monitor Transfer Section (Visible when 2+ displays connected)
-      ColumnLayout {
+      // Multi-Monitor Display Picker (Visible when 2+ displays connected)
+      Rectangle {
         Layout.fillWidth: true
-        spacing: 2
         visible: Quickshell.screens && Quickshell.screens.length > 1
+        implicitHeight: wcDisplaysSection.implicitHeight + Style.space(8)
+        radius: 10
+        color: wcContextMenu.sectionFill
+        border.color: wcContextMenu.sectionBorder
+        border.width: 1
 
-        Rectangle {
-          Layout.fillWidth: true
-          height: 1
-          color: Qt.rgba(1, 1, 1, 0.08)
-          Layout.topMargin: 2
-          Layout.bottomMargin: 2
-        }
+        ColumnLayout {
+          id: wcDisplaysSection
+          anchors.fill: parent
+          anchors.margins: Style.space(4)
+          spacing: 0
 
-        Repeater {
-          model: {
-            if (!Quickshell.screens || Quickshell.screens.length <= 1) return []
-            var list = []
-            for (var i = 0; i < Quickshell.screens.length; i++) {
-              var s = Quickshell.screens[i]
-              if (s && s.name && s.name !== widgetCardRoot.monitorName) {
-                list.push({ name: s.name })
-              }
-            }
-            return list
-          }
-
-          Rectangle {
-            required property var modelData
+          MonitorLayoutPicker {
             Layout.fillWidth: true
-            implicitHeight: 28
-            radius: 6
-            color: moveMonMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : "transparent"
-
-            RowLayout {
-              anchors.fill: parent
-              anchors.leftMargin: Style.space(10)
-              anchors.rightMargin: Style.space(10)
-              spacing: Style.space(8)
-
-              Text {
-                text: "\uf108"
-                font.family: Style.font.family
-                font.pixelSize: 11
-                color: Commons.Color.accent
-              }
-
-              Text {
-                Layout.fillWidth: true
-                text: "Move to " + modelData.name
-                font.family: Style.font.family
-                font.pixelSize: 11
-                font.weight: Font.Bold
-                color: Commons.Color.foreground
-                elide: Text.ElideRight
-              }
-            }
-
-            MouseArea {
-              id: moveMonMouse
-              anchors.fill: parent
-              hoverEnabled: true
-              cursorShape: Qt.PointingHandCursor
-              onClicked: {
-                widgetCardRoot.contextMenuOpen = false
-                if (rootRef && rootRef.moveToMonitor) {
-                  rootRef.moveToMonitor(widgetCardRoot.widgetId, widgetCardRoot.monitorName, modelData.name)
-                }
-              }
-            }
+            rootRef: widgetCardRoot.rootRef
+            widgetId: widgetCardRoot.widgetId
+            currentMonitor: widgetCardRoot.monitorName
           }
         }
       }

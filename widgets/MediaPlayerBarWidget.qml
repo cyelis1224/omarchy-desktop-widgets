@@ -35,7 +35,7 @@ Item {
     implicitWidth: rowLayout.implicitWidth + 16
     radius: Style.cornerRadius || 8
     color: bgMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : Qt.rgba(Commons.Color.bar.background.r, Commons.Color.bar.background.g, Commons.Color.bar.background.b, 0.65)
-    border.color: root.isPlaying ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+    border.color: root.isPlaying ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.12)
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 150 } }
@@ -46,18 +46,13 @@ Item {
       anchors.centerIn: parent
       spacing: 6
 
+      // Static on purpose: a looping pulse redraws the bar every frame for as
+      // long as music plays; the accent color already marks playback
       Text {
         text: "\uf001"
         font.family: Style.font.family
         font.pixelSize: 11
         color: root.isPlaying ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
-
-        SequentialAnimation on opacity {
-          running: root.isPlaying
-          loops: Animation.Infinite
-          NumberAnimation { to: 0.5; duration: 1000; easing.type: Easing.InOutQuad }
-          NumberAnimation { to: 1.0; duration: 1000; easing.type: Easing.InOutQuad }
-        }
       }
 
       Text {
@@ -104,7 +99,7 @@ Item {
         implicitHeight: 18
         radius: 9
         visible: root.activePlayer && root.activePlayer.canGoNext
-        color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent"
+        color: nextMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.15) : "transparent"
 
         Text {
           anchors.centerIn: parent

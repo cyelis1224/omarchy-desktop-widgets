@@ -27,7 +27,8 @@ BUILTIN_MIGRATION = {
     "CoinTrackerWidget.qml": "coin_tracker",
     "AnalogClockWidget.qml": "analog_clock",
     "CalendarWidget.qml": "calendar",
-    "RssFeedWidget.qml": "rss_feed"
+    "RssFeedWidget.qml": "rss_feed",
+    "SysmonWidget.qml": "sysmon"
 }
 
 BUILTIN_PROFILES = {
@@ -84,20 +85,29 @@ BUILTIN_PROFILES = {
     "Full Dashboard": {
         "name": "Full Dashboard",
         "description": "Comprehensive command center featuring all desktop widgets arranged across the screen.",
-        "enabled_widgets": ["clock", "gallery", "weather", "coin_tracker", "quick_notes", "pomodoro", "git_activity", "folder_view", "app_launcher", "network", "media", "hardware_telemetry", "system", "analog_clock", "calendar", "rss_feed"],
+        "enabled_widgets": ["clock", "gallery", "weather", "coin_tracker", "quick_notes", "pomodoro", "git_activity", "folder_view", "app_launcher", "network", "media", "hardware_telemetry", "system", "analog_clock", "calendar", "rss_feed", "sysmon", "agent_usage"],
         "positions": {
             "clock": {"x": 700, "y": 20},
             "gallery": {"x": 20, "y": 40, "w": 360, "h": 220},
             "quick_notes": {"x": 40, "y": 280, "w": 320, "h": 340},
             "pomodoro": {"x": 40, "y": 640, "w": 320, "h": 420},
-            "weather": {"x": 400, "y": 140, "w": 340, "h": 250},
-            "coin_tracker": {"x": 760, "y": 140, "w": 350, "h": 245},
-            "git_activity": {"x": 380, "y": 420, "w": 360, "h": 440},
-            "rss_feed": {"x": 380, "y": 880, "w": 360, "h": 440},
-            "calendar": {"x": 760, "y": 420, "w": 340, "h": 440},
-            "folder_view": {"x": 760, "y": 880, "w": 340, "h": 380},
-            "analog_clock": {"x": 1140, "y": 40, "w": 280, "h": 280},
-            "app_launcher": {"x": 1140, "y": 640, "w": 360, "h": 420},
+            # The two centre columns start below the hero clock (about 370x270
+            # with the greeting on) and run past 1080px: this preset needs a
+            # taller screen to show every widget without overlap.
+            "weather": {"x": 400, "y": 300, "w": 340, "h": 250},
+            "coin_tracker": {"x": 760, "y": 300, "w": 350, "h": 245},
+            "git_activity": {"x": 380, "y": 570, "w": 360, "h": 420},
+            "rss_feed": {"x": 380, "y": 1010, "w": 360, "h": 400},
+            "calendar": {"x": 760, "y": 570, "w": 340, "h": 440},
+            "folder_view": {"x": 760, "y": 1030, "w": 340, "h": 380},
+            "analog_clock": {"x": 1220, "y": 40, "w": 200, "h": 200},
+            "sysmon": {"x": 1140, "y": 260, "w": 360, "h": 280},
+            # agent_usage sizes itself to its content (about 480px tall). Its y
+            # stays above the 55% line so adapt_positions_to_monitor leaves it
+            # under sysmon while app_launcher drops to the bottom edge on
+            # taller screens.
+            "agent_usage": {"x": 1140, "y": 560, "w": 360, "h": 480},
+            "app_launcher": {"x": 1140, "y": 740, "w": 360, "h": 320},
             "network": {"x": 1520, "y": 40, "w": 360, "h": 180},
             "media": {"x": 1520, "y": 240, "w": 360, "h": 120},
             "hardware_telemetry": {"x": 1520, "y": 380, "w": 360, "h": 460},
@@ -112,8 +122,9 @@ BUILTIN_PROFILES = {
     "Gaming": {
         "name": "Gaming",
         "description": "Performance telemetry layout tracking CPU/GPU stats, RAM, multi-drive storage, and network bandwidth.",
-        "enabled_widgets": ["hardware_telemetry", "system", "network", "media"],
+        "enabled_widgets": ["hardware_telemetry", "system", "network", "media", "sysmon"],
         "positions": {
+            "sysmon": {"x": 1140, "y": 40, "w": 360, "h": 280},
             "network": {"x": 1520, "y": 40, "w": 360, "h": 180},
             "media": {"x": 1520, "y": 240, "w": 360, "h": 120},
             "hardware_telemetry": {"x": 1520, "y": 380, "w": 360, "h": 460},
@@ -287,7 +298,7 @@ def prompt_text_dialog(title="Save Preset", text="Enter name for this layout pre
             pass
     return None
 
-def migrate_custom_builtins(data):
+def migrate_custom_builtins(data, persist=True):
     changed = False
     customs = data.get('custom_widgets', [])
     new_customs = []
@@ -366,23 +377,33 @@ def migrate_custom_builtins(data):
         data['enabled_widgets'] = dedup_enabled
         data['custom_widgets'] = new_customs
         data['positions'] = positions
-        save_settings(data)
+        if persist:
+            save_settings(data)
     return data
 
 def read_state_file():
     # A state file that exists but will not parse is never "no settings": it is
-    # being written, or damaged. Retry briefly, then refuse to continue rather
-    # than fall back to the defaults and save them over the real layout.
+    # being written, or damaged. Retry briefly before treating it as damaged.
     for attempt in range(20):
         try:
             with open(STATE_FILE, 'r') as f:
                 return json.load(f)
         except Exception:
             time.sleep(0.05)
-    sys.stderr.write("manage-positions: could not read %s; leaving it untouched\n" % STATE_FILE)
-    sys.exit(1)
+    # Still unreadable after the retries: every writer replaces the file
+    # atomically, so it is damaged rather than mid-write. Keep it aside for
+    # recovery and start from the defaults, instead of failing every action
+    # (including the resets) until someone deletes it by hand.
+    aside = "%s.corrupt-%s" % (STATE_FILE, time.strftime('%Y%m%d-%H%M%S'))
+    try:
+        os.replace(STATE_FILE, aside)
+        sys.stderr.write("manage-positions: %s was unreadable; moved it to %s\n" % (STATE_FILE, aside))
+    except Exception:
+        sys.stderr.write("manage-positions: could not read %s; leaving it untouched\n" % STATE_FILE)
+        sys.exit(1)
+    return None
 
-def load_settings():
+def load_settings(persist=True):
     data = None
     if os.path.exists(STATE_FILE):
         data = read_state_file()
@@ -443,7 +464,7 @@ def load_settings():
         data['monitor_enabled_widgets'] = {}
 
     sync_git_settings(data)
-    return migrate_custom_builtins(data)
+    return migrate_custom_builtins(data, persist)
 
 def sync_git_settings(data, backup_or_prof=None):
     if not isinstance(data, dict):
@@ -506,8 +527,10 @@ def lock_state():
 
 def main():
     action = sys.argv[1] if len(sys.argv) > 1 else 'load'
+    # Dialog actions start from an unlocked, read-only snapshot; once the
+    # dialog returns they take the lock and reload before changing anything.
     state_lock = None if action in DIALOG_ACTIONS else lock_state()
-    settings = load_settings()
+    settings = load_settings(persist=state_lock is not None)
 
     if action == 'save_pos' and len(sys.argv) >= 5:
         widget_id = sys.argv[2]
@@ -556,6 +579,17 @@ def main():
             settings['positions'][widget_id] = geom
         save_settings(settings)
         print(json.dumps({"status": "geometry_saved", "widget_id": widget_id, "geometry": settings['positions'][widget_id]}))
+    elif action == 'save_stack_order' and len(sys.argv) >= 3:
+        try:
+            order = json.loads(sys.argv[2])
+        except Exception:
+            order = None
+        if isinstance(order, list):
+            settings['stack_order'] = [w for w in order if isinstance(w, str)]
+            save_settings(settings)
+            print(json.dumps({"status": "stack_order_saved", "stack_order": settings['stack_order']}))
+        else:
+            print(json.dumps({"status": "error", "error": "stack order must be a JSON list"}))
     elif action == 'toggle_widget' and len(sys.argv) >= 4:
         widget_id = sys.argv[2]
         enable = sys.argv[3].lower() in ('true', '1', 'yes')
@@ -602,6 +636,16 @@ def main():
         if 'monitor_enabled_widgets' not in settings or not isinstance(settings['monitor_enabled_widgets'], dict):
             settings['monitor_enabled_widgets'] = {}
 
+        # The shell passes each monitor's effective list, since a monitor
+        # without an explicit list resolves through position fallbacks.
+        for mon, arg_idx in ((from_mon, 5), (to_mon, 6)):
+            if len(sys.argv) > arg_idx:
+                try:
+                    explicit_list = json.loads(sys.argv[arg_idx])
+                    if isinstance(explicit_list, list):
+                        settings['monitor_enabled_widgets'][mon] = explicit_list
+                except Exception:
+                    pass
         if from_mon not in settings['monitor_enabled_widgets']:
             settings['monitor_enabled_widgets'][from_mon] = list(settings.get('enabled_widgets', DEFAULT_ENABLED))
         from_set = set(settings['monitor_enabled_widgets'][from_mon])
@@ -633,6 +677,44 @@ def main():
             "to_monitor": to_mon,
             "monitor_enabled_widgets": settings['monitor_enabled_widgets'],
             "monitor_positions": settings['monitor_positions']
+        }))
+    elif action == 'set_widget_monitors' and len(sys.argv) >= 4:
+        widget_id = sys.argv[2]
+        try:
+            monitor_lists = json.loads(sys.argv[3])
+        except Exception:
+            monitor_lists = None
+        try:
+            seeded_positions = json.loads(sys.argv[4]) if len(sys.argv) >= 5 else {}
+        except Exception:
+            seeded_positions = {}
+
+        if isinstance(monitor_lists, dict):
+            if 'monitor_enabled_widgets' not in settings or not isinstance(settings['monitor_enabled_widgets'], dict):
+                settings['monitor_enabled_widgets'] = {}
+            if 'monitor_positions' not in settings or not isinstance(settings['monitor_positions'], dict):
+                settings['monitor_positions'] = {}
+
+            for monitor, widget_list in monitor_lists.items():
+                if isinstance(widget_list, list):
+                    settings['monitor_enabled_widgets'][monitor] = widget_list
+
+            if isinstance(seeded_positions, dict):
+                for monitor, geom in seeded_positions.items():
+                    if not isinstance(geom, dict):
+                        continue
+                    if not isinstance(settings['monitor_positions'].get(monitor), dict):
+                        settings['monitor_positions'][monitor] = {}
+                    if widget_id not in settings['monitor_positions'][monitor]:
+                        settings['monitor_positions'][monitor][widget_id] = geom
+
+            save_settings(settings)
+
+        print(json.dumps({
+            "status": "widget_monitors_set",
+            "widget_id": widget_id,
+            "monitor_enabled_widgets": settings.get('monitor_enabled_widgets', {}),
+            "monitor_positions": settings.get('monitor_positions', {})
         }))
     elif action == 'save_setting' and len(sys.argv) >= 5:
         widget_id = sys.argv[2]
@@ -694,7 +776,7 @@ def main():
         }))
     elif action == 'switch_profile' and len(sys.argv) >= 3:
         target_name = sys.argv[2]
-        target_monitor = sys.argv[3] if len(sys.argv) >= 4 else None
+        target_monitor = (sys.argv[3] or None) if len(sys.argv) >= 4 else None
         target_monitor_width = int(sys.argv[4]) if len(sys.argv) >= 5 and str(sys.argv[4]).lstrip('-').isdigit() else 0
         target_monitor_height = int(sys.argv[5]) if len(sys.argv) >= 6 and str(sys.argv[5]).lstrip('-').isdigit() else 0
         profs = settings.get('layout_profiles', {})
@@ -709,10 +791,28 @@ def main():
                     settings['monitor_positions'] = {}
                 if 'monitor_enabled_widgets' not in settings or not isinstance(settings['monitor_enabled_widgets'], dict):
                     settings['monitor_enabled_widgets'] = {}
-                settings['monitor_positions'][target_monitor] = adapt_positions_to_monitor(prof.get('positions', {}), target_monitor_width, target_monitor_height)
-                settings['monitor_enabled_widgets'][target_monitor] = list(prof.get('enabled_widgets', DEFAULT_ENABLED))
+                # A preset saved on this monitor carries its own layout for it.
+                # Only presets without per-monitor data (the built-in ones, laid
+                # out for 1920x1080) go through the resolution adapter.
+                prof_mp = prof.get('monitor_positions')
+                prof_mew = prof.get('monitor_enabled_widgets')
+                if isinstance(prof_mp, dict) and isinstance(prof_mp.get(target_monitor), dict):
+                    settings['monitor_positions'][target_monitor] = copy.deepcopy(prof_mp[target_monitor])
+                elif isinstance(prof_mp, dict):
+                    settings['monitor_positions'][target_monitor] = copy.deepcopy(prof.get('positions', {}))
+                else:
+                    settings['monitor_positions'][target_monitor] = adapt_positions_to_monitor(prof.get('positions', {}), target_monitor_width, target_monitor_height)
+                if isinstance(prof_mew, dict) and isinstance(prof_mew.get(target_monitor), list):
+                    settings['monitor_enabled_widgets'][target_monitor] = list(prof_mew[target_monitor])
+                else:
+                    settings['monitor_enabled_widgets'][target_monitor] = list(prof.get('enabled_widgets', DEFAULT_ENABLED))
             else:
-                settings['positions'] = copy.deepcopy(prof.get('positions', {}))
+                # Single-monitor layouts live in the global lists. Built-in
+                # presets are still fitted to the screen when its size is given.
+                if isinstance(prof.get('monitor_positions'), dict):
+                    settings['positions'] = copy.deepcopy(prof.get('positions', {}))
+                else:
+                    settings['positions'] = adapt_positions_to_monitor(prof.get('positions', {}), target_monitor_width, target_monitor_height)
                 settings['enabled_widgets'] = list(prof.get('enabled_widgets', DEFAULT_ENABLED))
             if 'widget_settings' in prof and isinstance(prof['widget_settings'], dict):
                 if 'widget_settings' not in settings or not isinstance(settings['widget_settings'], dict):
@@ -785,6 +885,8 @@ def main():
     elif action == 'save_profile_dialog':
         name = prompt_text_dialog(title="Save Layout Preset", text="Enter a name for this preset:", default="Custom Preset")
         if name:
+            state_lock = lock_state()
+            settings = load_settings()
             sync_git_settings(settings)
             profs = settings.get('layout_profiles', {})
             profs[name] = {
@@ -874,6 +976,9 @@ def main():
                     data = json.load(f)
                 prof = data.get('profile', data)
                 name = prof.get('name') or os.path.splitext(os.path.basename(src_path))[0]
+                if state_lock is None:
+                    state_lock = lock_state()
+                    settings = load_settings()
                 profs = settings.get('layout_profiles', {})
                 profs[name] = {
                     "name": name,
@@ -946,6 +1051,8 @@ def main():
             if picked:
                 selected_file = os.path.abspath(os.path.expanduser(picked))
                 name = os.path.splitext(os.path.basename(selected_file))[0]
+                state_lock = lock_state()
+                settings = load_settings()
                 customs = settings.get('custom_widgets', [])
                 existing = next((c for c in customs if os.path.abspath(c.get('path', '')) == selected_file), None)
                 if existing:
@@ -1086,7 +1193,8 @@ def main():
             "profiles": profile_list,
             "appearance": settings.get('appearance', DEFAULT_APPEARANCE),
             "monitor_positions": settings.get('monitor_positions', {}),
-            "monitor_enabled_widgets": settings.get('monitor_enabled_widgets', {})
+            "monitor_enabled_widgets": settings.get('monitor_enabled_widgets', {}),
+            "stack_order": settings.get('stack_order', [])
         }))
 
 if __name__ == '__main__':

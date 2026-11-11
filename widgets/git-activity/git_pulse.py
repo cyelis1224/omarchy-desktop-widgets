@@ -6,28 +6,70 @@ import datetime
 import json
 import re
 import shutil
+import time
 import concurrent.futures
+import fcntl
+import tempfile
 
 STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
 CACHE_DIR = os.path.expanduser('~/.cache/omarchy/git-remotes')
+runtime_dir = os.environ.get('XDG_RUNTIME_DIR') or '/tmp'
+GITHUB_CACHE_FILE = os.path.join(runtime_dir, f'omarchy_git_pulse_github_{os.getuid()}.json')
+FETCH_MARKER = 'omarchy-last-fetch'
+
+# The widget polls every 15s for local git data, but GitHub lists and remote
+# fetches refresh at most this often (the unauthenticated API fallback allows
+# only 60 requests/hour).
+NETWORK_TTL = 300
+# Retry delay after a failed GitHub or remote fetch (offline, rate limited)
+FAIL_RETRY_TTL = 30
+
+STATE_LOCK = os.path.join(STATE_DIR, '.dagyr.desktop-widgets.lock')
+
+def read_state():
+    """Returns the parsed state file, {} when there is none, or None when it
+    exists but cannot be read (so callers never save defaults over it)."""
+    if not os.path.exists(STATE_FILE):
+        return {}
+    try:
+        with open(STATE_FILE, 'r') as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
 
 def load_settings():
-    if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, 'r') as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
+    return read_state() or {}
 
-def save_settings(settings):
+def update_settings(mutate):
+    # The state file is shared with manage-positions.sh and the other widgets:
+    # take the same lock, re-read it, change only our keys and replace it
+    # atomically, so a stale snapshot never overwrites someone else's save.
+    tmp_path = None
     try:
         os.makedirs(STATE_DIR, exist_ok=True)
-        with open(STATE_FILE, 'w') as f:
-            json.dump(settings, f, indent=2)
+        with open(STATE_LOCK, 'w') as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            fresh = read_state()
+            if fresh is None:
+                return False
+            mutate(fresh)
+            fd, tmp_path = tempfile.mkstemp(prefix='.dagyr.desktop-widgets.', suffix='.json', dir=STATE_DIR)
+            with os.fdopen(fd, 'w') as f:
+                json.dump(fresh, f, indent=2)
+            os.replace(tmp_path, STATE_FILE)
+            tmp_path = None
+            return True
     except Exception:
-        pass
+        return False
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+def persist_repos(settings, custom_repos, active_repo=None):
+    sync_repos_to_settings(settings, custom_repos, active_repo)
+    update_settings(lambda fresh: sync_repos_to_settings(fresh, custom_repos, active_repo))
 
 def get_custom_repos_from_settings(settings):
     if not isinstance(settings, dict):
@@ -162,7 +204,7 @@ def fetch_github_prs(slug):
     except Exception:
         pass
 
-    return []
+    return None
 
 def fetch_github_issues(slug):
     if not slug:
@@ -213,9 +255,87 @@ def fetch_github_issues(slug):
     except Exception:
         pass
 
-    return []
+    return None
 
-def sync_remote_repo(url):
+def load_github_cache():
+    try:
+        with open(GITHUB_CACHE_FILE, 'r') as f:
+            cache = json.load(f)
+            return cache if isinstance(cache, dict) else {}
+    except Exception:
+        return {}
+
+def save_github_cache(cache):
+    # Atomic replace: several widget instances (one per monitor) can poll at once
+    tmp = f"{GITHUB_CACHE_FILE}.{os.getpid()}"
+    try:
+        with open(tmp, 'w') as f:
+            json.dump(cache, f)
+        os.replace(tmp, GITHUB_CACHE_FILE)
+    except Exception:
+        try:
+            os.remove(tmp)
+        except Exception:
+            pass
+
+def fetch_github_lists(slug, force=False):
+    """Pull requests and issues for slug, fetched live at most every NETWORK_TTL seconds."""
+    cache = load_github_cache()
+    entry = cache.get(slug) if isinstance(cache.get(slug), dict) else {}
+    now = time.time()
+    ttl = NETWORK_TTL if entry.get("ok", True) else FAIL_RETRY_TTL
+    if not force and now - entry.get("time", 0) < ttl:
+        return entry.get("prs", []), entry.get("issues", [])
+
+    pull_requests = None
+    issues = None
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        fut_prs = executor.submit(fetch_github_prs, slug)
+        fut_issues = executor.submit(fetch_github_issues, slug)
+        try:
+            pull_requests = fut_prs.result(timeout=6)
+        except Exception:
+            pass
+        try:
+            issues = fut_issues.result(timeout=6)
+        except Exception:
+            pass
+
+    # A failed fetch (offline, rate limited) keeps the last good lists instead
+    # of blanking them, and retries after FAIL_RETRY_TTL rather than a full TTL
+    ok = pull_requests is not None and issues is not None
+    if pull_requests is None:
+        pull_requests = entry.get("prs", [])
+    if issues is None:
+        issues = entry.get("issues", [])
+    cache[slug] = {"time": now, "ok": ok, "prs": pull_requests, "issues": issues}
+    save_github_cache(cache)
+    return pull_requests, issues
+
+def touch_fetch_marker(repo_cache_dir):
+    marker = os.path.join(repo_cache_dir, FETCH_MARKER)
+    try:
+        with open(marker, 'a'):
+            pass
+        os.utime(marker)
+    except Exception:
+        pass
+
+def mark_fetch_failed(repo_cache_dir):
+    """Backdate the marker so the next poll retries after FAIL_RETRY_TTL, not NETWORK_TTL."""
+    try:
+        t = time.time() - NETWORK_TTL + FAIL_RETRY_TTL
+        os.utime(os.path.join(repo_cache_dir, FETCH_MARKER), (t, t))
+    except Exception:
+        pass
+
+def fetched_recently(repo_cache_dir):
+    try:
+        return time.time() - os.path.getmtime(os.path.join(repo_cache_dir, FETCH_MARKER)) < NETWORK_TTL
+    except Exception:
+        return False
+
+def sync_remote_repo(url, force=False):
     os.makedirs(CACHE_DIR, exist_ok=True)
     slug = get_remote_slug(url)
     repo_cache_dir = os.path.join(CACHE_DIR, slug)
@@ -231,8 +351,10 @@ def sync_remote_repo(url):
         # Ensure refspec is configured for bare fetch to update local refs
         subprocess.run(['git', '-C', repo_cache_dir, 'config', 'remote.origin.fetch', '+refs/heads/*:refs/heads/*'],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    else:
-        # Fast background fetch
+        touch_fetch_marker(repo_cache_dir)
+    elif force or not fetched_recently(repo_cache_dir):
+        # Marked before fetching, so a concurrent poll skips instead of racing this fetch
+        touch_fetch_marker(repo_cache_dir)
         try:
             # Clean up stale locks that block fetch
             for lock_name in ('shallow.lock', 'index.lock', 'HEAD.lock'):
@@ -248,9 +370,11 @@ def sync_remote_repo(url):
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
             cmd = ['git', '-C', repo_cache_dir, 'fetch', 'origin', '+refs/heads/*:refs/heads/*', '--depth=200', '--update-head-ok']
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+            p = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+            if p.returncode != 0:
+                mark_fetch_failed(repo_cache_dir)
         except Exception:
-            pass
+            mark_fetch_failed(repo_cache_dir)
 
     return repo_cache_dir
 
@@ -353,7 +477,7 @@ def find_repos(custom_repos=None):
 
     return sorted(repos, key=lambda r: r["name"].lower())
 
-def get_git_data(repo_path, all_repos=None, num_weeks=12):
+def get_git_data(repo_path, all_repos=None, num_weeks=12, force_network=False):
     today = datetime.date.today()
     days_to_sat = (5 - today.weekday()) % 7
     end_date = today + datetime.timedelta(days=days_to_sat)
@@ -402,7 +526,7 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
     for item in target_items:
         p = item["path"]
         if item.get("is_remote"):
-            cache = sync_remote_repo(p)
+            cache = sync_remote_repo(p, force=force_network)
             if cache and os.path.exists(cache):
                 valid_targets.append((item, cache))
         else:
@@ -553,21 +677,11 @@ def get_git_data(repo_path, all_repos=None, num_weeks=12):
         recent_commits.sort(key=lambda c: c.get("_ts", 0), reverse=True)
         recent_commits = recent_commits[:25]
 
-    # Fetch Pull Requests and Issues concurrently if GitHub slug is present
+    # Pull Requests and Issues if GitHub slug is present
     pull_requests = []
     issues = []
     if github_slug:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-            fut_prs = executor.submit(fetch_github_prs, github_slug)
-            fut_issues = executor.submit(fetch_github_issues, github_slug)
-            try:
-                pull_requests = fut_prs.result(timeout=6)
-            except Exception:
-                pull_requests = []
-            try:
-                issues = fut_issues.result(timeout=6)
-            except Exception:
-                issues = []
+        pull_requests, issues = fetch_github_lists(github_slug, force=force_network)
 
     return {
         "repo_name": "All Repositories (Combined)" if is_all_mode else primary_item["name"],
@@ -592,24 +706,26 @@ def main():
     settings = load_settings()
     custom_repos = list(get_custom_repos_from_settings(settings))
 
+    # --refresh (manual refresh) bypasses the GitHub and remote-fetch caches
+    force_refresh = "--refresh" in sys.argv[1:]
+    args = [a for a in sys.argv[1:] if a != "--refresh"]
+
     # Handle argument to switch active repository, remove, or open picker dialog
-    if len(sys.argv) > 1 and sys.argv[1].strip():
-        req = sys.argv[1].strip()
+    if args and args[0].strip():
+        req = args[0].strip()
         if req == "pick_dialog":
             chosen = pick_repo_dialog()
             if chosen:
                 if chosen not in custom_repos:
                     custom_repos.append(chosen)
-                sync_repos_to_settings(settings, custom_repos, chosen)
-                save_settings(settings)
+                persist_repos(settings, custom_repos, chosen)
         elif req == "pick_remote_dialog":
             chosen = pick_remote_url_dialog()
             if chosen:
-                sync_remote_repo(chosen)
+                sync_remote_repo(chosen, force=True)
                 if chosen not in custom_repos:
                     custom_repos.append(chosen)
-                sync_repos_to_settings(settings, custom_repos, chosen)
-                save_settings(settings)
+                persist_repos(settings, custom_repos, chosen)
         elif req.startswith("remove:"):
             target_to_remove = req[7:].strip()
             if target_to_remove in custom_repos:
@@ -621,23 +737,19 @@ def main():
             new_active = get_active_repo_from_settings(settings)
             if new_active == target_to_remove:
                 new_active = custom_repos[0] if custom_repos else ""
-            sync_repos_to_settings(settings, custom_repos, new_active)
-            save_settings(settings)
+            persist_repos(settings, custom_repos, new_active)
         elif req == "ALL":
-            sync_repos_to_settings(settings, custom_repos, "ALL")
-            save_settings(settings)
+            persist_repos(settings, custom_repos, "ALL")
         elif is_remote_url(req):
             norm_url = normalize_remote_url(req)
-            sync_remote_repo(norm_url)
+            sync_remote_repo(norm_url, force=True)
             if norm_url not in custom_repos:
                 custom_repos.append(norm_url)
-            sync_repos_to_settings(settings, custom_repos, norm_url)
-            save_settings(settings)
+            persist_repos(settings, custom_repos, norm_url)
         elif os.path.exists(req) and os.path.exists(os.path.join(req, '.git')):
             if req not in custom_repos:
                 custom_repos.append(req)
-            sync_repos_to_settings(settings, custom_repos, req)
-            save_settings(settings)
+            persist_repos(settings, custom_repos, req)
 
     detected_repos = find_repos(custom_repos)
 
@@ -647,10 +759,9 @@ def main():
             active_repo = ""
     elif not active_repo or not any(r["path"] == active_repo for r in detected_repos):
         active_repo = detected_repos[0]["path"] if detected_repos else ""
-        sync_repos_to_settings(settings, custom_repos, active_repo)
-        save_settings(settings)
+        persist_repos(settings, custom_repos, active_repo)
 
-    data = get_git_data(active_repo, detected_repos)
+    data = get_git_data(active_repo, detected_repos, force_network=force_refresh)
     data["detected_repos"] = detected_repos
     print(json.dumps(data))
 

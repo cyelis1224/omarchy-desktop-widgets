@@ -62,6 +62,7 @@ Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GP
     - Transparent or frosted glass desktop card displaying files and directories (defaults to `~/Desktop`).
     - Full `.desktop` launcher shortcut support with actual application names and icons.
     - Interactive directory drill-down with breadcrumb back navigation and native file chooser dialog.
+    - Icons or Details view (size and modified columns, click a header to sort), persistent sort by name / date / size / type, folders kept on top with their own name / date sort (or mixed in with files), and an item spacing slider in the right-click menu.
 13. **🪙 Coin Tracker** (`widgets/CoinTrackerWidget.qml`)
     - Live cryptocurrency market tracker featuring multi-coin watchlist, cycling navigation, and custom Coinbase coin adding.
     - Interactive 24-hour canvas sparkline area chart with hover scrubber crosshair and hourly price tooltips.
@@ -85,8 +86,14 @@ Featuring a 3D photo stack gallery, real-time network traffic sparklines, CPU/GP
     - Session (5h) and weekly (7d) rate-limit radial gauges with reset countdowns, 7-day token histogram, and top model breakdown.
     - Multi-account support for Claude Code, Codex, and Fireworks (automatically discovering extra `~/.claude-*` / `~/.codex-*` profiles alongside Omarchy's stock collectors).
     - Per-account visibility toggles and configurable refresh intervals (`5m` to `1h`).
+18. **📈 System Monitor** (`widgets/SysmonWidget.qml`)
+    - CPU, RAM, GPU, and VRAM (NVIDIA) utilization history with a selectable time scale (30 sec to 1 hr) on a linear or logarithmic timeline, using tiered 2s / 20s sampling with constant memory.
+    - Wall-clock anchored sliding grid, time axis marks, and a hover crosshair with per-series readouts.
+    - Series colors follow the active theme's blue / green / yellow / magenta, with generated hues on monochrome themes.
+    - Compact layout: live values sit in the title row and turn urgent above a configurable alert threshold; the top CPU / RAM / GPU process line can be hidden.
+    - Right-click menu: smooth 25 fps scrolling, time scale, logarithmic timeline, show top processes, alert threshold, and Open Task Manager (btop).
 
-All 17 widgets are built-in and available right out of the box from the desktop **Add Widgets** drawer or right-click wallpaper menu.
+All 18 widgets are built-in and available right out of the box from the desktop **Add Widgets** drawer or right-click wallpaper menu.
 
 ---
 
@@ -176,8 +183,8 @@ The desktop widgets feature an interactive shaded backdrop overlay that elevates
   - Dismissing the overlay restores your previous desktop layout state without unwanted popups across workspaces.
 - **Widget-Level Right-Click Context Menu**:
   - Right-click anywhere on any widget body to open its specific options menu.
-  - When multiple monitors are connected, widgets display a **"Move to <Monitor>"** option allowing immediate migration to secondary screens.
-  - Selecting any setting option automatically saves your preference and dismisses the context menu.
+  - When multiple monitors are connected, the menu shows a **Displays** map of your monitor layout. Click a display to show or hide the widget on it (it can be on several at once), or use **All** to put it on every display.
+  - Selecting any setting option automatically saves your preference and dismisses the context menu; the Displays map keeps the menu open so several displays can be picked.
 - **Move Mode (Layout Lock/Unlock)**:
   - Select **Unlock Layout** from the desktop menu, any widget menu, or top banner.
   - Drag widgets freely across your desktop with smooth physics, drag scale feedback (`1.025×`), and configurable grid snapping. Custom-header widgets feature dedicated move grip handles (`\uf0b2`) and close buttons (`\uf00d`).
@@ -199,14 +206,14 @@ Five curated profiles are built-in and ready out of the box:
 - **Default**: Standard balanced desktop setup with Hero Clock, Photo Deck, Network Sparklines, MPRIS Media, and System Specs.
 - **Minimal**: Distraction-free glance layout featuring only the centerpiece clock and weather forecast.
 - **Productivity**: Focus workspace equipped with Pomodoro timer, Kanban todos, Git radar, and Folder view.
-- **Full Dashboard**: Comprehensive 12-widget command center arranged across the canvas.
+- **Full Dashboard**: Command center with all 18 built-in widgets. It needs more room than 1920x1080 offers: on a display of about 2560x1440 or larger every widget gets its own space, while on smaller displays widgets are kept on screen and overlap.
 - **Gaming**: Performance telemetry layout tracking CPU/GPU stats, RAM, multi-drive storage, and network bandwidth.
 
 ![Move Mode & Layout Editor](assets/screenshots/move-mode.png)
 
 ### ⚡ Quick-Switching & IPC Commands
 - **Top Move Mode Banner**: When Move Mode is unlocked, click any preset pill (`Default`, `Minimal`, `Productivity`, `Full Dashboard`, `Gaming`) to switch immediately.
-- **Desktop Right-Click Menu**: Right-click blank desktop wallpaper ➜ **Layout Presets ▸** to view the active checkmark and switch profiles.
+- **Desktop Right-Click Menu**: Right-click blank desktop wallpaper ➜ **Layout Presets ▸** to view the active checkmark and switch profiles, save the current layout to the active preset, save it as a new preset, or revert to the last saved layout.
 - **CLI / Scripting IPC**:
   ```bash
   # Switch to any layout preset via CLI or hotkey
@@ -215,8 +222,8 @@ Five curated profiles are built-in and ready out of the box:
   ```
 
 ### 💾 Import & Export Profiles
-- **Exporting**: Right-click wallpaper ➜ **Layout Presets ▸** ➜ **Export Current Preset...** opens a native file dialog to save a portable `.json` layout profile.
-- **Importing**: Select **Import Preset JSON...** to load community profiles or restore previous layouts.
+- **Exporting**: Right-click wallpaper ➜ **Layout Presets ▸** ➜ **Export...** opens a native file dialog to save a portable `.json` layout profile.
+- **Importing**: Select **Import...** to load community profiles or restore previous layouts.
 - **File Format**: Standard portable JSON schema:
   ```json
   {
@@ -271,7 +278,7 @@ Open the preferences dialog at any time via:
      - **Coarse (40px)**: Bold modular alignment for large displays.
 6. **Auto-Hide Behavior Modes**:
    - Customize when widgets automatically hide beneath applications:
-     - **Hide on Any Window (Tiled)** *(Default)*: Widgets hide whenever any window is active on the current workspace.
+     - **Hide Behind Tiled Windows** *(Default)*: Widgets hide when tiled or fullscreen windows cover the desktop. Floating windows leave them visible.
      - **Hide on Fullscreen Only**: Widgets stay visible beneath floating and tiled windows, hiding only when an app goes fullscreen.
      - **Always Keep Visible**: Widgets remain permanently rendered on the desktop canvas behind windows.
      - **Manual Toggle Only**: Widgets disregard window states; toggle manually via top bar or shortcut.
@@ -300,7 +307,7 @@ All desktop widgets inherit from the base card component (`shared/WidgetCard.qml
 | **Optional Header** | Set `showHeader: true`, `title: "..."`, and `icon: "\uf005"` to automatically render a standardized header with icon, title, and close buttons during Move Mode. Custom-header widgets include integrated move grips (`\uf0b2`) and close buttons (`\uf00d`). |
 | **Move & Drag Physics** | Integrated grid snapping (configurable 1px, 10px, 20px, 40px), smooth scale-up animation during drag, screen edge collision clamping, and automatic coordinate persistence. |
 | **3-Axis Resizing** | Built-in corner and edge resize handles with min/max boundary constraints (`minWidth`, `minHeight`, `maxWidth`, `maxHeight`) and live dimension tooltip badge. |
-| **Right-Click Context Menu** | Standard menu with "Unlock Widgets Layout", "Reset Positions", and widget toggle, expandable via `customMenuContent: Component { ... }`. When multi-monitor displays are connected, dynamically presents **"Move to <Monitor>"** transfer options. |
+| **Right-Click Context Menu** | Standard menu with "Unlock Widgets Layout", "Reset Positions", and widget toggle, expandable via `customMenuContent: Component { ... }`. When multi-monitor displays are connected, dynamically presents a clickable **Displays** layout map (plus an **All** toggle) to choose which monitors show the widget. |
 | **Multi-Monitor Geometry** | Native per-monitor dimension awareness via `monitorName`, `monitorWidth`, and `monitorHeight`, resolution-bound clamping (`maxX`, `maxY`), and display output tracking (`eDP-1`, `HDMI-A-1`, `DP-1`). |
 | **State Persistence API** | Built-in methods (`saveSetting`, `getSetting`, `saveSettings`, `settingsLoaded`) connected directly to Omarchy's persistent JSON state storage. |
 | **Screen Geometry Access** | `screenWidth`, `screenHeight`, `monitorWidth`, `monitorHeight`, and `rootRef` access for responsive calculations. |

@@ -14,6 +14,11 @@ Item {
   property bool isOpen: (rootRef && rootRef.preferencesOpen !== undefined) ? rootRef.preferencesOpen : false
   property int activeTab: 0
 
+  // Light themes pair a light surface with a dark foreground, so black wells become grey
+  // slabs; well() keeps the dark look and uses a faint foreground tint in light themes.
+  readonly property bool lightTheme: Commons.Color.background.hslLightness >= 0.5
+  function well(a) { return lightTheme ? Util.alpha(Commons.Color.foreground, a / 5) : Qt.rgba(0, 0, 0, a) }
+
   signal closeRequested()
 
   function closeDialog() {
@@ -77,7 +82,7 @@ Item {
     width: Math.min(parent.width - Style.space(32), 640)
     height: Math.min(parent.height - Style.space(64), 540)
     radius: 22
-    color: Qt.rgba(16/255, 16/255, 22/255, 0.96)
+    color: Util.alpha(Commons.Color.menu.background, 0.96)
     border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.45)
     border.width: 1.5
 
@@ -156,8 +161,8 @@ Item {
           width: 32
           height: 32
           radius: 16
-          color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
-          border.color: closeMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(1, 1, 1, 0.12)
+          color: closeMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Util.alpha(Commons.Color.foreground, 0.08)
+          border.color: closeMouse.containsMouse ? Commons.Color.urgent : Util.alpha(Commons.Color.foreground, 0.12)
           border.width: 1
 
           Text {
@@ -185,8 +190,8 @@ Item {
         Layout.fillWidth: true
         height: 38
         radius: 10
-        color: Qt.rgba(0, 0, 0, 0.40)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: prefsDialogRoot.well(0.40)
+        border.color: Util.alpha(Commons.Color.foreground, 0.08)
         border.width: 1
 
         RowLayout {
@@ -199,7 +204,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: 8
-            color: prefsDialogRoot.activeTab === 0 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab0Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            color: prefsDialogRoot.activeTab === 0 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab0Mouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.06) : "transparent")
             border.color: prefsDialogRoot.activeTab === 0 ? Commons.Color.accent : "transparent"
             border.width: 1
 
@@ -235,7 +240,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: 8
-            color: prefsDialogRoot.activeTab === 1 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab1Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            color: prefsDialogRoot.activeTab === 1 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab1Mouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.06) : "transparent")
             border.color: prefsDialogRoot.activeTab === 1 ? Commons.Color.accent : "transparent"
             border.width: 1
 
@@ -271,7 +276,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: 8
-            color: prefsDialogRoot.activeTab === 2 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab2Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            color: prefsDialogRoot.activeTab === 2 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab2Mouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.06) : "transparent")
             border.color: prefsDialogRoot.activeTab === 2 ? Commons.Color.accent : "transparent"
             border.width: 1
 
@@ -307,7 +312,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: 8
-            color: prefsDialogRoot.activeTab === 3 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab3Mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
+            color: prefsDialogRoot.activeTab === 3 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (tab3Mouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.06) : "transparent")
             border.color: prefsDialogRoot.activeTab === 3 ? Commons.Color.accent : "transparent"
             border.width: 1
 
@@ -360,8 +365,8 @@ Item {
             Layout.fillWidth: true
             implicitHeight: opacityCol.implicitHeight + 20
             radius: 12
-            color: Qt.rgba(0, 0, 0, 0.30)
-            border.color: Qt.rgba(1, 1, 1, 0.08)
+            color: prefsDialogRoot.well(0.30)
+            border.color: Util.alpha(Commons.Color.foreground, 0.08)
             border.width: 1
 
             ColumnLayout {
@@ -395,7 +400,7 @@ Item {
                 Layout.fillWidth: true
                 height: 8
                 radius: 4
-                color: Qt.rgba(1, 1, 1, 0.12)
+                color: Util.alpha(Commons.Color.foreground, 0.12)
 
                 Rectangle {
                   height: parent.height
@@ -455,8 +460,8 @@ Item {
                     height: 26
                     radius: 6
                     readonly property bool isSelected: Math.abs(prefsDialogRoot.curOpacity - modelData.val) < 0.05
-                    color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.28) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.35))
-                    border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+                    color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.28) : (chipMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.09) : prefsDialogRoot.well(0.35))
+                    border.color: isSelected ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.12)
                     border.width: isSelected ? 1.5 : 1
 
                     Text {
@@ -486,8 +491,8 @@ Item {
             Layout.fillWidth: true
             implicitHeight: radiusCol.implicitHeight + 20
             radius: 12
-            color: Qt.rgba(0, 0, 0, 0.30)
-            border.color: Qt.rgba(1, 1, 1, 0.08)
+            color: prefsDialogRoot.well(0.30)
+            border.color: Util.alpha(Commons.Color.foreground, 0.08)
             border.width: 1
 
             ColumnLayout {
@@ -520,7 +525,7 @@ Item {
                 Layout.fillWidth: true
                 height: 8
                 radius: 4
-                color: Qt.rgba(1, 1, 1, 0.12)
+                color: Util.alpha(Commons.Color.foreground, 0.12)
 
                 Rectangle {
                   height: parent.height
@@ -579,8 +584,8 @@ Item {
                     height: 26
                     radius: 6
                     readonly property bool isSelected: prefsDialogRoot.curRadius === modelData.val
-                    color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.28) : (radMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.09) : Qt.rgba(0, 0, 0, 0.35))
-                    border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+                    color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.28) : (radMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.09) : prefsDialogRoot.well(0.35))
+                    border.color: isSelected ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.12)
                     border.width: isSelected ? 1.5 : 1
 
                     Text {
@@ -615,8 +620,8 @@ Item {
               Layout.fillWidth: true
               height: 48
               radius: 12
-              color: Qt.rgba(0, 0, 0, 0.30)
-              border.color: Qt.rgba(1, 1, 1, 0.08)
+              color: prefsDialogRoot.well(0.30)
+              border.color: Util.alpha(Commons.Color.foreground, 0.08)
               border.width: 1
 
               RowLayout {
@@ -648,8 +653,8 @@ Item {
                   width: 38
                   height: 22
                   radius: 11
-                  color: prefsDialogRoot.curShadows ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.45)
-                  border.color: prefsDialogRoot.curShadows ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  color: prefsDialogRoot.curShadows ? Commons.Color.accent : (prefsDialogRoot.lightTheme ? Util.alpha(Commons.Color.foreground, 0.2) : Qt.rgba(0, 0, 0, 0.45))
+                  border.color: prefsDialogRoot.curShadows ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.20)
                   border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -677,8 +682,8 @@ Item {
               Layout.fillWidth: true
               height: 48
               radius: 12
-              color: Qt.rgba(0, 0, 0, 0.30)
-              border.color: Qt.rgba(1, 1, 1, 0.08)
+              color: prefsDialogRoot.well(0.30)
+              border.color: Util.alpha(Commons.Color.foreground, 0.08)
               border.width: 1
 
               RowLayout {
@@ -710,8 +715,8 @@ Item {
                   width: 38
                   height: 22
                   radius: 11
-                  color: prefsDialogRoot.curBlur ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.45)
-                  border.color: prefsDialogRoot.curBlur ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  color: prefsDialogRoot.curBlur ? Commons.Color.accent : (prefsDialogRoot.lightTheme ? Util.alpha(Commons.Color.foreground, 0.2) : Qt.rgba(0, 0, 0, 0.45))
+                  border.color: prefsDialogRoot.curBlur ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.20)
                   border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -739,8 +744,8 @@ Item {
               Layout.fillWidth: true
               height: 48
               radius: 12
-              color: Qt.rgba(0, 0, 0, 0.30)
-              border.color: Qt.rgba(1, 1, 1, 0.08)
+              color: prefsDialogRoot.well(0.30)
+              border.color: Util.alpha(Commons.Color.foreground, 0.08)
               border.width: 1
 
               RowLayout {
@@ -772,8 +777,8 @@ Item {
                   width: 38
                   height: 22
                   radius: 11
-                  color: prefsDialogRoot.curAnimations ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.45)
-                  border.color: prefsDialogRoot.curAnimations ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                  color: prefsDialogRoot.curAnimations ? Commons.Color.accent : (prefsDialogRoot.lightTheme ? Util.alpha(Commons.Color.foreground, 0.2) : Qt.rgba(0, 0, 0, 0.45))
+                  border.color: prefsDialogRoot.curAnimations ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.20)
                   border.width: 1
                   Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -846,8 +851,8 @@ Item {
               height: 54
               radius: 12
               readonly property bool isSelected: prefsDialogRoot.curGridSnap === modelData.snap
-              color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : (gridMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.28))
-              border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.08)
+              color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : (gridMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.08) : prefsDialogRoot.well(0.28))
+              border.color: isSelected ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.08)
               border.width: isSelected ? 1.5 : 1
 
               RowLayout {
@@ -859,7 +864,7 @@ Item {
                   width: 32
                   height: 32
                   radius: 8
-                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Util.alpha(Commons.Color.foreground, 0.08)
 
                   Text {
                     anchors.centerIn: parent
@@ -896,7 +901,7 @@ Item {
                   height: 20
                   radius: 10
                   color: isSelected ? Commons.Color.accent : "transparent"
-                  border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.3)
+                  border.color: isSelected ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.3)
                   border.width: 1.5
 
                   Text {
@@ -940,8 +945,8 @@ Item {
             model: [
               {
                 idVal: "tiled",
-                title: "Hide on Any Active Window (Default)",
-                desc: "Widgets automatically hide whenever any app window is open on the workspace.",
+                title: "Hide Behind Tiled Windows (Default)",
+                desc: "Widgets hide when tiled or fullscreen windows cover the desktop. Floating windows leave them visible.",
                 icon: "\uf2d0"
               },
               {
@@ -969,8 +974,8 @@ Item {
               height: 54
               radius: 12
               readonly property bool isSelected: prefsDialogRoot.curAutoHide === modelData.idVal
-              color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : (hideMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.28))
-              border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.08)
+              color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22) : (hideMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.08) : prefsDialogRoot.well(0.28))
+              border.color: isSelected ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.08)
               border.width: isSelected ? 1.5 : 1
 
               RowLayout {
@@ -982,7 +987,7 @@ Item {
                   width: 32
                   height: 32
                   radius: 8
-                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Util.alpha(Commons.Color.foreground, 0.08)
 
                   Text {
                     anchors.centerIn: parent
@@ -1019,7 +1024,7 @@ Item {
                   height: 20
                   radius: 10
                   color: isSelected ? Commons.Color.accent : "transparent"
-                  border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.3)
+                  border.color: isSelected ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.3)
                   border.width: 1.5
 
                   Text {
@@ -1057,8 +1062,8 @@ Item {
             Layout.fillWidth: true
             height: 60
             radius: 12
-            color: Qt.rgba(0, 0, 0, 0.32)
-            border.color: prefsDialogRoot.curScreensaver ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5) : Qt.rgba(1, 1, 1, 0.08)
+            color: prefsDialogRoot.well(0.32)
+            border.color: prefsDialogRoot.curScreensaver ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5) : Util.alpha(Commons.Color.foreground, 0.08)
             border.width: 1
 
             RowLayout {
@@ -1070,7 +1075,7 @@ Item {
                 width: 36
                 height: 36
                 radius: 10
-                color: prefsDialogRoot.curScreensaver ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+                color: prefsDialogRoot.curScreensaver ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Util.alpha(Commons.Color.foreground, 0.06)
 
                 Text {
                   anchors.centerIn: parent
@@ -1103,8 +1108,8 @@ Item {
                 width: 44
                 height: 24
                 radius: 12
-                color: prefsDialogRoot.curScreensaver ? Commons.Color.accent : Qt.rgba(0, 0, 0, 0.45)
-                border.color: prefsDialogRoot.curScreensaver ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.20)
+                color: prefsDialogRoot.curScreensaver ? Commons.Color.accent : (prefsDialogRoot.lightTheme ? Util.alpha(Commons.Color.foreground, 0.2) : Qt.rgba(0, 0, 0, 0.45))
+                border.color: prefsDialogRoot.curScreensaver ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.20)
                 border.width: 1
                 Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -1171,8 +1176,8 @@ Item {
                   height: 30
                   radius: 8
                   readonly property bool isSelected: prefsDialogRoot.curScreensaverTimeout === modelData.val
-                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.30) : (chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25))
-                  border.color: isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.08)
+                  color: isSelected ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.30) : (chipMouse.containsMouse ? Util.alpha(Commons.Color.foreground, 0.08) : prefsDialogRoot.well(0.25))
+                  border.color: isSelected ? Commons.Color.accent : Util.alpha(Commons.Color.foreground, 0.08)
                   border.width: isSelected ? 1.5 : 1
 
                   Text {
@@ -1206,8 +1211,8 @@ Item {
               Layout.fillWidth: true
               height: 52
               radius: 10
-              color: Qt.rgba(0, 0, 0, 0.25)
-              border.color: Qt.rgba(1, 1, 1, 0.06)
+              color: prefsDialogRoot.well(0.25)
+              border.color: Util.alpha(Commons.Color.foreground, 0.06)
               border.width: 1
 
               RowLayout {
@@ -1250,8 +1255,8 @@ Item {
               Layout.fillWidth: true
               height: 52
               radius: 10
-              color: Qt.rgba(0, 0, 0, 0.25)
-              border.color: Qt.rgba(1, 1, 1, 0.06)
+              color: prefsDialogRoot.well(0.25)
+              border.color: Util.alpha(Commons.Color.foreground, 0.06)
               border.width: 1
 
               RowLayout {
@@ -1363,7 +1368,7 @@ Item {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: Util.alpha(Commons.Color.foreground, 0.08)
       }
 
       RowLayout {
@@ -1375,8 +1380,8 @@ Item {
           implicitWidth: resetText.implicitWidth + 20
           height: 32
           radius: 8
-          color: resetMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
-          border.color: resetMouse.containsMouse ? Commons.Color.urgent : Qt.rgba(1, 1, 1, 0.1)
+          color: resetMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.25) : Util.alpha(Commons.Color.foreground, 0.06)
+          border.color: resetMouse.containsMouse ? Commons.Color.urgent : Util.alpha(Commons.Color.foreground, 0.1)
           border.width: 1
 
           RowLayout {

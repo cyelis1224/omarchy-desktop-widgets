@@ -83,6 +83,16 @@ WidgetCard {
     return (bps / (1024 * 1024 * 1024)).toFixed(2) + " GB/s"
   }
 
+  // Mirrors format_bytes() in get-network.sh
+  function formatBytes(n) {
+    var units = ["B", "KB", "MB", "GB", "TB"]
+    for (var i = 0; i < units.length; i++) {
+      if (n < 1024) return n.toFixed(1) + " " + units[i]
+      n /= 1024
+    }
+    return n.toFixed(1) + " PB"
+  }
+
   function hoverTimeOffset() {
     var steps = netRxHistory.length - 1 - hoverIndex
     if (steps <= 0) return "Now"
@@ -204,13 +214,21 @@ WidgetCard {
     return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
+  // Device switch requested while the info script was already running (e.g. the
+  // popout just opened); applied when that run exits instead of being dropped
+  property string pendingDeviceId: ""
+
   function selectNetworkDevice(devId) {
     selectedDeviceId = devId
     netRxHistory = emptyHistory()
     netTxHistory = emptyHistory()
     netCanvas.requestPaint()
-    netInfoProc.command = [networkWidgetRoot.netScriptPath, devId]
-    if (!netInfoProc.running) netInfoProc.running = true
+    if (netInfoProc.running) {
+      pendingDeviceId = devId
+    } else {
+      netInfoProc.command = [networkWidgetRoot.netScriptPath, devId]
+      netInfoProc.running = true
+    }
     devicePopoutOpen = false
     contextMenuOpen = false
   }
@@ -259,7 +277,7 @@ WidgetCard {
         radius: 6
         color: (devTriggerMouse.containsMouse || networkWidgetRoot.devicePopoutOpen)
           ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.2)
-          : Qt.rgba(1, 1, 1, 0.05)
+          : networkWidgetRoot.fgTint(0.05)
         border.color: networkWidgetRoot.devicePopoutOpen
           ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.55)
           : "transparent"
@@ -327,7 +345,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: networkWidgetRoot.fgTint(0.08)
         Layout.topMargin: 4
         Layout.bottomMargin: 4
       }
@@ -475,7 +493,7 @@ WidgetCard {
             radius: 10
             color: networkWidgetRoot.timeScaleMenuOpen
               ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
-              : Qt.rgba(1, 1, 1, 0.06)
+              : networkWidgetRoot.fgTint(0.06)
             border.color: networkWidgetRoot.timeScaleMenuOpen ? Commons.Color.accent : Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
             border.width: 1
 
@@ -519,7 +537,7 @@ WidgetCard {
         Layout.rightMargin: Style.space(6)
         implicitHeight: scaleOptionsCol.implicitHeight + 8
         radius: 6
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: networkWidgetRoot.fgTint(0.04)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3)
         border.width: 1
 
@@ -542,7 +560,7 @@ WidgetCard {
               radius: 5
               color: isSelected
                 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
-                : (scaleOptionMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+                : (scaleOptionMouse.containsMouse ? networkWidgetRoot.fgTint(0.08) : "transparent")
 
               RowLayout {
                 anchors.fill: parent
@@ -680,37 +698,126 @@ WidgetCard {
     }
   }
 
+  // Interface metadata (monitored interface, display name, device list). Speeds
+  // are sampled from /proc/net/dev below, so this Python + `ip` script only runs
+  // at startup, on device switch/refresh, when the device menu opens, when the
+  // monitored interface disappears, and every netMetaTimer interval.
+  function refreshNetInfo() {
+    if (!netInfoProc.running) netInfoProc.running = true
+  }
+
+  onDevicePopoutOpenChanged: if (devicePopoutOpen) refreshNetInfo()
+
   Process {
     id: netInfoProc
     command: [networkWidgetRoot.netScriptPath]
     running: true
     // Device argument is a one-shot switch request; later polls must run without it
-    onStarted: command = [networkWidgetRoot.netScriptPath]
+    onStarted: {
+      networkWidgetRoot.lastNetInfoMs = Date.now()
+      command = [networkWidgetRoot.netScriptPath]
+    }
+    onExited: {
+      if (networkWidgetRoot.pendingDeviceId) {
+        var devId = networkWidgetRoot.pendingDeviceId
+        networkWidgetRoot.pendingDeviceId = ""
+        command = [networkWidgetRoot.netScriptPath, devId]
+        running = true
+      }
+    }
     stdout: SplitParser {
       onRead: function(line) {
         try {
           var data = JSON.parse(String(line).trim())
-          if (data.rx_speed !== undefined) networkWidgetRoot.netRxSpeed = data.rx_speed
-          if (data.tx_speed !== undefined) networkWidgetRoot.netTxSpeed = data.tx_speed
-          if (data.rx_speed_str) networkWidgetRoot.netRxSpeedStr = data.rx_speed_str
-          if (data.tx_speed_str) networkWidgetRoot.netTxSpeedStr = data.tx_speed_str
-          if (data.rx_total_str) networkWidgetRoot.netRxTotalStr = data.rx_total_str
-          if (data.tx_total_str) networkWidgetRoot.netTxTotalStr = data.tx_total_str
           if (data.iface) networkWidgetRoot.netIface = data.iface
           if (data.available_devices) networkWidgetRoot.availableDevices = data.available_devices
+          // A run that predates a pending switch reports the old selection; skip it
+          if (networkWidgetRoot.pendingDeviceId) return
           if (data.selected_iface) networkWidgetRoot.selectedDeviceId = data.selected_iface
           if (data.active_iface) networkWidgetRoot.activeIface = data.active_iface
-
-          var rxList = networkWidgetRoot.netRxHistory.slice(1)
-          rxList.push(networkWidgetRoot.netRxSpeed)
-          networkWidgetRoot.netRxHistory = rxList
-
-          var txList = networkWidgetRoot.netTxHistory.slice(1)
-          txList.push(networkWidgetRoot.netTxSpeed)
-          networkWidgetRoot.netTxHistory = txList
         } catch (e) {}
       }
     }
+  }
+
+  // Picks up auto-detect changes (e.g. Wi-Fi to Ethernet) and fresh device IPs.
+  // This one forks (bash + python + ip), so it pauses while the card is off
+  // screen; coming back refreshes right away only if the last run is stale.
+  // The traffic sampling below is a plain file read and keeps running.
+  property real lastNetInfoMs: 0
+  onVisibleChanged: {
+    if (visible && Date.now() - lastNetInfoMs >= netMetaTimer.interval) refreshNetInfo()
+  }
+  Timer {
+    id: netMetaTimer
+    interval: 30000
+    running: networkWidgetRoot.visible
+    repeat: true
+    onTriggered: networkWidgetRoot.refreshNetInfo()
+  }
+
+  // Traffic sampling. Keeps running while hidden so the history stays continuous.
+  property real lastRxBytes: 0
+  property real lastTxBytes: 0
+  property real lastSampleMs: 0
+  property string lastSampleIface: ""
+
+  function sampleTraffic(devText) {
+    var iface = activeIface
+    if (!iface || iface === "none") return
+    var rx = -1
+    var tx = -1
+    var lines = devText.split("\n")
+    for (var i = 0; i < lines.length; i++) {
+      var sep = lines[i].indexOf(":")
+      if (sep < 0 || lines[i].substring(0, sep).trim() !== iface) continue
+      var cols = lines[i].substring(sep + 1).trim().split(/\s+/)
+      if (cols.length >= 9) {
+        rx = Number(cols[0])
+        tx = Number(cols[8])
+      }
+      break
+    }
+
+    var now = Date.now()
+    var rxSpeed = 0
+    var txSpeed = 0
+    if (rx < 0) {
+      // Monitored interface is gone (unplugged, renamed); let the script re-resolve
+      refreshNetInfo()
+    } else {
+      // Same rules as the script's cache: no rate across a gap, switch or counter reset
+      var dt = (now - lastSampleMs) / 1000
+      if (iface === lastSampleIface && dt > 0 && dt < 10 && rx >= lastRxBytes && tx >= lastTxBytes) {
+        rxSpeed = Math.round((rx - lastRxBytes) / dt)
+        txSpeed = Math.round((tx - lastTxBytes) / dt)
+      }
+      lastRxBytes = rx
+      lastTxBytes = tx
+      netRxTotalStr = formatBytes(rx)
+      netTxTotalStr = formatBytes(tx)
+    }
+    lastSampleMs = now
+    lastSampleIface = rx < 0 ? "" : iface
+
+    netRxSpeed = rxSpeed
+    netTxSpeed = txSpeed
+    netRxSpeedStr = formatSpeed(rxSpeed)
+    netTxSpeedStr = formatSpeed(txSpeed)
+
+    var rxList = netRxHistory.slice(1)
+    rxList.push(rxSpeed)
+    netRxHistory = rxList
+
+    var txList = netTxHistory.slice(1)
+    txList.push(txSpeed)
+    netTxHistory = txList
+  }
+
+  FileView {
+    id: netDevFile
+    path: "/proc/net/dev"
+    onLoaded: networkWidgetRoot.sampleTraffic(text())
   }
 
   Timer {
@@ -718,9 +825,7 @@ WidgetCard {
     interval: 1500
     running: true
     repeat: true
-    onTriggered: {
-      if (!netInfoProc.running) netInfoProc.running = true
-    }
+    onTriggered: netDevFile.reload()
   }
 
   ColumnLayout {
@@ -782,7 +887,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeNetMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeNetMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : networkWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -813,7 +918,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: netGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: netGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : networkWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -861,7 +966,7 @@ WidgetCard {
     Rectangle {
       Layout.fillWidth: true
       height: 1
-      color: Qt.rgba(1, 1, 1, 0.08)
+      color: networkWidgetRoot.fgTint(0.08)
     }
 
     // Speeds Metric Row
@@ -916,8 +1021,8 @@ WidgetCard {
           width: 22
           height: 22
           radius: 11
-          color: Qt.rgba(1, 1, 1, 0.08)
-          border.color: Qt.rgba(1, 1, 1, 0.2)
+          color: networkWidgetRoot.fgTint(0.08)
+          border.color: networkWidgetRoot.fgTint(0.2)
           border.width: 1
 
           Text {
@@ -956,8 +1061,8 @@ WidgetCard {
       Layout.minimumHeight: 40
       implicitHeight: 72
       radius: 10
-      color: Qt.rgba(0, 0, 0, 0.35)
-      border.color: Qt.rgba(1, 1, 1, 0.06)
+      color: networkWidgetRoot.wellColor
+      border.color: networkWidgetRoot.fgTint(0.06)
       border.width: 1
       clip: true
 
@@ -966,13 +1071,20 @@ WidgetCard {
         anchors.fill: parent
         anchors.margins: 4
 
+        // requestPaint() runs onPaint even while hidden, so sampling behind
+        // windows skips the redraw and the graph catches up once visible
+        function repaintIfVisible() {
+          if (visible) requestPaint()
+        }
+        onVisibleChanged: repaintIfVisible()
+
         Connections {
           target: networkWidgetRoot
-          function onNetRxHistoryChanged() { netCanvas.requestPaint() }
-          function onNetTxHistoryChanged() { netCanvas.requestPaint() }
-          function onHoverIndexChanged() { netCanvas.requestPaint() }
-          function onLogTimeScaleChanged() { netCanvas.requestPaint() }
-          function onTimeScaleSecondsChanged() { netCanvas.requestPaint() }
+          function onNetRxHistoryChanged() { netCanvas.repaintIfVisible() }
+          function onNetTxHistoryChanged() { netCanvas.repaintIfVisible() }
+          function onHoverIndexChanged() { netCanvas.repaintIfVisible() }
+          function onLogTimeScaleChanged() { netCanvas.repaintIfVisible() }
+          function onTimeScaleSecondsChanged() { netCanvas.repaintIfVisible() }
         }
 
         onPaint: {
@@ -1049,7 +1161,7 @@ WidgetCard {
 
           // Horizontal subtle guideline, plus log timeline time markers
           // (their labels are Text items overlaid on the canvas)
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.06)"
+          ctx.strokeStyle = networkWidgetRoot.fgTint(0.06)
           ctx.lineWidth = 1
           ctx.beginPath()
           ctx.moveTo(0, h * 0.5)
@@ -1065,7 +1177,7 @@ WidgetCard {
           // 1. Draw TX (Upload) Area & Line
           drawSeries(points(txArr),
                      Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.75), 1.5,
-                     "rgba(255, 255, 255, 0.18)", "rgba(255, 255, 255, 0.01)")
+                     networkWidgetRoot.fgTint(0.18), networkWidgetRoot.fgTint(0.01))
 
           // 2. Draw RX (Download) Area & Line
           drawSeries(points(rxArr), Commons.Color.accent, 2,
@@ -1077,14 +1189,14 @@ WidgetCard {
           if (hi >= start && hi < count) {
             var hx = networkWidgetRoot.xFraction(hi) * w
             ctx.save()
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)"
+            ctx.strokeStyle = networkWidgetRoot.fgTint(0.25)
             ctx.lineWidth = 1
             ctx.beginPath()
             ctx.moveTo(hx, 0)
             ctx.lineTo(hx, h)
             ctx.stroke()
 
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.6)"
+            ctx.strokeStyle = networkWidgetRoot.bgTint(0.6)
             ctx.lineWidth = 1.5
 
             ctx.beginPath()
@@ -1150,7 +1262,7 @@ WidgetCard {
         width: netHoverLayout.implicitWidth + 12
         height: 20
         radius: 6
-        color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+        color: networkWidgetRoot.bgTint(0.95)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.55)
         border.width: 1
 
@@ -1254,7 +1366,7 @@ WidgetCard {
     height: popoutHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.98)
+    color: Qt.rgba(Commons.Color.menu.background.r, Commons.Color.menu.background.g, Commons.Color.menu.background.b, 0.98)
     border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
     border.width: 1.5
 
@@ -1311,7 +1423,7 @@ WidgetCard {
           width: 20
           height: 20
           radius: 10
-          color: closePopoutMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: closePopoutMouse.containsMouse ? networkWidgetRoot.fgTint(0.22) : networkWidgetRoot.fgTint(0.08)
 
           Text {
             anchors.centerIn: parent
@@ -1335,7 +1447,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: networkWidgetRoot.fgTint(0.08)
         Layout.bottomMargin: 2
       }
 
@@ -1380,7 +1492,7 @@ WidgetCard {
                   radius: 11
                   color: isSelected
                     ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
-                    : Qt.rgba(1, 1, 1, 0.06)
+                    : networkWidgetRoot.fgTint(0.06)
 
                   Text {
                     anchors.centerIn: parent

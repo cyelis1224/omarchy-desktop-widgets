@@ -405,7 +405,7 @@ WidgetCard {
         width: todayTxt.implicitWidth + 12
         height: 22
         radius: 4
-        color: todayMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+        color: todayMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : calendarRoot.fgTint(0.08)
 
         Text {
           id: todayTxt
@@ -431,7 +431,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 4
-        color: prevMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06)
+        color: prevMouse.containsMouse ? calendarRoot.fgTint(0.15) : calendarRoot.fgTint(0.06)
 
         Text {
           anchors.centerIn: parent
@@ -455,7 +455,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 4
-        color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06)
+        color: nextMouse.containsMouse ? calendarRoot.fgTint(0.15) : calendarRoot.fgTint(0.06)
 
         Text {
           anchors.centerIn: parent
@@ -480,7 +480,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: calCloseMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: calCloseMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : calendarRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -512,7 +512,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: calGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: calGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : calendarRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -605,7 +605,7 @@ WidgetCard {
           color: {
             if (modelData.isSelected) return Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.30)
             if (modelData.isToday) return Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.15)
-            if (cellMouse.containsMouse) return Qt.rgba(1, 1, 1, 0.08)
+            if (cellMouse.containsMouse) return calendarRoot.fgTint(0.08)
             return "transparent"
           }
 
@@ -658,7 +658,7 @@ WidgetCard {
     Rectangle {
       Layout.fillWidth: true
       height: 1
-      color: Qt.rgba(1, 1, 1, 0.08)
+      color: calendarRoot.fgTint(0.08)
       Layout.topMargin: 2
       Layout.bottomMargin: 2
     }
@@ -732,9 +732,9 @@ WidgetCard {
         width: agendaListView.width
         implicitHeight: eventCol.implicitHeight + 12
         radius: 6
-        color: evMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
+        color: evMouse.containsMouse ? calendarRoot.fgTint(0.08) : calendarRoot.fgTint(0.04)
         border.width: 1
-        border.color: modelData.done ? "transparent" : Qt.rgba(1, 1, 1, 0.06)
+        border.color: modelData.done ? "transparent" : calendarRoot.fgTint(0.06)
 
         RowLayout {
           anchors.fill: parent
@@ -900,9 +900,9 @@ WidgetCard {
       Layout.fillWidth: true
       height: 30
       radius: 6
-      color: schedBtnMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.05)
+      color: schedBtnMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : calendarRoot.fgTint(0.05)
       border.width: 1
-      border.color: schedBtnMouse.containsMouse ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.08)
+      border.color: schedBtnMouse.containsMouse ? Commons.Color.accent : calendarRoot.fgTint(0.08)
 
       RowLayout {
         anchors.centerIn: parent
@@ -943,7 +943,7 @@ WidgetCard {
     z: 300
     visible: calendarRoot.showEventModal
     radius: 18
-    color: Qt.rgba(12/255, 14/255, 20/255, 0.97)
+    color: Qt.rgba(Commons.Color.menu.background.r, Commons.Color.menu.background.g, Commons.Color.menu.background.b, 0.97)
     border.width: 1.5
     border.color: Commons.Color.accent
 
@@ -1002,7 +1002,7 @@ WidgetCard {
           width: 22
           height: 22
           radius: 11
-          color: modalCloseMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+          color: modalCloseMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : calendarRoot.fgTint(0.08)
 
           Text {
             anchors.centerIn: parent
@@ -1039,9 +1039,9 @@ WidgetCard {
           Layout.fillWidth: true
           height: 30
           radius: 6
-          color: Qt.rgba(0, 0, 0, 0.4)
+          color: calendarRoot.wellColor
           border.width: 1
-          border.color: titleInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+          border.color: titleInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
           MouseArea {
             anchors.fill: parent
@@ -1103,9 +1103,9 @@ WidgetCard {
             Layout.fillWidth: true
             height: 28
             radius: 6
-            color: Qt.rgba(0, 0, 0, 0.4)
+            color: calendarRoot.wellColor
             border.width: 1
-            border.color: startInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+            border.color: startInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
             MouseArea {
               anchors.fill: parent
@@ -1146,9 +1146,9 @@ WidgetCard {
             Layout.fillWidth: true
             height: 28
             radius: 6
-            color: Qt.rgba(0, 0, 0, 0.4)
+            color: calendarRoot.wellColor
             border.width: 1
-            border.color: endInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+            border.color: endInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
             MouseArea {
               anchors.fill: parent
@@ -1244,9 +1244,9 @@ WidgetCard {
             Layout.fillWidth: true
             height: 28
             radius: 6
-            color: Qt.rgba(0, 0, 0, 0.4)
+            color: calendarRoot.wellColor
             border.width: 1
-            border.color: sTimeInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+            border.color: sTimeInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
             MouseArea {
               anchors.fill: parent
@@ -1287,9 +1287,9 @@ WidgetCard {
             Layout.fillWidth: true
             height: 28
             radius: 6
-            color: Qt.rgba(0, 0, 0, 0.4)
+            color: calendarRoot.wellColor
             border.width: 1
-            border.color: eTimeInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+            border.color: eTimeInput.activeFocus ? Commons.Color.accent : calendarRoot.fgTint(0.12)
 
             MouseArea {
               anchors.fill: parent
@@ -1352,7 +1352,7 @@ WidgetCard {
               height: 24
               radius: 5
               readonly property bool isSelected: (calendarRoot.modalCategory === modelData.id)
-              color: isSelected ? Qt.rgba(0.2, 0.6, 0.9, 0.25) : Qt.rgba(1, 1, 1, 0.05)
+              color: isSelected ? Qt.rgba(0.2, 0.6, 0.9, 0.25) : calendarRoot.fgTint(0.05)
               border.width: isSelected ? 1 : 0
               border.color: modelData.color
 
@@ -1386,7 +1386,7 @@ WidgetCard {
           Layout.fillWidth: true
           height: 30
           radius: 6
-          color: cancelBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+          color: cancelBtnMouse.containsMouse ? calendarRoot.fgTint(0.12) : calendarRoot.fgTint(0.06)
 
           Text {
             anchors.centerIn: parent

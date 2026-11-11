@@ -4,6 +4,8 @@ import json
 import os
 import sys
 import subprocess
+import fcntl
+import tempfile
 
 runtime_dir = os.environ.get('XDG_RUNTIME_DIR') or '/tmp'
 CACHE_FILE = os.path.join(runtime_dir, f'omarchy_net_stats_{os.getuid()}.json')
@@ -11,28 +13,56 @@ STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
 LEGACY_CONFIG = os.path.expanduser('~/.config/omarchy/plugins/dagyr.desktop-widgets/settings.json')
 
+STATE_LOCK = os.path.join(STATE_DIR, '.dagyr.desktop-widgets.lock')
+
+def read_state():
+    """Returns the parsed state file, {} when there is none, or None when it
+    exists but cannot be read (so callers never save defaults over it)."""
+    if not os.path.exists(STATE_FILE):
+        return {}
+    try:
+        with open(STATE_FILE, 'r') as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
 def load_settings():
     if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, 'r') as f:
-                return json.load(f)
-        except Exception:
-            pass
-    elif os.path.exists(LEGACY_CONFIG):
+        return read_state() or {}
+    if os.path.exists(LEGACY_CONFIG):
         try:
             with open(LEGACY_CONFIG, 'r') as f:
-                return json.load(f)
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
         except Exception:
             pass
     return {}
 
-def save_settings(settings):
+def update_settings(mutate):
+    # The state file is shared with manage-positions.sh and the other widgets:
+    # take the same lock, re-read it, change only our keys and replace it
+    # atomically, so a stale snapshot never overwrites someone else's save.
+    tmp_path = None
     try:
         os.makedirs(STATE_DIR, exist_ok=True)
-        with open(STATE_FILE, 'w') as f:
-            json.dump(settings, f, indent=2)
+        with open(STATE_LOCK, 'w') as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            fresh = read_state()
+            if fresh is None:
+                return False
+            mutate(fresh)
+            fd, tmp_path = tempfile.mkstemp(prefix='.dagyr.desktop-widgets.', suffix='.json', dir=STATE_DIR)
+            with os.fdopen(fd, 'w') as f:
+                json.dump(fresh, f, indent=2)
+            os.replace(tmp_path, STATE_FILE)
+            tmp_path = None
+            return True
     except Exception:
-        pass
+        return False
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 def format_speed(bps):
     if bps < 1024:
@@ -235,7 +265,7 @@ def main():
         # Only persist on actual change; the speed cache is keyed by iface, so no reset is needed
         if new_selection != settings.get("network_iface", "AUTO"):
             settings["network_iface"] = new_selection
-            save_settings(settings)
+            update_settings(lambda fresh: fresh.__setitem__("network_iface", new_selection))
 
     selected_iface = settings.get("network_iface", "AUTO")
     current_stats = read_net_dev()

@@ -179,10 +179,12 @@ WidgetCard {
   property bool isAddingTracker: false
   property string addInputText: ""
 
-  function nextCoin() {
+  // Auto-cycle passes persist = false: saving spawns a settings write and makes
+  // every widget re-apply its settings, too much for a timer tick
+  function nextCoin(persist) {
     if (!trackedCoins || trackedCoins.length <= 1) return
     currentCoinIndex = (currentCoinIndex + 1) % trackedCoins.length
-    saveSetting("currentCoinIndex", currentCoinIndex)
+    if (persist !== false) saveSetting("currentCoinIndex", currentCoinIndex)
     fetchCrypto()
   }
 
@@ -303,6 +305,8 @@ WidgetCard {
   property string lastUpdated: "--"
   property bool isLoading: false
   property bool isStale: false
+  // Emitted after each successful fetch; the header dot pulses on it
+  signal priceUpdated()
   property string errorMessage: ""
 
   // Hover inspection on sparkline
@@ -332,8 +336,10 @@ WidgetCard {
     return decodeURIComponent(u.replace(/^file:\/\//, ""))
   }
 
+  property real lastFetchMs: 0
   function fetchCrypto() {
     if (cryptoProc.running) return
+    lastFetchMs = Date.now()
     isLoading = true
     cryptoProc.command = [btcWidgetRoot.cryptoScriptPath, btcWidgetRoot.currentCoinParam, btcWidgetRoot.currency]
     cryptoProc.running = true
@@ -375,6 +381,7 @@ WidgetCard {
             btcWidgetRoot.lastUpdated = data.last_updated || ""
             btcWidgetRoot.isStale = Boolean(data.is_stale)
             btcWidgetRoot.errorMessage = ""
+            btcWidgetRoot.priceUpdated()
           } else {
             btcWidgetRoot.errorMessage = data.message || "Failed to fetch crypto feed"
           }
@@ -391,12 +398,18 @@ WidgetCard {
     }
   }
 
-  // Periodic Auto-refresh Timer for active coin
+  // Periodic Auto-refresh Timer for active coin. Refresh and auto-cycle pause
+  // while the card is off screen (the sparkline comes from the API, so nothing
+  // is lost); coming back fetches right away only if the price is already stale.
   Timer {
     interval: btcWidgetRoot.refreshInterval
-    running: true
+    running: btcWidgetRoot.visible
     repeat: true
     onTriggered: btcWidgetRoot.fetchCrypto()
+  }
+
+  onVisibleChanged: {
+    if (visible && Date.now() - lastFetchMs >= refreshInterval) fetchCrypto()
   }
 
   // Auto-Cycle Timer: switches coin every (refreshInterval / trackedCoins.length)
@@ -406,10 +419,10 @@ WidgetCard {
       var count = btcWidgetRoot.trackedCoins ? Math.max(1, btcWidgetRoot.trackedCoins.length) : 1
       return Math.max(4000, Math.round(btcWidgetRoot.refreshInterval / count))
     }
-    running: btcWidgetRoot.autoCycle && btcWidgetRoot.trackedCoins && btcWidgetRoot.trackedCoins.length > 1
+    running: btcWidgetRoot.visible && btcWidgetRoot.autoCycle && btcWidgetRoot.trackedCoins && btcWidgetRoot.trackedCoins.length > 1
     repeat: true
     onTriggered: {
-      btcWidgetRoot.nextCoin()
+      btcWidgetRoot.nextCoin(false)
     }
   }
 
@@ -452,10 +465,10 @@ WidgetCard {
         radius: 6
         color: (trackTriggerMouse.containsMouse || btcWidgetRoot.trackingPopoutOpen)
           ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
-          : Qt.rgba(1, 1, 1, 0.04)
+          : btcWidgetRoot.fgTint(0.04)
         border.color: btcWidgetRoot.trackingPopoutOpen
           ? Commons.Color.accent
-          : (trackTriggerMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent")
+          : (trackTriggerMouse.containsMouse ? btcWidgetRoot.fgTint(0.15) : "transparent")
         border.width: 1
 
         RowLayout {
@@ -559,7 +572,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: btcWidgetRoot.fgTint(0.06)
         Layout.topMargin: 2
         Layout.bottomMargin: 2
       }
@@ -594,10 +607,10 @@ WidgetCard {
             readonly property bool isSelected: btcWidgetRoot.currency === modelData.id
             color: isSelected
               ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
-              : (curMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+              : (curMouse.containsMouse ? btcWidgetRoot.fgTint(0.08) : btcWidgetRoot.fgTint(0.03))
             border.color: isSelected
               ? Commons.Color.accent
-              : (curMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent")
+              : (curMouse.containsMouse ? btcWidgetRoot.fgTint(0.15) : "transparent")
             border.width: 1
 
             Text {
@@ -627,7 +640,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: btcWidgetRoot.fgTint(0.06)
         Layout.topMargin: 2
         Layout.bottomMargin: 2
       }
@@ -661,7 +674,7 @@ WidgetCard {
             readonly property bool isSelected: btcWidgetRoot.refreshInterval === modelData.ms
             color: isSelected
               ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25)
-              : (freqMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03))
+              : (freqMouse.containsMouse ? btcWidgetRoot.fgTint(0.08) : btcWidgetRoot.fgTint(0.03))
             border.color: isSelected ? Commons.Color.accent : "transparent"
             border.width: 1
 
@@ -692,7 +705,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: btcWidgetRoot.fgTint(0.06)
         Layout.topMargin: 2
         Layout.bottomMargin: 2
       }
@@ -885,7 +898,7 @@ WidgetCard {
     height: popoutHeight
 
     radius: 14
-    color: Qt.rgba(14/255, 14/255, 20/255, 0.98)
+    color: Qt.rgba(Commons.Color.menu.background.r, Commons.Color.menu.background.g, Commons.Color.menu.background.b, 0.98)
     border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
     border.width: 1.5
 
@@ -958,7 +971,7 @@ WidgetCard {
           width: 20
           height: 20
           radius: 10
-          color: closePopoutMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.08)
+          color: closePopoutMouse.containsMouse ? btcWidgetRoot.fgTint(0.22) : btcWidgetRoot.fgTint(0.08)
 
           Text {
             anchors.centerIn: parent
@@ -982,7 +995,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: btcWidgetRoot.fgTint(0.06)
         Layout.bottomMargin: 2
       }
 
@@ -1045,8 +1058,8 @@ WidgetCard {
             Layout.fillWidth: true
             height: 32
             radius: 6
-            color: Qt.rgba(1, 1, 1, 0.07)
-            border.color: trackerInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.15)
+            color: btcWidgetRoot.fgTint(0.07)
+            border.color: trackerInput.activeFocus ? Commons.Color.accent : btcWidgetRoot.fgTint(0.15)
             border.width: 1
 
             MouseArea {
@@ -1097,7 +1110,7 @@ WidgetCard {
                 width: 22
                 height: 20
                 radius: 4
-                color: pasteBtnHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : Qt.rgba(1, 1, 1, 0.08)
+                color: pasteBtnHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : btcWidgetRoot.fgTint(0.08)
                 border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35)
                 border.width: 1
 
@@ -1146,7 +1159,7 @@ WidgetCard {
               Layout.fillWidth: true
               height: 26
               radius: 5
-              color: cancelAddMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.05)
+              color: cancelAddMouse.containsMouse ? btcWidgetRoot.fgTint(0.12) : btcWidgetRoot.fgTint(0.05)
 
               Text {
                 anchors.centerIn: parent
@@ -1206,7 +1219,7 @@ WidgetCard {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: Qt.rgba(1, 1, 1, 0.06)
+        color: btcWidgetRoot.fgTint(0.06)
         Layout.topMargin: 2
         Layout.bottomMargin: 2
       }
@@ -1237,7 +1250,7 @@ WidgetCard {
               readonly property bool isCurrent: btcWidgetRoot.currentCoinIndex === index
               color: isCurrent
                 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.22)
-                : (itemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.07) : "transparent")
+                : (itemMouse.containsMouse ? btcWidgetRoot.fgTint(0.07) : "transparent")
               border.color: isCurrent
                 ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
                 : "transparent"
@@ -1262,7 +1275,7 @@ WidgetCard {
                   width: symText.implicitWidth + 8
                   height: 18
                   radius: 4
-                  color: Qt.rgba(1, 1, 1, 0.08)
+                  color: btcWidgetRoot.fgTint(0.08)
 
                   Text {
                     id: symText
@@ -1355,8 +1368,8 @@ WidgetCard {
         height: 22
         radius: 11
         visible: btcWidgetRoot.trackedCoins && btcWidgetRoot.trackedCoins.length > 1
-        color: prevHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.05)
-        border.color: prevHover.containsMouse ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.1)
+        color: prevHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : btcWidgetRoot.fgTint(0.05)
+        border.color: prevHover.containsMouse ? Commons.Color.accent : btcWidgetRoot.fgTint(0.1)
         border.width: 1
 
         Text {
@@ -1412,7 +1425,7 @@ WidgetCard {
           width: coinTagText.implicitWidth + 8
           height: 16
           radius: 4
-          color: Qt.rgba(1, 1, 1, 0.08)
+          color: btcWidgetRoot.fgTint(0.08)
 
           Text {
             id: coinTagText
@@ -1432,8 +1445,8 @@ WidgetCard {
         height: 22
         radius: 11
         visible: btcWidgetRoot.trackedCoins && btcWidgetRoot.trackedCoins.length > 1
-        color: nextHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.05)
-        border.color: nextHover.containsMouse ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.1)
+        color: nextHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : btcWidgetRoot.fgTint(0.05)
+        border.color: nextHover.containsMouse ? Commons.Color.accent : btcWidgetRoot.fgTint(0.1)
         border.width: 1
 
         Text {
@@ -1460,12 +1473,21 @@ WidgetCard {
         radius: 3
         color: btcWidgetRoot.isStale ? "#F59E0B" : btcWidgetRoot.trendColor
 
+        // Pulses twice when a fresh price lands. An endless pulse would
+        // redraw the whole desktop surface every frame for a 6px dot.
         SequentialAnimation on opacity {
-          // Pause while hidden: a running animation keeps the whole shell repainting every vsync.
-          running: btcWidgetRoot.visible
-          loops: Animation.Infinite
+          id: pulseAnim
+          running: false
+          loops: 2
           NumberAnimation { from: 1.0; to: 0.3; duration: 1000; easing.type: Easing.InOutQuad }
           NumberAnimation { from: 0.3; to: 1.0; duration: 1000; easing.type: Easing.InOutQuad }
+        }
+
+        Connections {
+          target: btcWidgetRoot
+          function onPriceUpdated() {
+            if (btcWidgetRoot.visible) pulseAnim.restart()
+          }
         }
       }
 
@@ -1476,7 +1498,7 @@ WidgetCard {
         width: curPillText.implicitWidth + 14
         height: 22
         radius: 11
-        color: curPillHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : Qt.rgba(1, 1, 1, 0.06)
+        color: curPillHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : btcWidgetRoot.fgTint(0.06)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4)
         border.width: 1
 
@@ -1504,8 +1526,8 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: refHover.containsMouse ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(1, 1, 1, 0.06)
-        border.color: Qt.rgba(1, 1, 1, 0.1)
+        color: refHover.containsMouse ? btcWidgetRoot.fgTint(0.14) : btcWidgetRoot.fgTint(0.06)
+        border.color: btcWidgetRoot.fgTint(0.1)
         border.width: 1
 
         Text {
@@ -1516,7 +1538,7 @@ WidgetCard {
           color: btcWidgetRoot.isLoading ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.75)
 
           RotationAnimation on rotation {
-            running: btcWidgetRoot.isLoading
+            running: btcWidgetRoot.isLoading && btcWidgetRoot.visible
             from: 0
             to: 360
             loops: Animation.Infinite
@@ -1539,7 +1561,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeCoinMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeCoinMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : btcWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -1571,7 +1593,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: coinGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: coinGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : btcWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -1670,8 +1692,8 @@ WidgetCard {
       Layout.fillHeight: true
       Layout.minimumHeight: 65
       radius: 10
-      color: Qt.rgba(1, 1, 1, 0.03)
-      border.color: Qt.rgba(1, 1, 1, 0.07)
+      color: btcWidgetRoot.fgTint(0.03)
+      border.color: btcWidgetRoot.fgTint(0.07)
       border.width: 1
       clip: true
 
@@ -1717,6 +1739,12 @@ WidgetCard {
           function onFillSparklineChanged() { sparklineCanvas.requestPaint() }
         }
 
+        // Grid line is foreground-tinted; repaint when the theme changes
+        Connections {
+          target: Commons.Color
+          function onForegroundChanged() { sparklineCanvas.requestPaint() }
+        }
+
         onPaint: {
           var ctx = getContext("2d")
           ctx.reset()
@@ -1744,7 +1772,7 @@ WidgetCard {
           var stepX = w / (count - 1)
 
           // 1. Subtle baseline grid line
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.05)"
+          ctx.strokeStyle = btcWidgetRoot.fgTint(0.05)
           ctx.lineWidth = 1
           ctx.beginPath()
           ctx.moveTo(0, h * 0.5)
@@ -1847,7 +1875,7 @@ WidgetCard {
         width: hoverBadgeLayout.implicitWidth + 12
         height: 22
         radius: 6
-        color: Qt.rgba(14/255, 14/255, 20/255, 0.95)
+        color: btcWidgetRoot.bgTint(0.95)
         border.color: btcWidgetRoot.trendColor
         border.width: 1
 
@@ -1912,7 +1940,7 @@ WidgetCard {
         Layout.fillWidth: true
         height: 4
         radius: 2
-        color: Qt.rgba(1, 1, 1, 0.08)
+        color: btcWidgetRoot.fgTint(0.08)
 
         // Filled Portion
         Rectangle {
@@ -1956,8 +1984,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 24
         radius: 6
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.06)
+        color: btcWidgetRoot.fgTint(0.04)
+        border.color: btcWidgetRoot.fgTint(0.06)
         border.width: 1
 
         RowLayout {
@@ -1986,8 +2014,8 @@ WidgetCard {
         Layout.fillWidth: true
         implicitHeight: 24
         radius: 6
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.06)
+        color: btcWidgetRoot.fgTint(0.04)
+        border.color: btcWidgetRoot.fgTint(0.06)
         border.width: 1
 
         RowLayout {
@@ -2016,8 +2044,8 @@ WidgetCard {
         implicitWidth: updatedText.implicitWidth + 10
         implicitHeight: 24
         radius: 6
-        color: Qt.rgba(1, 1, 1, 0.04)
-        border.color: Qt.rgba(1, 1, 1, 0.06)
+        color: btcWidgetRoot.fgTint(0.04)
+        border.color: btcWidgetRoot.fgTint(0.06)
         border.width: 1
 
         Text {

@@ -30,6 +30,30 @@ WidgetCard {
   property var allApps: []
   property bool isLoading: false
 
+  readonly property bool hasInputFocus: (typeof searchInput !== "undefined" && searchInput && searchInput.activeFocus)
+
+  onHasInputFocusChanged: {
+    if (rootRef && "keyboardFocusRequested" in rootRef) {
+      rootRef.keyboardFocusRequested = hasInputFocus
+    }
+  }
+
+  Connections {
+    target: (rootRef && "keyboardFocusRequested" in rootRef) ? rootRef : null
+    ignoreUnknownSignals: true
+    function onKeyboardFocusRequestedChanged() {
+      if (rootRef && !rootRef.keyboardFocusRequested) {
+        if (typeof searchInput !== "undefined" && searchInput && searchInput.activeFocus) searchInput.focus = false
+      }
+    }
+  }
+
+  Component.onDestruction: {
+    if (rootRef && "keyboardFocusRequested" in rootRef && rootRef.keyboardFocusRequested) {
+      rootRef.keyboardFocusRequested = false
+    }
+  }
+
   function applySavedSettings() {
     var cat = getSetting("selectedCategory", undefined)
     if (cat !== undefined && typeof cat === "string") {
@@ -57,6 +81,11 @@ WidgetCard {
   function launchApp(execCommand) {
     if (!execCommand) return
     Quickshell.execDetached([launcherWidgetRoot.appsScriptPath, "launch", execCommand])
+    // Drop keyboard focus so the desktop layer falls back below the new window
+    if (typeof searchInput !== "undefined" && searchInput) searchInput.focus = false
+    if (rootRef && "keyboardFocusRequested" in rootRef) {
+      rootRef.keyboardFocusRequested = false
+    }
   }
 
   function getCategoryIcon(cat) {
@@ -204,7 +233,7 @@ WidgetCard {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             launcherWidgetRoot.contextMenuOpen = false
-            launcherWidgetRoot.searchQuery = ""
+            searchInput.text = ""
           }
         }
       }
@@ -229,9 +258,19 @@ WidgetCard {
         Layout.fillWidth: true
         height: 34
         radius: 17
-        color: Qt.rgba(1, 1, 1, 0.07)
-        border.color: searchInput.activeFocus ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.12)
+        color: launcherWidgetRoot.fgTint(0.07)
+        border.color: searchInput.activeFocus ? Commons.Color.accent : launcherWidgetRoot.fgTint(0.12)
         border.width: 1
+
+        MouseArea {
+          anchors.fill: parent
+          z: -1
+          cursorShape: Qt.IBeamCursor
+          onClicked: {
+            if (rootRef && "keyboardFocusRequested" in rootRef) rootRef.keyboardFocusRequested = true
+            searchInput.forceActiveFocus()
+          }
+        }
 
         RowLayout {
           anchors.fill: parent
@@ -253,8 +292,24 @@ WidgetCard {
             font.pixelSize: 12
             color: Commons.Color.foreground
             clip: true
+            selectByMouse: true
             text: launcherWidgetRoot.searchQuery
             onTextChanged: launcherWidgetRoot.searchQuery = text
+            onAccepted: {
+              if (launcherWidgetRoot.filteredApps.length > 0) {
+                launcherWidgetRoot.launchApp(launcherWidgetRoot.filteredApps[0].exec)
+              }
+            }
+
+            // Escape clears the query first; with an empty query it falls
+            // through to the window-level Escape shortcut, which drops focus
+            Keys.onShortcutOverride: function(event) {
+              event.accepted = (event.key === Qt.Key_Escape && searchInput.text !== "")
+            }
+            Keys.onEscapePressed: function(event) {
+              searchInput.text = ""
+              event.accepted = true
+            }
 
             Text {
               anchors.fill: parent
@@ -272,7 +327,7 @@ WidgetCard {
             width: 20
             height: 20
             radius: 10
-            color: clearHover.containsMouse ? Qt.rgba(1, 1, 1, 0.2) : "transparent"
+            color: clearHover.containsMouse ? launcherWidgetRoot.fgTint(0.2) : "transparent"
 
             Text {
               anchors.centerIn: parent
@@ -298,8 +353,8 @@ WidgetCard {
         height: 26
         implicitWidth: countText.implicitWidth + 16
         radius: 13
-        color: Qt.rgba(1, 1, 1, 0.05)
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        color: launcherWidgetRoot.fgTint(0.05)
+        border.color: launcherWidgetRoot.fgTint(0.08)
         border.width: 1
 
         Text {
@@ -319,7 +374,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: closeAppMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: closeAppMouse.containsMouse ? Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.35) : launcherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
         border.width: 1
 
@@ -351,7 +406,7 @@ WidgetCard {
         width: 22
         height: 22
         radius: 11
-        color: appGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+        color: appGripArea.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.35) : launcherWidgetRoot.fgTint(0.08)
         border.color: Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.5)
         border.width: 1
 
@@ -425,8 +480,8 @@ WidgetCard {
             height: 26
             radius: 13
             readonly property bool isSelected: launcherWidgetRoot.selectedCategory === modelData.name
-            color: catItemHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : (isSelected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.06))
-            border.color: isSelected ? Qt.rgba(255, 255, 255, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+            color: isSelected ? Commons.Color.accent : (catItemHover.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.25) : launcherWidgetRoot.fgTint(0.06))
+            border.color: isSelected ? launcherWidgetRoot.bgTint(0.25) : launcherWidgetRoot.fgTint(0.08)
             border.width: 1
 
             RowLayout {
@@ -516,7 +571,7 @@ WidgetCard {
             anchors.fill: parent
             anchors.margins: 4
             radius: 12
-            color: appMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.03)
+            color: appMouse.containsMouse ? launcherWidgetRoot.fgTint(0.12) : launcherWidgetRoot.fgTint(0.03)
             border.color: appMouse.containsMouse ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.4) : "transparent"
             border.width: 1
             scale: appMouse.pressed ? 0.95 : (appMouse.containsMouse ? 1.04 : 1.0)
