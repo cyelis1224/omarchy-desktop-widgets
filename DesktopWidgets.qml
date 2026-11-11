@@ -330,21 +330,33 @@ Item {
     return root.isDefaultMonitor(mName) && root.isWidgetEnabledInList(targetId, root.enabledWidgets)
   }
 
+  // The widgets a monitor currently shows: its explicit list, or what the
+  // position fallbacks in isWidgetActiveOnMonitor resolve to. Seed a monitor's
+  // first explicit list from this, or the widgets it shows through a fallback
+  // vanish (and other monitors' widgets appear) the moment one is toggled.
+  function effectiveMonitorWidgets(mName) {
+    if (root.monitorEnabledWidgets && root.monitorEnabledWidgets[mName] !== undefined) {
+      return root.monitorEnabledWidgets[mName].slice()
+    }
+    var all = widgetRegistry.allWidgets
+    var list = []
+    for (var i = 0; i < all.length; i++) {
+      if (root.isWidgetActiveOnMonitor(all[i].id, mName)) list.push(all[i].id)
+    }
+    return list
+  }
+
   function toggleWidgetEnabled(id, enable, monitorName) {
     var targetId = (id === "btc_tracker") ? "coin_tracker" : id
     var screens = Quickshell.screens
     var isMulti = (screens && screens.length > 1)
-    var isFirstScreen = root.isDefaultMonitor(monitorName)
 
     // A newly added widget lands on top of the ones already there
     if (enable) root.raiseWidget(targetId)
 
     if (isMulti && monitorName) {
       var mew = Object.assign({}, root.monitorEnabledWidgets)
-      if (!mew[monitorName]) {
-        mew[monitorName] = isFirstScreen ? root.enabledWidgets.slice() : []
-      }
-      var mList = mew[monitorName].slice()
+      var mList = root.effectiveMonitorWidgets(monitorName)
       var mIdx = mList.indexOf(targetId)
       if (enable && mIdx === -1) mList.push(targetId)
       else if (!enable && mIdx !== -1) mList.splice(mIdx, 1)
@@ -366,23 +378,17 @@ Item {
     var targetId = (id === "btc_tracker") ? "coin_tracker" : id
     var mew = Object.assign({}, root.monitorEnabledWidgets)
 
-    if (!mew[fromMon]) {
-      var screens = Quickshell.screens
-      var isFirst = (!screens || screens.length <= 1 || (screens[0] && screens[0].name === fromMon))
-      mew[fromMon] = isFirst ? root.enabledWidgets.slice() : []
-    }
-    var fromList = mew[fromMon].slice()
+    var fromList = root.effectiveMonitorWidgets(fromMon)
+    var toList = root.effectiveMonitorWidgets(toMon)
     var fIdx = fromList.indexOf(targetId)
     if (fIdx !== -1) fromList.splice(fIdx, 1)
     mew[fromMon] = fromList
 
-    if (!mew[toMon]) mew[toMon] = []
-    var toList = mew[toMon].slice()
     if (toList.indexOf(targetId) === -1) toList.push(targetId)
     mew[toMon] = toList
 
     root.monitorEnabledWidgets = mew
-    Quickshell.execDetached([root.manageScriptPath, "move_to_monitor", targetId, fromMon, toMon])
+    Quickshell.execDetached([root.manageScriptPath, "move_to_monitor", targetId, fromMon, toMon, JSON.stringify(fromList), JSON.stringify(toList)])
   }
 
   // Shows the widget on exactly the given connected monitors. Newly added monitors
@@ -404,19 +410,8 @@ Item {
     // Snapshot every monitor's effective list before writing anything: monitors
     // without an explicit list resolve through position fallbacks that the
     // seeded positions below would otherwise shift.
-    var all = widgetRegistry.allWidgets
     var lists = {}
-    for (var name in sizes) {
-      var list = []
-      if (root.monitorEnabledWidgets && root.monitorEnabledWidgets[name] !== undefined) {
-        list = root.monitorEnabledWidgets[name].slice()
-      } else {
-        for (var j = 0; j < all.length; j++) {
-          if (root.isWidgetActiveOnMonitor(all[j].id, name)) list.push(all[j].id)
-        }
-      }
-      lists[name] = list
-    }
+    for (var name in sizes) lists[name] = root.effectiveMonitorWidgets(name)
 
     var mp = Object.assign({}, root.monitorPositions)
     var srcPos = null
@@ -479,8 +474,12 @@ Item {
   }
 
   function switchProfile(name, monitorName, monitorWidth, monitorHeight) {
+    var screens = Quickshell.screens
+    var isMulti = screens && screens.length > 1
     if (monitorName) {
-      switchProfileProc.command = [root.manageScriptPath, "switch_profile", name, monitorName, Math.round(monitorWidth || 0).toString(), Math.round(monitorHeight || 0).toString()]
+      // A single screen uses the global layout: pass no monitor name, only the
+      // size, so the preset is applied to the lists that screen actually reads.
+      switchProfileProc.command = [root.manageScriptPath, "switch_profile", name, isMulti ? monitorName : "", Math.round(monitorWidth || 0).toString(), Math.round(monitorHeight || 0).toString()]
     } else {
       switchProfileProc.command = [root.manageScriptPath, "switch_profile", name]
     }
@@ -1680,7 +1679,10 @@ Item {
 
               readonly property string monitorName: desktopWindow.monitorName
               readonly property bool isMultiScreen: Quickshell.screens && Quickshell.screens.length > 1
-              readonly property var monitorPos: (root.monitorPositions && monitorName && root.monitorPositions[monitorName] && (root.monitorPositions[monitorName][modelData.id] || (modelData.id === "coin_tracker" ? root.monitorPositions[monitorName]["btc_tracker"] : null))) ? (root.monitorPositions[monitorName][modelData.id] || root.monitorPositions[monitorName]["btc_tracker"]) : null
+              // Per-monitor positions are only written with several screens (see
+              // saveWidgetPos); reading them on a single screen would let a stale
+              // entry override every newly saved position.
+              readonly property var monitorPos: (isMultiScreen && root.monitorPositions && monitorName && root.monitorPositions[monitorName] && (root.monitorPositions[monitorName][modelData.id] || (modelData.id === "coin_tracker" ? root.monitorPositions[monitorName]["btc_tracker"] : null))) ? (root.monitorPositions[monitorName][modelData.id] || root.monitorPositions[monitorName]["btc_tracker"]) : null
               readonly property var savedPos: monitorPos ? monitorPos : ((root.widgetPositions && (root.widgetPositions[modelData.id] || (modelData.id === "coin_tracker" ? root.widgetPositions["btc_tracker"] : null))) ? (root.widgetPositions[modelData.id] || root.widgetPositions["btc_tracker"]) : null)
               readonly property real savedWidth: (savedPos && savedPos.w !== undefined) ? savedPos.w : 0
               readonly property real savedHeight: (savedPos && savedPos.h !== undefined) ? savedPos.h : 0

@@ -63,6 +63,7 @@ WidgetCard {
   }
 
   function applySavedSettings() {
+    var urlBefore = currentFeedUrl
     var cf = getSetting("customFeeds", undefined)
     if (cf !== undefined && Array.isArray(cf)) customFeeds = cf
 
@@ -73,6 +74,10 @@ WidgetCard {
 
     var rim = getSetting("refreshIntervalMinutes", undefined)
     if (rim !== undefined && typeof rim === "number") refreshIntervalMinutes = rim
+
+    // Saved settings arrive after the first fetch has started for the default
+    // feed; without this the restored feed stays empty until the next refresh.
+    if (currentFeedUrl !== urlBefore) fetchFeed(false)
   }
 
   onSettingsLoaded: applySavedSettings()
@@ -86,9 +91,20 @@ WidgetCard {
     rssWidgetRoot.isLoading = true
     var args = [rssWidgetRoot.currentFeedUrl]
     if (force) args.push("--force")
-    fetchProc.command = [rssWidgetRoot.scriptPath].concat(args)
-    if (!fetchProc.running) fetchProc.running = true
+    var command = [rssWidgetRoot.scriptPath].concat(args)
+    if (fetchProc.running) {
+      // A fetch is in flight, possibly for another feed: queue this one and
+      // drop the stale result instead of showing it under the new tab.
+      if (force || rssWidgetRoot.fetchingUrl !== rssWidgetRoot.currentFeedUrl) rssWidgetRoot.pendingFetchCommand = command
+      return
+    }
+    rssWidgetRoot.fetchingUrl = rssWidgetRoot.currentFeedUrl
+    fetchProc.command = command
+    fetchProc.running = true
   }
+
+  property var pendingFetchCommand: null
+  property string fetchingUrl: ""
 
   function openAddDialog() {
     actionProc.command = [rssWidgetRoot.scriptPath, "add_dialog"]
@@ -133,6 +149,7 @@ WidgetCard {
     stdout: SplitParser {
       onRead: function(line) {
         try {
+          if (rssWidgetRoot.fetchingUrl !== rssWidgetRoot.currentFeedUrl) return
           var res = JSON.parse(String(line).trim())
           if (res.status === "ok" && Array.isArray(res.items)) {
             rssWidgetRoot.articlesList = res.items
@@ -144,7 +161,15 @@ WidgetCard {
       }
     }
     onExited: function(code) {
-      rssWidgetRoot.isLoading = false
+      var next = rssWidgetRoot.pendingFetchCommand
+      rssWidgetRoot.pendingFetchCommand = null
+      if (next && rssWidgetRoot.currentFeedUrl) {
+        rssWidgetRoot.fetchingUrl = rssWidgetRoot.currentFeedUrl
+        fetchProc.command = next
+        Qt.callLater(function() { fetchProc.running = true })
+      } else {
+        rssWidgetRoot.isLoading = false
+      }
     }
   }
 

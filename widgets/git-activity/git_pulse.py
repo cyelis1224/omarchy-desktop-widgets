@@ -8,6 +8,8 @@ import re
 import shutil
 import time
 import concurrent.futures
+import fcntl
+import tempfile
 
 STATE_DIR = os.path.expanduser('~/.local/state/omarchy')
 STATE_FILE = os.path.join(STATE_DIR, 'dagyr.desktop-widgets.json')
@@ -23,22 +25,51 @@ NETWORK_TTL = 300
 # Retry delay after a failed GitHub or remote fetch (offline, rate limited)
 FAIL_RETRY_TTL = 30
 
-def load_settings():
-    if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, 'r') as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
+STATE_LOCK = os.path.join(STATE_DIR, '.dagyr.desktop-widgets.lock')
 
-def save_settings(settings):
+def read_state():
+    """Returns the parsed state file, {} when there is none, or None when it
+    exists but cannot be read (so callers never save defaults over it)."""
+    if not os.path.exists(STATE_FILE):
+        return {}
+    try:
+        with open(STATE_FILE, 'r') as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+def load_settings():
+    return read_state() or {}
+
+def update_settings(mutate):
+    # The state file is shared with manage-positions.sh and the other widgets:
+    # take the same lock, re-read it, change only our keys and replace it
+    # atomically, so a stale snapshot never overwrites someone else's save.
+    tmp_path = None
     try:
         os.makedirs(STATE_DIR, exist_ok=True)
-        with open(STATE_FILE, 'w') as f:
-            json.dump(settings, f, indent=2)
+        with open(STATE_LOCK, 'w') as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            fresh = read_state()
+            if fresh is None:
+                return False
+            mutate(fresh)
+            fd, tmp_path = tempfile.mkstemp(prefix='.dagyr.desktop-widgets.', suffix='.json', dir=STATE_DIR)
+            with os.fdopen(fd, 'w') as f:
+                json.dump(fresh, f, indent=2)
+            os.replace(tmp_path, STATE_FILE)
+            tmp_path = None
+            return True
     except Exception:
-        pass
+        return False
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+def persist_repos(settings, custom_repos, active_repo=None):
+    sync_repos_to_settings(settings, custom_repos, active_repo)
+    update_settings(lambda fresh: sync_repos_to_settings(fresh, custom_repos, active_repo))
 
 def get_custom_repos_from_settings(settings):
     if not isinstance(settings, dict):
@@ -687,16 +718,14 @@ def main():
             if chosen:
                 if chosen not in custom_repos:
                     custom_repos.append(chosen)
-                sync_repos_to_settings(settings, custom_repos, chosen)
-                save_settings(settings)
+                persist_repos(settings, custom_repos, chosen)
         elif req == "pick_remote_dialog":
             chosen = pick_remote_url_dialog()
             if chosen:
                 sync_remote_repo(chosen, force=True)
                 if chosen not in custom_repos:
                     custom_repos.append(chosen)
-                sync_repos_to_settings(settings, custom_repos, chosen)
-                save_settings(settings)
+                persist_repos(settings, custom_repos, chosen)
         elif req.startswith("remove:"):
             target_to_remove = req[7:].strip()
             if target_to_remove in custom_repos:
@@ -708,23 +737,19 @@ def main():
             new_active = get_active_repo_from_settings(settings)
             if new_active == target_to_remove:
                 new_active = custom_repos[0] if custom_repos else ""
-            sync_repos_to_settings(settings, custom_repos, new_active)
-            save_settings(settings)
+            persist_repos(settings, custom_repos, new_active)
         elif req == "ALL":
-            sync_repos_to_settings(settings, custom_repos, "ALL")
-            save_settings(settings)
+            persist_repos(settings, custom_repos, "ALL")
         elif is_remote_url(req):
             norm_url = normalize_remote_url(req)
             sync_remote_repo(norm_url, force=True)
             if norm_url not in custom_repos:
                 custom_repos.append(norm_url)
-            sync_repos_to_settings(settings, custom_repos, norm_url)
-            save_settings(settings)
+            persist_repos(settings, custom_repos, norm_url)
         elif os.path.exists(req) and os.path.exists(os.path.join(req, '.git')):
             if req not in custom_repos:
                 custom_repos.append(req)
-            sync_repos_to_settings(settings, custom_repos, req)
-            save_settings(settings)
+            persist_repos(settings, custom_repos, req)
 
     detected_repos = find_repos(custom_repos)
 
@@ -734,8 +759,7 @@ def main():
             active_repo = ""
     elif not active_repo or not any(r["path"] == active_repo for r in detected_repos):
         active_repo = detected_repos[0]["path"] if detected_repos else ""
-        sync_repos_to_settings(settings, custom_repos, active_repo)
-        save_settings(settings)
+        persist_repos(settings, custom_repos, active_repo)
 
     data = get_git_data(active_repo, detected_repos, force_network=force_refresh)
     data["detected_repos"] = detected_repos

@@ -153,7 +153,11 @@ WidgetCard {
   onPollIntervalMsChanged: {
     if (!telemetryProc.running) return
     telemetryProc.running = false
-    Qt.callLater(function() { telemetryProc.running = hwWidgetRoot.visible })
+    // Assigning running drops its binding to visible; bind it again so the
+    // collector keeps following the widget's visibility.
+    Qt.callLater(function() {
+      telemetryProc.running = Qt.binding(function() { return hwWidgetRoot.visible })
+    })
   }
 
   // ---------------------------------------------------------------------------
