@@ -504,9 +504,14 @@ WidgetCard {
         }
       }
 
+      // Fills the row and elides: a long CPU model name must not widen the layout past the card
       ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
         spacing: 0
         Text {
+          Layout.fillWidth: true
+          elide: Text.ElideRight
           text: "Hardware Thermals"
           font.family: Style.font.family
           font.pixelSize: 13
@@ -514,14 +519,14 @@ WidgetCard {
           color: Commons.Color.foreground
         }
         Text {
+          Layout.fillWidth: true
+          elide: Text.ElideRight
           text: (hwWidgetRoot.cpuModel ? hwWidgetRoot.cpuModel + " · " : "") + hwWidgetRoot.cpuCores + "C / " + hwWidgetRoot.cpuThreads + "T"
           font.family: Style.font.family
           font.pixelSize: 10
           color: Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, 0.5)
         }
       }
-
-      Item { Layout.fillWidth: true }
 
       // Live Status Badge
       Rectangle {
