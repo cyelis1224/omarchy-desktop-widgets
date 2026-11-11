@@ -85,21 +85,29 @@ BUILTIN_PROFILES = {
     "Full Dashboard": {
         "name": "Full Dashboard",
         "description": "Comprehensive command center featuring all desktop widgets arranged across the screen.",
-        "enabled_widgets": ["clock", "gallery", "weather", "coin_tracker", "quick_notes", "pomodoro", "git_activity", "folder_view", "app_launcher", "network", "media", "hardware_telemetry", "system", "analog_clock", "calendar", "rss_feed", "sysmon"],
+        "enabled_widgets": ["clock", "gallery", "weather", "coin_tracker", "quick_notes", "pomodoro", "git_activity", "folder_view", "app_launcher", "network", "media", "hardware_telemetry", "system", "analog_clock", "calendar", "rss_feed", "sysmon", "agent_usage"],
         "positions": {
             "clock": {"x": 700, "y": 20},
             "gallery": {"x": 20, "y": 40, "w": 360, "h": 220},
             "quick_notes": {"x": 40, "y": 280, "w": 320, "h": 340},
             "pomodoro": {"x": 40, "y": 640, "w": 320, "h": 420},
-            "weather": {"x": 400, "y": 140, "w": 340, "h": 250},
-            "coin_tracker": {"x": 760, "y": 140, "w": 350, "h": 245},
-            "git_activity": {"x": 380, "y": 420, "w": 360, "h": 440},
-            "rss_feed": {"x": 380, "y": 880, "w": 360, "h": 440},
-            "calendar": {"x": 760, "y": 420, "w": 340, "h": 440},
-            "folder_view": {"x": 760, "y": 880, "w": 340, "h": 380},
-            "analog_clock": {"x": 1140, "y": 40, "w": 280, "h": 280},
-            "sysmon": {"x": 1140, "y": 340, "w": 360, "h": 280},
-            "app_launcher": {"x": 1140, "y": 640, "w": 360, "h": 420},
+            # The two centre columns start below the hero clock (about 370x270
+            # with the greeting on) and run past 1080px: this preset needs a
+            # taller screen to show every widget without overlap.
+            "weather": {"x": 400, "y": 300, "w": 340, "h": 250},
+            "coin_tracker": {"x": 760, "y": 300, "w": 350, "h": 245},
+            "git_activity": {"x": 380, "y": 570, "w": 360, "h": 420},
+            "rss_feed": {"x": 380, "y": 1010, "w": 360, "h": 400},
+            "calendar": {"x": 760, "y": 570, "w": 340, "h": 440},
+            "folder_view": {"x": 760, "y": 1030, "w": 340, "h": 380},
+            "analog_clock": {"x": 1220, "y": 40, "w": 200, "h": 200},
+            "sysmon": {"x": 1140, "y": 260, "w": 360, "h": 280},
+            # agent_usage sizes itself to its content (about 480px tall). Its y
+            # stays above the 55% line so adapt_positions_to_monitor leaves it
+            # under sysmon while app_launcher drops to the bottom edge on
+            # taller screens.
+            "agent_usage": {"x": 1140, "y": 560, "w": 360, "h": 480},
+            "app_launcher": {"x": 1140, "y": 740, "w": 360, "h": 320},
             "network": {"x": 1520, "y": 40, "w": 360, "h": 180},
             "media": {"x": 1520, "y": 240, "w": 360, "h": 120},
             "hardware_telemetry": {"x": 1520, "y": 380, "w": 360, "h": 460},

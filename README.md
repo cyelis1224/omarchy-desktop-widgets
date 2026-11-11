@@ -206,7 +206,7 @@ Five curated profiles are built-in and ready out of the box:
 - **Default**: Standard balanced desktop setup with Hero Clock, Photo Deck, Network Sparklines, MPRIS Media, and System Specs.
 - **Minimal**: Distraction-free glance layout featuring only the centerpiece clock and weather forecast.
 - **Productivity**: Focus workspace equipped with Pomodoro timer, Kanban todos, Git radar, and Folder view.
-- **Full Dashboard**: Comprehensive 12-widget command center arranged across the canvas.
+- **Full Dashboard**: Command center with all 18 built-in widgets. It needs more room than 1920x1080 offers: on a display of about 2560x1440 or larger every widget gets its own space, while on smaller displays widgets are kept on screen and overlap.
 - **Gaming**: Performance telemetry layout tracking CPU/GPU stats, RAM, multi-drive storage, and network bandwidth.
 
 ![Move Mode & Layout Editor](assets/screenshots/move-mode.png)
